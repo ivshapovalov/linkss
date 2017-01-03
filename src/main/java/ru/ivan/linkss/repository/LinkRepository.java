@@ -7,4 +7,6 @@ public interface LinkRepository {
     String create(String link);
 
     String get(String key);
+
+    String getRandomShortLink();
 }

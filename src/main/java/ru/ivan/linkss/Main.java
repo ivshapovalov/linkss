@@ -6,10 +6,26 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public class Main {
 
     public static void main(String[] args) {
-        init();
+        //init();
+        String domain=getDomainName("http://ya.ru/sdfasfas");
+        System.out.println(domain);
+    }
+
+    public static String getDomainName(String url) {
+        URI uri = null;
+        try {
+            uri = new URI(url);
+            String domain = uri.getHost();
+            return domain.startsWith("www.") ? domain.substring(4) : domain;
+        } catch (URISyntaxException e) {
+            return "";
+        }
     }
 
     private static void init() {

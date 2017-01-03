@@ -5,6 +5,8 @@ package ru.ivan.linkss.service;
  */
 public interface Service {
 
+    String getRandomShortLink();
+
     String create(String link);
 
     String get(String shortLink);

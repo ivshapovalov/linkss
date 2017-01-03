@@ -12,6 +12,11 @@ public class ServiceImpl implements Service {
     }
 
     @Override
+    public String getRandomShortLink() {
+        return repository.getRandomShortLink();
+    }
+
+    @Override
     public String create(String link) {
         return repository.create(link);
     }
