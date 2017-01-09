@@ -21,6 +21,7 @@ public class KeyCreator {
     public void create(final int length) {
 
         redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+        redisClient = RedisClient.create("redis://h:pdca0ced53f63e3cae18b8f9550b7947167301de07466c4411958d553d2060421@ec2-50-17-230-205.compute-1.amazonaws.com:7479");
         connection = redisClient.connect();
         syncCommands = connection.sync();
         syncCommands.select(1);

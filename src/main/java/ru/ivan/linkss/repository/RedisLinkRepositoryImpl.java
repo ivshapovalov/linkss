@@ -31,9 +31,11 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_PREFERENCES_NUMBER);
         syncCommands.set(KEY_LENGTH, String.valueOf("4"));
         syncCommands.set(EXPIRE_PERIOD, "30");
+        syncCommands.select(DB_STATISTICS_NUMBER);
+        syncCommands.select(DB_FREELINK_NUMBER);
         syncCommands.save();
         connection.close();
-        //redisClient.shutdown();
+        redisClient.shutdown();
     }
 
     @Override
