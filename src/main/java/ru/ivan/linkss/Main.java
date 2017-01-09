@@ -1,9 +1,6 @@
 package ru.ivan.linkss;
 
 
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
 
 import java.net.URI;
@@ -56,12 +53,9 @@ public class Main {
 //                new KeyCreator().create(5);
 //            }
 //        },"t5").start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new KeyCreator().create(4);
-            }
-        },"t4").start();
+
+        new KeyCreator().create(4);
+
 
     }
 

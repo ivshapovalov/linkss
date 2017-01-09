@@ -19,13 +19,6 @@
         <zxing.version>3.3.0</zxing.version>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
 
         <dependency>
             <groupId>biz.paluch.redis</groupId>
