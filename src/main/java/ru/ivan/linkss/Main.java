@@ -12,9 +12,9 @@ import java.net.URISyntaxException;
 public class Main {
 
     public static void main(String[] args) {
-        //init();
-        String domain=getDomainName("http://ya.ru/sdfasfas");
-        System.out.println(domain);
+        init();
+//        String domain=getDomainName("http://ya.ru/sdfasfas");
+//        System.out.println(domain);
     }
 
     public static String getDomainName(String url) {
@@ -32,30 +32,30 @@ public class Main {
 
         new RedisLinkRepositoryImpl().init();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new KeyCreator().create(3);
-            }
-        },"t3").start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new KeyCreator().create(2);
-            }
-        },"t2").start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new KeyCreator().create(6);
-            }
-        },"t6").start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new KeyCreator().create(5);
-            }
-        },"t5").start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                new KeyCreator().create(3);
+//            }
+//        },"t3").start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                new KeyCreator().create(2);
+//            }
+//        },"t2").start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                new KeyCreator().create(6);
+//            }
+//        },"t6").start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                new KeyCreator().create(5);
+//            }
+//        },"t5").start();
         new Thread(new Runnable() {
             @Override
             public void run() {

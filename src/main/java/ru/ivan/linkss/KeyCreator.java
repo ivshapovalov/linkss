@@ -3,6 +3,7 @@ package ru.ivan.linkss;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by Ivan on 31.12.2016.
@@ -13,6 +14,7 @@ public class KeyCreator {
             .toCharArray();
 
     private RedisClient redisClient;
+
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
 
