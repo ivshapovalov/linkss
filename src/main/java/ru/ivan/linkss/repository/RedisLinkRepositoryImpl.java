@@ -13,11 +13,12 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     private static final int DB_PREFERENCES_NUMBER = 2;
     private static final int DB_FREELINK_NUMBER = 1;
     private static final int DB_STATISTICS_NUMBER = 3;
-    private static final String EXPIRE_PERIOD= "expire.period";
-    private static final String KEY_LENGTH= "key.length";
+    private static final String EXPIRE_PERIOD = "expire.period";
+    private static final String KEY_LENGTH = "key.length";
 
     //private RedisClient redisClient = RedisClient.create("redis://localhost:6379/0");
-    private RedisClient redisClient = RedisClient.create("redis://h:pdca0ced53f63e3cae18b8f9550b7947167301de07466c4411958d553d2060421@ec2-50-17-230-205.compute-1.amazonaws.com:7479");
+    private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+
     private long dayInSeconds = 60 * 60 * 24;
 
     public RedisLinkRepositoryImpl() {
@@ -52,7 +53,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_PREFERENCES_NUMBER);
-        String days=syncCommands.get(EXPIRE_PERIOD);
+        String days = syncCommands.get(EXPIRE_PERIOD);
         syncCommands.select(DB_FREELINK_NUMBER);
         String shortLink = syncCommands.randomkey();
         syncCommands.del(shortLink);
