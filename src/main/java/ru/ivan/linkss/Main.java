@@ -59,7 +59,7 @@ public class Main {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                new KeyCreator().create(4);
+                new KeyCreator().create(3);
             }
         },"t4").start();
 
