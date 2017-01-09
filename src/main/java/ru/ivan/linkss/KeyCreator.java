@@ -20,7 +20,7 @@ public class KeyCreator {
 
     public void create(final int length) {
 
-        redisClient = RedisClient.create("redis://localhost:6379/0");
+        redisClient = RedisClient.create(System.getenv("REDIS_URL"));
         connection = redisClient.connect();
         syncCommands = connection.sync();
         syncCommands.select(1);
