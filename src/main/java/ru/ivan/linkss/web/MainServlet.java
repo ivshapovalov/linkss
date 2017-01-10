@@ -27,10 +27,6 @@ public class MainServlet extends HttpServlet {
         super.init(config);
         springContext = new ClassPathXmlApplicationContext("spring/spring-app.xml");
         service = springContext.getBean(ServiceImpl.class);
-
-//        super.init(config);
-//        SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this,
-//                config.getServletContext());
     }
 
     @Override

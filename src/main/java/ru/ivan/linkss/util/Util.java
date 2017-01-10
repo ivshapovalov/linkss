@@ -3,9 +3,6 @@ package ru.ivan.linkss.util;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/**
- * Created by Ivan on 03.01.2017.
- */
 public class Util {
 
     public static String getDomainName(String url) {
