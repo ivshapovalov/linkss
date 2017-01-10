@@ -11,5 +11,5 @@ public interface LinkRepository {
 
     List<List<String>> getShortStat();
 
-    List<List<String>> getFullStat();
+    List<FullLink> getFullStat(String contextPath);
 }

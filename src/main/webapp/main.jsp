@@ -40,7 +40,7 @@
             </tr>
             <tr>
                 <td colspan="2" width="100%" align="center">
-                    <img src="${filename}.png" alt="">
+                    <img src="${filename}" alt="">
                 </td>
             </tr>
         </table>

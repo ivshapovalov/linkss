@@ -8,6 +8,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
 
 import javax.imageio.ImageIO;
@@ -51,8 +52,8 @@ public class ServiceImpl implements Service {
     }
 
     @Override
-    public List<List<String>> getFullStat() {
-        return repository.getFullStat();
+    public List<FullLink> getFullStat(String contextPath) {
+        return repository.getFullStat(contextPath);
     }
 
     @Override

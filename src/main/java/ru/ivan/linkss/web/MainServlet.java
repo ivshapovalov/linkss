@@ -4,6 +4,7 @@ import com.google.zxing.WriterException;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.service.Service;
 import ru.ivan.linkss.service.ServiceImpl;
 
@@ -49,9 +50,9 @@ public class MainServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        request.setAttribute("filename", shortLink);
+        request.setAttribute("filename", shortLink+".png");
         request.setAttribute("link", link);
-        request.setAttribute("shortLink", "https://linkss.herokuapp.com/" + shortLink);
+        request.setAttribute("shortLink", request.getRequestURL() + shortLink);
         //response.sendRedirect("main.jsp");
         request.getRequestDispatcher("main.jsp").forward(request, response);
     }
@@ -68,35 +69,26 @@ public class MainServlet extends HttpServlet {
         }
          else if (shortLink.equals("/stat")) {
             List<List<String>> shortStat=service.getShortStat();
-            List<List<String>> fullStat=service.getFullStat();
+            String p = request.getRequestURL().toString();
+            String cp = request.getServletPath();
+
+            String contextPath="";
+            if (p.startsWith(cp)) {
+                contextPath=p.substring(0,p.length()-cp.length()+1);
+            }
+            List<FullLink> fullStat=service.getFullStat(contextPath);
             request.setAttribute("shortStat", shortStat);
             request.setAttribute("fullStat", fullStat);
             request.getRequestDispatcher("stat.jsp").forward(request, response);
 
         } else if (shortLink.contains(".png") || shortLink.contains(".jpg")) {
-//            response.setContentType("application/png");
-//            String path = getServletContext().getRealPath("/");
-//            response.setHeader("Content-Disposition", "attachment; filename=\""+path+shortLink.substring(1)
-//                    +"\"");
-
-            InputStream is = null;
             OutputStream os = response.getOutputStream();
-//            try {
-//
-//                response.setContentType("image/png");
-//                response.setContentLength((int) b.length());
-//                is = b.getBinaryStream();
-//                byte buf[] = new byte[(int) b.length()];
-//                is.read(buf);
-//                os.write(buf);
-//            } catch (Exception ex) {
             File file = new File(getServletContext().getRealPath(shortLink));
             FileInputStream fis = new FileInputStream(file);
             int bytes;
             while ((bytes = fis.read()) != -1) {
                 os.write(bytes);
             }
-            //}
 
         } else {
             String link = service.get(shortLink.substring(1));
@@ -105,10 +97,6 @@ public class MainServlet extends HttpServlet {
             } else {
                 response.sendRedirect("//" + link);
             }
-            //response.sendRedirect(link);
-
         }
     }
-
-
 }

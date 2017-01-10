@@ -83,7 +83,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<List<String>> getFullStat() {
+    public List<FullLink> getFullStat(String contextPath) {
         StatefulRedisConnection<String, String> connectionStat = redisClientStat.connect();
         RedisCommands<String, String> syncCommandsStat = connectionStat.sync();
         StatefulRedisConnection<String, String> connection = redisClient.connect();
@@ -92,20 +92,19 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommandsStat.select(DB_STATISTICS_NUMBER);
         List<ScoredValue<String>> list=syncCommandsStat.zscan("visits")
                 .getValues();
-        List<List<String>> shortStat = list.stream()
+        List<FullLink> fullStat = list.stream()
                 .map(p -> {
-                    List<String> l = new ArrayList<>();
-                    String shortLink=p.getValue();
+                    String shortLink=contextPath+p.getValue();
                     String link=syncCommands.get(p.getValue());
-                    l.add(shortLink);
-                    l.add(link);
-                    l.add(String.valueOf((int)p.getScore()));
+                    FullLink l = new FullLink(shortLink,
+                            link,String.valueOf((int)p.getScore()),
+                            shortLink+".png");
                     return l;
                 }).collect(Collectors.toList())
                 ;
         connectionStat.close();
 
-        return shortStat;
+        return fullStat;
     }
 
     @Override
