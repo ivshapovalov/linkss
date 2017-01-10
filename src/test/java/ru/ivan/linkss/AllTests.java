@@ -21,4 +21,6 @@ public class AllTests {
         assertEquals("ya.ru",Util.getDomainName("https://www.ya.ru/sadfaf"));
 
     }
+
+
 }

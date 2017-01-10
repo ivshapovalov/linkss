@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.List;
 
 @Component
 public class MainServlet extends HttpServlet {
@@ -71,6 +72,11 @@ public class MainServlet extends HttpServlet {
             request.getRequestDispatcher("main.jsp").forward(request, response);
         }
          else if (shortLink.equals("/stat")) {
+            List<List<String>> shortStat=service.getShortStat();
+            List<List<String>> fullStat=service.getFullStat();
+            request.setAttribute("shortStat", shortStat);
+            request.setAttribute("fullStat", fullStat);
+            request.getRequestDispatcher("stat.jsp").forward(request, response);
 
         } else if (shortLink.contains(".png") || shortLink.contains(".jpg")) {
 //            response.setContentType("application/png");

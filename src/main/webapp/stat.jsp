@@ -7,46 +7,35 @@
 </head>
 <body>
 <section>
-    <h2><a href="">Home</a></h2>
-    <h2><a href="/stat">Statistics</a></h2>
-    <form method="post">
-        <table border="1" width="30%">
-            <tr>
-                <td colspan="2" width="100%" align="center">
-                    <button type="submit">Create short link</button>
-                    <button
-                            onclick="location.href=''" type="button">
-                        Clear
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td width="10%">Link:</td>
-                <td width="90%"><input size="90%" type="text" id="${link}"
-                                       name="link"
-                                       value="${link}"></td>
-            </tr>
-            <tr>
-                <td width="10%">
-                    Short:
-                </td>
-                <td width="90%"><a href="${shortLink}">${shortLink}</a>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" width="100%" align="center">
-                    QR Code
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" width="100%" align="center">
-                    <img src="${filename}.png" alt="">
-                </td>
-            </tr>
-        </table>
+    <h2><a href="/">Home</a></h2>
 
+    <h3>Domain Statistics</h3>
 
-    </form>
+    <table border="1" width="50%">
+        <c:forEach items="${shortStat}" var="column">
+            <tr>
+                <c:forEach items="${column}" var="row">
+                    <td width="50%">
+                            ${row}
+                    </td>
+                </c:forEach>
+            </tr>
+        </c:forEach>
+    </table>
+
+    <h3>Links Statistics</h3>
+
+    <table border="1" width="50%">
+        <c:forEach items="${fullStat}" var="column">
+            <tr>
+                <c:forEach items="${column}" var="row">
+                    <td width="50%">
+                            ${row}
+                    </td>
+                </c:forEach>
+            </tr>
+        </c:forEach>
+    </table>
 </section>
 </body>
 </html>

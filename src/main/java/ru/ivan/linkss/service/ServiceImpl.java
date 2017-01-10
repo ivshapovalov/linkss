@@ -6,6 +6,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import com.lambdaworks.redis.ScoredValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.LinkRepository;
@@ -15,7 +16,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -47,6 +47,18 @@ public class ServiceImpl implements Service {
     public String get(String shortLink) {
         return repository.get(shortLink);
     }
+
+    @Override
+    public List<List<String>> getShortStat() {
+        return repository.getShortStat();
+    }
+
+    @Override
+    public List<List<String>> getFullStat() {
+        return repository.getFullStat();
+    }
+
+
 
     @Override
     public void createQRImage(String path, String link, String shortLink) throws WriterException,

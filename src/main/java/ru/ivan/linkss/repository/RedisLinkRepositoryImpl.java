@@ -1,12 +1,15 @@
 package ru.ivan.linkss.repository;
 
 import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.util.Util;
 
-import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RedisLinkRepositoryImpl implements LinkRepository {
@@ -57,6 +60,50 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         //syncCommandsStat.bgsave();
         connectionStat.close();
         //redisClient.shutdown();
+    }
+
+    @Override
+    public List<List<String>> getShortStat() {
+        StatefulRedisConnection<String, String> connectionStat = redisClientStat.connect();
+        RedisCommands<String, String> syncCommandsStat = connectionStat.sync();
+        syncCommandsStat.select(DB_STATISTICS_NUMBER);
+        List<ScoredValue<String>> list=syncCommandsStat.zscan("visits_by_domain")
+                .getValues();
+        List<List<String>> shortStat = list.stream()
+                .map(p -> {
+                    List<String> l = new ArrayList<>();
+                    l.add(p.getValue());
+                    l.add(String.valueOf((int)p.getScore()));
+                    return l;
+                }).collect(Collectors.toList())
+                ;
+        connectionStat.close();
+
+        return shortStat;
+    }
+
+    @Override
+    public List<List<String>> getFullStat() {
+        StatefulRedisConnection<String, String> connectionStat = redisClientStat.connect();
+        RedisCommands<String, String> syncCommandsStat = connectionStat.sync();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_LINK_NUMBER);
+        syncCommandsStat.select(DB_STATISTICS_NUMBER);
+        List<ScoredValue<String>> list=syncCommandsStat.zscan("visits")
+                .getValues();
+        List<List<String>> shortStat = list.stream()
+                .map(p -> {
+                    List<String> l = new ArrayList<>();
+                    String link=syncCommands.get(p.getValue());
+                    l.add(link);
+                    l.add(String.valueOf((int)p.getScore()));
+                    return l;
+                }).collect(Collectors.toList())
+                ;
+        connectionStat.close();
+
+        return shortStat;
     }
 
     @Override
