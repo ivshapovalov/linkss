@@ -18,10 +18,10 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     private static final String EXPIRE_PERIOD= "expire.period";
     private static final String KEY_LENGTH= "key.length";
 
-  private RedisClient redisClient = RedisClient.create("redis://localhost:6379/0");
+  //private RedisClient redisClient = RedisClient.create("redis://localhost:6379/0");
 //    private RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-    //private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+    private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
     private long dayInSeconds = 60 * 60 * 24;
 
     public RedisLinkRepositoryImpl() {
