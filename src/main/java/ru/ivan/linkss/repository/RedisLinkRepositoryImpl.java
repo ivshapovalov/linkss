@@ -95,7 +95,9 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         List<List<String>> shortStat = list.stream()
                 .map(p -> {
                     List<String> l = new ArrayList<>();
+                    String shortLink=p.getValue();
                     String link=syncCommands.get(p.getValue());
+                    l.add(shortLink);
                     l.add(link);
                     l.add(String.valueOf((int)p.getScore()));
                     return l;
