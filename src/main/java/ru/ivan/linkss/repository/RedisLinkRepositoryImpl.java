@@ -151,7 +151,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         StatefulRedisConnection<String, String> connectionStat = redisClientStat.connect();
-        RedisCommands<String, String> syncCommandsStat = connection.sync();
+        RedisCommands<String, String> syncCommandsStat = connectionStat.sync();
         syncCommands.select(DB_LINK_NUMBER);
         String link = syncCommands.get(shortLink);
         syncCommandsStat.select(DB_STATISTICS_NUMBER);
