@@ -76,7 +76,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.del(shortLink);
         syncCommands.select(DB_LINK_NUMBER);
         syncCommands.set(shortLink, link);
-        syncCommands.expire(shortLink, dayInSeconds * Integer.valueOf(30));
+        syncCommands.expire(shortLink, dayInSeconds * 30);
 //        syncCommands.select(DB_STATISTICS_NUMBER);
 //        syncCommands.zadd("visits", 0, shortLink);
 //        String domainName = Util.getDomainName(link);
