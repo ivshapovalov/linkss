@@ -1,16 +1,12 @@
 package ru.ivan.linkss.web;
 
 import com.google.zxing.WriterException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.service.Service;
 import ru.ivan.linkss.service.ServiceImpl;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -61,18 +57,21 @@ public class MainServlet extends HttpServlet {
 //        request.setAttribute("shortLink", "https://linkss.herokuapp.com/" + shortLink);
         request.setAttribute("shortLink", "http://whydt.ru/" + shortLink);
         //response.sendRedirect("main.jsp");
-      request.getRequestDispatcher("main.jsp").forward(request, response);
+        request.getRequestDispatcher("main.jsp").forward(request, response);
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         //response.sendRedirect("index.jsp");
         String shortLink = request.getServletPath();
-        if (shortLink.equals("/")) {
+        if (shortLink.equals("/") || shortLink.equals("")) {
             request.setAttribute("filename", "");
             request.setAttribute("link", "");
             request.setAttribute("shortLink", "");
 
             request.getRequestDispatcher("main.jsp").forward(request, response);
+        }
+         else if (shortLink.equals("/stat")) {
+
         } else if (shortLink.contains(".png") || shortLink.contains(".jpg")) {
 //            response.setContentType("application/png");
 //            String path = getServletContext().getRealPath("/");
@@ -90,12 +89,12 @@ public class MainServlet extends HttpServlet {
 //                is.read(buf);
 //                os.write(buf);
 //            } catch (Exception ex) {
-                File file = new File(getServletContext().getRealPath(shortLink));
-                FileInputStream fis = new FileInputStream(file);
-                int bytes;
-                while ((bytes = fis.read()) != -1) {
-                    os.write(bytes);
-                }
+            File file = new File(getServletContext().getRealPath(shortLink));
+            FileInputStream fis = new FileInputStream(file);
+            int bytes;
+            while ((bytes = fis.read()) != -1) {
+                os.write(bytes);
+            }
             //}
 
         } else {
@@ -109,7 +108,6 @@ public class MainServlet extends HttpServlet {
 
         }
     }
-
 
 
 }

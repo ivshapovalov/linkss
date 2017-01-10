@@ -3,7 +3,7 @@
 
 <html>
 <head>
-    <title>Main</title>
+    <title>Statistics</title>
 </head>
 <body>
 <section>

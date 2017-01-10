@@ -72,7 +72,6 @@
             <artifactId>spring-web</artifactId>
             <version>4.0.5.RELEASE</version>
         </dependency>
-
     </dependencies>
     <build>
         <finalName>linkss</finalName>

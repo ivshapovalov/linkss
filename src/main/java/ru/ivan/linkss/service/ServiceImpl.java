@@ -7,18 +7,17 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
 import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 @Component
 public class ServiceImpl implements Service {
@@ -36,8 +35,13 @@ public class ServiceImpl implements Service {
 
     @Override
     public String create(String link) {
-        return repository.create(link);
+
+        String shortLink = repository.create(link);
+
+        return shortLink;
     }
+
+
 
     @Override
     public String get(String shortLink) {
@@ -48,7 +52,7 @@ public class ServiceImpl implements Service {
     public void createQRImage(String path, String link, String shortLink) throws WriterException,
             IOException {
 
-        String filePath = path+shortLink+".png";
+        String filePath = path + shortLink + ".png";
         int size = 125;
         String fileType = "png";
         File qrFile = new File(filePath);
