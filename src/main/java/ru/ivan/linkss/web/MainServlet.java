@@ -59,7 +59,7 @@ public class MainServlet extends HttpServlet {
         request.setAttribute("filename", shortLink);
         request.setAttribute("link", link);
 //        request.setAttribute("shortLink", "https://linkss.herokuapp.com/" + shortLink);
-        request.setAttribute("shortLink", "whydt.ru/" + shortLink);
+        request.setAttribute("shortLink", "http://whydt.ru/" + shortLink);
         //response.sendRedirect("main.jsp");
       request.getRequestDispatcher("main.jsp").forward(request, response);
     }
