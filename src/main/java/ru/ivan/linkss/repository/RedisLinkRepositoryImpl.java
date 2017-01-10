@@ -28,7 +28,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
 //            ("redis://h:p7c4dd823e40671d79ccbc943c29c2f0aec03d38cc29627b165cb1f32985fd766@ec2-54-221-228-237.compute-1.amazonaws.com:18689");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
     private RedisClient redisClientStat = RedisClient.create(System.getenv
-     ("HEROKU_REDIS_COBALT_URL"));
+            ("HEROKU_REDIS_COBALT_URL"));
     private long dayInSeconds = 60 * 60 * 24;
 
     public RedisLinkRepositoryImpl() {
@@ -96,10 +96,9 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                 .map(p -> {
                     String shortLink=contextPath+p.getValue();
                     String link=syncCommands.get(p.getValue());
-                    FullLink l = new FullLink(shortLink,
+                    return new FullLink(shortLink,
                             link,String.valueOf((int)p.getScore()),
                             shortLink+".png");
-                    return l;
                 }).collect(Collectors.toList())
                 ;
         connectionStat.close();

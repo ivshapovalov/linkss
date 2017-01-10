@@ -6,9 +6,9 @@
     <title>Statistics</title>
 </head>
 <body>
+<%@include file="header.jsp" %>
 <section>
-    <h2><a href="/">Home</a></h2>
-
+    <br>
     <h3>Domain Statistics</h3>
 
     <table border="1" width="50%">
