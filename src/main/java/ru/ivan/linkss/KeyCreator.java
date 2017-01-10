@@ -5,9 +5,6 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 /**
  * Created by Ivan on 31.12.2016.
  */
@@ -24,10 +21,8 @@ public class KeyCreator {
     public void create(final int length) {
 
         redisClient = RedisClient.create(System.getenv("REDIS_URL"));
-        //redisClient = RedisClient.create
-        //        ("redis://h:pdca0ced53f63e3cae18b8f9550b7947167301de07466c4411958d553d2060421" +
-          //      "@ec2-50-17-230-205.compute-1.amazonaws.com:7479");
-//        redisClient = RedisClient.create("redis://localhost:6379/0");
+//        redisClient = RedisClient.create
+//                ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
         connection = redisClient.connect();
         syncCommands = connection.sync();
         syncCommands.select(1);

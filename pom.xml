@@ -19,13 +19,6 @@
         <zxing.version>3.3.0</zxing.version>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
 
         <dependency>
             <groupId>biz.paluch.redis</groupId>
@@ -79,7 +72,6 @@
             <artifactId>spring-web</artifactId>
             <version>4.0.5.RELEASE</version>
         </dependency>
-
     </dependencies>
     <build>
         <finalName>linkss</finalName>
@@ -92,26 +84,27 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.github.jsimone</groupId>
+                                    <artifactId>webapp-runner</artifactId>
+                                    <version>8.0.30.2</version>
+                                    <destFileName>webapp-runner.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>heroku</id>
-            <build>
-                <plugins> <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>2.4</version>
-                    <executions>
-                        <execution>
-                            <id>copy-dependencies</id>
-                            <phase>package</phase>
-                            <goals><goal>copy-dependencies</goal></goals>
-                        </execution>
-                    </executions>
-                </plugin></plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

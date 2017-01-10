@@ -8,6 +8,7 @@
 <body>
 <section>
     <h2><a href="">Home</a></h2>
+    <h2><a href="/stat">Statistics</a></h2>
     <form method="post">
         <table border="1" width="30%">
             <tr>
