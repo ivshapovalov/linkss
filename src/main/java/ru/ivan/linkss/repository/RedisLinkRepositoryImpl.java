@@ -4,6 +4,7 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.util.Util;
 
@@ -14,10 +15,16 @@ import java.util.stream.Collectors;
 @Component
 public class RedisLinkRepositoryImpl implements LinkRepository {
 
+    //DB 1
     private static final int DB_LINK_NUMBER = 0;
-    private static final int DB_PREFERENCES_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
+    //DB 2
+    private static final int DB_PREFERENCES_NUMBER = 0;
     private static final int DB_STATISTICS_NUMBER = 1;
+    //DB 3
+    private static final int DB_USERS_NUMBER = 0;
+    private static final int DB_USER_LINKS_NUMBER = 1;
+
     private static final String EXPIRE_PERIOD= "expire.period";
     private static final String KEY_LENGTH= "key.length";
 
@@ -26,9 +33,13 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
 //    private RedisClient redisClientStat = RedisClient.create
 //            ("redis://h:p7c4dd823e40671d79ccbc943c29c2f0aec03d38cc29627b165cb1f32985fd766@ec2-54-221-228-237.compute-1.amazonaws.com:18689");
+    //   private RedisClient redisClientByUsers = RedisClient.create
+//            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
     private RedisClient redisClientStat = RedisClient.create(System.getenv
             ("HEROKU_REDIS_COBALT_URL"));
+    private RedisClient redisClientByUsers = RedisClient.create(System.getenv
+            ("HEROKU_REDIS_CRIMSON_URL"));
     private long dayInSeconds = 60 * 60 * 24;
 
     public RedisLinkRepositoryImpl() {
@@ -48,17 +59,22 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     public void init() {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         StatefulRedisConnection<String, String> connectionStat = redisClientStat.connect();
+        StatefulRedisConnection<String, String> connectionByUsers = redisClientByUsers.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         RedisCommands<String, String> syncCommandsStat = connectionStat.sync();
+        RedisCommands<String, String> syncCommandsByUsers = connectionByUsers.sync();
 
         //syncCommands.configSet("databases","16");
         syncCommands.flushall();
         syncCommandsStat.flushall();
+        syncCommandsByUsers.flushall();
         syncCommandsStat.select(DB_PREFERENCES_NUMBER);
         syncCommandsStat.set(KEY_LENGTH, String.valueOf("4"));
         syncCommandsStat.set(EXPIRE_PERIOD, "30");
         //syncCommandsStat.bgsave();
+        connection.close();
         connectionStat.close();
+        connectionByUsers.close();
         //redisClient.shutdown();
     }
 

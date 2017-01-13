@@ -1,8 +1,8 @@
 package ru.ivan.linkss;
 
 
-import ru.ivan.linkss.service.Service;
-import ru.ivan.linkss.service.ServiceImpl;
+import ru.ivan.linkss.service.LinkssService;
+import ru.ivan.linkss.service.LinkssServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import static java.lang.Thread.sleep;
 public class TestConnection {
     private static int sizeOfPool = 50;
     private static int numberOfClients = 1000000;
-    private static final Service service = new ServiceImpl();
+    private static final LinkssService service = new LinkssServiceImpl();
 
     final List<String> domains=new ArrayList<>();
     {

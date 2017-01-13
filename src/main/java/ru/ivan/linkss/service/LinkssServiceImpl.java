@@ -7,6 +7,8 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.*;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
@@ -20,12 +22,12 @@ import java.util.Hashtable;
 import java.util.List;
 
 @Component
-public class ServiceImpl implements Service {
+public class LinkssServiceImpl implements LinkssService {
 
     @Autowired
     private LinkRepository repository;
 
-    public ServiceImpl() {
+    public LinkssServiceImpl() {
     }
 
     @Override
@@ -56,8 +58,40 @@ public class ServiceImpl implements Service {
         return repository.getFullStat(contextPath);
     }
 
+    private void sendFileToS3(String fileName) {
+//        //String url = System.getenv("EASYSMS_URL")+"/messages";
+//        String url = "https://s3-bucket.s3.amazonaws.com/whydt";
+//        String text = "{\"to\":\"+79266948741\",\"body\":\"Hello from Easy SMS Add-on for Heroku.\"}";
+//        HttpClient client = new DefaultHttpClient();
+//        HttpPost post = new HttpPost(url);
+//        MultipartEntity entity = new MultipartEntity();
+//        entity.addPart("file", new FileBody(new File(fileName)));
+//
+//        post.setHeader("Content-Type", "text/html; charset=UTF-8");
+//        List<NameValuePair> urlParameters = new ArrayList<>();
+//        urlParameters.add(new BasicNameValuePair("key", "uploads/${" + fileName + "}"));
+//        urlParameters.add(new BasicNameValuePair("AWSAccessKeyId", "AKIAIAZ7FWJQR56IJ6XQ"));
+//        urlParameters.add(new BasicNameValuePair("acl", "public-read"));
+//        urlParameters.add(new BasicNameValuePair("policy", "YOUR_POLICY_DOCUMENT_BASE64_ENCODED"));
+//        urlParameters.add(new BasicNameValuePair("signature", "YOUR_POLICY_DOCUMENT_BASE64_ENCODED"));
+//        urlParameters.add(new BasicNameValuePair("Content-Type", "image/png"));
+//        urlParameters.add(new BasicNameValuePair("Content-Type", "image/png"));
+//
+//        try {
+//            post.setEntity(new UrlEncodedFormEntity(urlParameters));
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+//
+//        try {
+//            HttpResponse response = client.execute(post);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
     @Override
-    public void createQRImage(String path, String link, String shortLink) throws WriterException,
+    public void createQRImage(String path, String shortLink, String fullShortLink) throws WriterException,
             IOException {
 
         String filePath = path + shortLink + ".png";
@@ -69,7 +103,7 @@ public class ServiceImpl implements Service {
         Hashtable hintMap = new Hashtable();
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix byteMatrix = qrCodeWriter.encode(link,
+        BitMatrix byteMatrix = qrCodeWriter.encode(fullShortLink,
                 BarcodeFormat.QR_CODE, size, size, hintMap);
         // Make the BufferedImage that are to hold the QRCode
         int matrixWidth = byteMatrix.getWidth();

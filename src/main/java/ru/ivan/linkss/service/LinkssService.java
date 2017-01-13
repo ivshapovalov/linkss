@@ -6,7 +6,7 @@ import ru.ivan.linkss.repository.FullLink;
 import java.io.IOException;
 import java.util.List;
 
-public interface Service {
+public interface LinkssService {
 
     String getRandomShortLink();
 
@@ -18,6 +18,7 @@ public interface Service {
 
     List<FullLink> getFullStat(String contextPath);
 
-    void createQRImage(String path,String link,String shortLink) throws WriterException,
+    void createQRImage(String path,String shortLink, String fullShortLink) throws
+            WriterException,
             IOException;
 }

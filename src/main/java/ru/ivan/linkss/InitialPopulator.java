@@ -6,7 +6,7 @@ import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class Main {
+public class InitialPopulator {
 
     public static void main(String[] args) {
         init();
