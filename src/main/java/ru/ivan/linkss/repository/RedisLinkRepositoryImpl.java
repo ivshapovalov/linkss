@@ -53,8 +53,8 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("4"));
-        syncCommands.hset(KEY_USERS, "ADMIN", "ADMIN");
-        syncCommands.hset(KEY_USERS, "USER", "USER");
+        syncCommands.hset(KEY_USERS, "admin", "admin");
+        //syncCommands.hset(KEY_USERS, "USER", "USER");
         connection.close();
     }
 

@@ -122,7 +122,7 @@ public class MainController {
                 boolean existedUser = service.checkUser(user);
                 if (existedUser) {
                     user.setEmpty(false);
-                    if (user.getUserName().equals("ADMIN")) {
+                    if (user.getUserName().equals("admin")) {
                         user.setAdmin(true);
                     }
                     session.setAttribute("user", user);
