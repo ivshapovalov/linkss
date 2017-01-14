@@ -32,25 +32,25 @@ public class InitialPopulator {
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
-//                new KeyCreator().create(3);
+//                new KeyCreator().createShortLink(3);
 //            }
 //        },"t3").start();
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
-//                new KeyCreator().create(2);
+//                new KeyCreator().createShortLink(2);
 //            }
 //        },"t2").start();
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
-//                new KeyCreator().create(6);
+//                new KeyCreator().createShortLink(6);
 //            }
 //        },"t6").start();
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
-//                new KeyCreator().create(5);
+//                new KeyCreator().createShortLink(5);
 //            }
 //        },"t5").start();
 

@@ -71,14 +71,14 @@ public class TestConnection {
             }
             if (isWrite) {
                 String link = getRandomDomain() +"/"+ number;
-                String shortLink = service.create(link);
+                String shortLink = service.createShortLink(null,link);
 //                System.out.println(Thread.currentThread().getName() +
-//                        ": create '" + shortLink + "' - link '" + link + "'");
+//                        ": createShortLink '" + shortLink + "' - link '" + link + "'");
             } else {
                 String shortLink = service.getRandomShortLink();
-                String link = service.get(shortLink);
+                String link = service.getLink(shortLink);
 //                System.out.println(Thread.currentThread().getName() +
-//                        ": get '" + shortLink + "' - link '" + link + "'");
+//                        ": getLink '" + shortLink + "' - link '" + link + "'");
             }
         }
 

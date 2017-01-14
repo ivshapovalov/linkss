@@ -5,7 +5,7 @@
         <title>SQLCmd</title>
     </head>
     <body>
-        Йойкс! Что-то пошло не так: ${message}<br>
+        Something wrong: ${message}<br>
 
     </body>
 

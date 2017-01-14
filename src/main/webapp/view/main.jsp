@@ -7,14 +7,32 @@
 </head>
 <body>
 <%@include file="header.jsp" %>
-<section>
-    <br>
+<button onclick="location.href='/actions/statistics'">Statistics</button>
+<c:choose>
+    <c:when test="${user!=null && user.isAdmin()}" >
+        <button onclick="location.href='/actions/manage'">Manage</button>
+    </c:when>
+</c:choose>
+<button onclick="location.href='/actions/registration'">Registration</button>
+<c:choose>
+    <c:when test="${user==null || user.isEmpty()}" >
+        <button onclick="location.href='/actions/signin'">Sign in</button>
+    </c:when>
+    <c:otherwise>
+        <button onclick="location.href='/actions/logout'">Logout</button>
+        <b>Login as ${user.getUserName()};</b>
+    </c:otherwise>
+</c:choose>
 
+<section>
     <form method="post">
+        <input type="hidden" name="user" value=${user}>
+        <br>
+
         <table border="1" width="30%">
             <tr>
                 <td colspan="2" width="100%" align="center">
-                    <button type="submit">Create short link</button>
+                    <button type="submit" name="create">Create short link</button>
                     <button
                             onclick="location.href=''" type="button">
                         Clear

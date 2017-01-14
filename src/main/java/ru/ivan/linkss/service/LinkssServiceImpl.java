@@ -7,11 +7,10 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.*;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
+import ru.ivan.linkss.repository.User;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -31,21 +30,31 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public boolean checkUser(User user) {
+        return repository.checkUser(user);
+    }
+
+    @Override
     public String getRandomShortLink() {
         return repository.getRandomShortLink();
     }
 
     @Override
-    public String create(String link) {
+    public String createShortLink(String user, String link) {
 
-        String shortLink = repository.create(link);
+        String shortLink = repository.createShortLink(user,link);
 
         return shortLink;
     }
 
     @Override
-    public String get(String shortLink) {
-        return repository.get(shortLink);
+    public void createUser(String userName, String password) {
+        repository.createUser(userName,password);
+    }
+
+    @Override
+    public String getLink(String shortLink) {
+        return repository.getLink(shortLink);
     }
 
     @Override
@@ -54,8 +63,17 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public List<List<String>> getShortStat(String autorizedUser ) {
+        return repository.getShortStat(autorizedUser);
+    }
+
+    @Override
     public List<FullLink> getFullStat(String contextPath) {
         return repository.getFullStat(contextPath);
+    }
+    @Override
+    public List<FullLink> getFullStat(String userName, String contextPath) {
+        return repository.getFullStat(userName, contextPath );
     }
 
     private void sendFileToS3(String fileName) {

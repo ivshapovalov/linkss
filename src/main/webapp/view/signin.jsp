@@ -6,7 +6,7 @@
     <title>Linkss</title>
 </head>
 <body>
-<form:form action="/actions/register" method="post" modelAttribute="user">
+<form:form action="/actions/login" method="post" modelAttribute="user">
     <table>
         <tr>
             <td>User name</td>
@@ -18,7 +18,7 @@
         </tr>
         <tr>
             <td></td>
-            <td><input type="submit" value="register" id="register"/></td>
+            <td><input type="submit" value="login" id="login"/></td>
         </tr>
     </table>
 </form:form>

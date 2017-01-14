@@ -4,13 +4,16 @@ import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.FullLink;
+import ru.ivan.linkss.repository.User;
 import ru.ivan.linkss.service.LinkssService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,8 +26,14 @@ public class MainController {
     @Autowired
     private LinkssService service;
 
-    @RequestMapping(value = "/", method = RequestMethod.GET)
-    public String main() {
+    @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
+    public String main(Model model,
+                       HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user != null && !user.isEmpty()) {
+            //AuthorizedUser.valueOf(autorizedUser);
+            model.addAttribute("user", user);
+        }
         return "main";
     }
 
@@ -32,11 +41,11 @@ public class MainController {
     public String redirect(HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
-        String link = service.get(shortLink.substring(1));
+        String link = service.getLink(shortLink.substring(1));
         if (link.contains(":")) {
-            return "redirect:"+link;
+            return "redirect:" + link;
         } else {
-            return "redirect:"+"//"+link;
+            return "redirect:" + "//" + link;
         }
     }
 
@@ -53,22 +62,99 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = "/registration", method = RequestMethod.GET)
-    public String registration(HttpServletRequest request, HttpServletResponse response)
+    @RequestMapping(value = "/actions/registration", method = RequestMethod.GET)
+    public String registration(Model model, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        model.addAttribute("user", new User());
+
         return "registration";
 
     }
 
+    @RequestMapping(value = "/actions/signin", method = RequestMethod.GET)
+    public String signin(Model model)
+            throws IOException {
+        model.addAttribute("user", new User());
+
+        return "signin";
+
+    }
+
+    @RequestMapping(value = "/actions/logout", method = RequestMethod.GET)
+    public String logout(Model model, HttpSession session)
+            throws IOException {
+        model.addAttribute("user", null);
+        session.setAttribute("user", null);
+        return "redirect:/";
+    }
+
+    @RequestMapping(value = "/actions/manage", method = RequestMethod.GET)
+    public String manage(Model model, HttpSession session)
+            throws IOException {
+        User user = (User) session.getAttribute("user");
+        if (user != null && !user.isEmpty() &&user.isAdmin()) {
+            model.addAttribute("user", user);
+            return "manage";
+        }
+        return "main";
+
+    }
+
+    @RequestMapping(value = "/actions/register", method = RequestMethod.POST)
+    public String register(Model model,
+                           @ModelAttribute("user") User user) {
+        try {
+            service.createUser(user.getUserName(), user.getPassword());
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+        return "redirect:/";
+
+    }
+
+    @RequestMapping(value = "/actions/login", method = RequestMethod.POST)
+    public String login(Model model,
+                        @ModelAttribute("user") User user,
+                        HttpSession session) {
+        if (user != null && !user.getUserName().equals("") && !user.getPassword().equals("")) {
+            try {
+                boolean existedUser = service.checkUser(user);
+                if (existedUser) {
+                    user.setEmpty(false);
+                    if (user.getUserName().equals("ADMIN")) {
+                        user.setAdmin(true);
+                    }
+                    session.setAttribute("user", user);
+                    model.addAttribute("user", user);
+                    return "redirect:/";
+                }
+            } catch (RuntimeException e) {
+                model.addAttribute("message", e.getMessage());
+                return "error";
+            }
+        }
+        return "signin";
+
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String createShortLink(Model model, HttpServletRequest request) {
+    public String createShortLink(Model model, HttpSession session,
+                                  HttpServletRequest request) {
+        User user = (User) session.getAttribute("user");
+
         String link = request.getParameter("link");
         if ("".equals(link)) {
             return "main";
         }
-        String shortLink = service.create(link);
-        if (shortLink==null) {
-            model.addAttribute("message", "Sorry, service is unavailable! Try later");
+        String shortLink = "";
+        if (user == null || user.isEmpty()) {
+            shortLink = service.createShortLink("", link);
+        } else {
+            shortLink = service.createShortLink(user.getUserName(), link);
+        }
+        if (shortLink == null) {
+            model.addAttribute("message", "Sorry, free short links ended. Try later!");
             return "error";
         }
         String path = request.getServletContext().getRealPath("/");
@@ -78,26 +164,46 @@ public class MainController {
         } catch (IOException | WriterException e) {
             e.printStackTrace();
         }
-
+        model.addAttribute("user", user);
         model.addAttribute("filename", shortLink + ".png");
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
+
         return "main";
     }
 
-    @RequestMapping(value = "/statistics", method = RequestMethod.GET)
-    public String statistics(Model model, HttpServletRequest request) {
-        List<List<String>> shortStat = service.getShortStat();
-        String p = request.getRequestURL().toString();
-        String cp = request.getServletPath();
+    @RequestMapping(value = "/actions/statistics", method = RequestMethod.GET)
+    public String statistics(Model model,
+                             HttpServletRequest request, HttpSession session) {
 
-        String contextPath = "";
-        if (p.startsWith(cp)) {
-            contextPath = p.substring(0, p.length() - cp.length() + 1);
+        User user = (User) session.getAttribute("user");
+        if (user == null || user.isEmpty()) {
+            return "redirect:/";
         }
-        List<FullLink> fullStat = service.getFullStat(contextPath);
-        model.addAttribute("shortStat", shortStat);
-        model.addAttribute("fullStat", fullStat);
+        if (user.isAdmin()) {
+            List<List<String>> shortStat = service.getShortStat();
+            String p = request.getRequestURL().toString();
+            String cp = request.getServletPath();
+
+            String contextPath = "";
+            if (p.endsWith(cp)) {
+                contextPath = p.substring(0, p.length() - cp.length() + 1);
+            }
+            List<FullLink> fullStat = service.getFullStat(contextPath);
+
+            model.addAttribute("shortStat", shortStat);
+            model.addAttribute("fullStat", fullStat);
+        } else {
+            String p = request.getRequestURL().toString();
+            String cp = request.getServletPath();
+
+            String contextPath = "";
+            if (p.endsWith(cp)) {
+                contextPath = p.substring(0, p.length() - cp.length() + 1);
+            }
+            List<FullLink> fullStat = service.getFullStat(user.getUserName(), contextPath);
+            model.addAttribute("fullStat", fullStat);
+        }
         return "statistics";
     }
 
@@ -345,7 +451,7 @@ public class MainController {
 //        for (String column : columns) {
 //            List<String> row = new ArrayList<>(2);
 //            row.add(column);
-//            Object ob = tableData.get(column);
+//            Object ob = tableData.getLink(column);
 //            if (ob != null) {
 //                row.add(ob.toString());
 //            } else {
@@ -401,7 +507,7 @@ public class MainController {
 //                Map<String, Object> row = new LinkedHashMap<>();
 //                for (String columnName : columnNames
 //                        ) {
-//                    Object parameter = allRequestParams.get(columnName);
+//                    Object parameter = allRequestParams.getLink(columnName);
 //                    row.put(columnName, parameter);
 //                }
 //                row.remove("id");
@@ -455,7 +561,7 @@ public class MainController {
 //                Map<String, Object> row = new LinkedHashMap<>();
 //                for (String columnName : columnNames
 //                        ) {
-//                    Object parameter = allRequestParams.get(columnName);
+//                    Object parameter = allRequestParams.getLink(columnName);
 //                    row.put(columnName, parameter);
 //                }
 //                manager.insertRow(tableName, row);
@@ -512,8 +618,8 @@ public class MainController {
 //            try {
 //                Map<String, Object> columnParameters = new LinkedHashMap<>();
 //                for (int index = 1; index < columnCount; index++) {
-//                    columnParameters.put((String) allRequestParams.get("columnName" + index),
-//                            allRequestParams.get("columnType" + index));
+//                    columnParameters.put((String) allRequestParams.getLink("columnName" + index),
+//                            allRequestParams.getLink("columnType" + index));
 //                }
 //                String query = tableName + "(" + keyName + " INT PRIMARY KEY NOT NULL"
 //                        + getParameters(columnParameters) + ")";

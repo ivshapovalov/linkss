@@ -8,27 +8,8 @@
 <body>
 <%@include file="header.jsp" %>
 <section>
-    <br>
-    <c:choose>
-        <c:when test="${shortStat!=null}" >
-            <h3>Domain Statistics</h3>
-            <table border="1" width="50%">
-                <c:forEach items="${shortStat}" var="column">
-                    <tr>
-                        <c:forEach items="${column}" var="row">
-                            <td width="50%">
-                                    ${row}
-                            </td>
-                        </c:forEach>
-                    </tr>
-                </c:forEach>
-            </table>
-        </c:when>
-    </c:choose>
 
-
-    <h3>Links Statistics</h3>
-
+    <h3>Users</h3>
     <table border="1" width="50%">
         <tr>
             <td width="40%"><b>Link</b></td>
