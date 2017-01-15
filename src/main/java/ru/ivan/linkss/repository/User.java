@@ -8,13 +8,23 @@ public class User {
     private String password;
     private boolean isAdmin;
     private boolean isEmpty=true;
+    private long linkNumber;
 
     public User() {
     }
 
-    public User(String userName, String password) {
+    public User(String userName, String password, long linkNumber) {
         this.userName = userName;
         this.password = password;
+        this.linkNumber = linkNumber;
+    }
+
+    public long getLinkNumber() {
+        return linkNumber;
+    }
+
+    public void setLinkNumber(long linkNumber) {
+        this.linkNumber = linkNumber;
     }
 
     public String getUserName() {

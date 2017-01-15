@@ -236,7 +236,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         List<User> users=syncCommands.hscan(KEY_USERS).getMap()
                 .entrySet()
                 .stream()
-                .map(u -> new User(u.getKey(),u.getValue()))
+                .map(u -> new User(u.getKey(),u.getValue(),syncCommands.hlen(u.getKey())))
                 .collect(Collectors.toList());
 
         connection.close();

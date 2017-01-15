@@ -14,6 +14,7 @@ public interface LinkRepository {
     List<List<String>> getShortStat();
 
     List<List<String>> getShortStat(String autorizedUser);
+
     List<FullLink> getFullStat(String contextPath);
 
     List<FullLink> getFullStat(String userName, String contextPath);

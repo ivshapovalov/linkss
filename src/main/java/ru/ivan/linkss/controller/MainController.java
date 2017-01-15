@@ -24,7 +24,7 @@ import java.util.List;
 @Controller
 public class MainController {
 
-    private static final String DEFAULT_USER ="user";
+    private static final String DEFAULT_USER = "user";
 
     @Autowired
     private LinkssService service;
@@ -95,8 +95,8 @@ public class MainController {
     public String manage(Model model, HttpSession session)
             throws IOException {
         User user = (User) session.getAttribute("user");
-        if (user != null && !user.isEmpty() &&user.isAdmin()) {
-            List<User> users=service.getUsers();
+        if (user != null && !user.isEmpty() && user.isAdmin()) {
+            List<User> users = service.getUsers();
             model.addAttribute("user", user);
             model.addAttribute("users", users);
             return "manage";
@@ -120,9 +120,8 @@ public class MainController {
 
         if (request.getParameter("register") != null) {
             return "redirect:/";
-        }
-        else if (request.getParameter("registerAndLogin") != null) {
-            return autoLogin(model,user,session);
+        } else if (request.getParameter("registerAndLogin") != null) {
+            return autoLogin(model, user, session);
         }
         return "redirect:/";
 
@@ -134,7 +133,7 @@ public class MainController {
                         HttpSession session) {
         if (user != null && !user.getUserName().equals("") && !user.getPassword().equals("")) {
             try {
-                return autoLogin(model,user,session);
+                return autoLogin(model, user, session);
             } catch (RuntimeException e) {
                 model.addAttribute("message", e.getMessage());
                 return "error";
@@ -158,11 +157,12 @@ public class MainController {
         return "signin";
     }
 
-    @RequestMapping(value = "/actions/deletelink", method = RequestMethod.GET)
+    @RequestMapping(value = {"/actions/deletelink"}, method =
+            RequestMethod.GET)
     public String deletelink(Model model,
-                        @ModelAttribute("key") String shortLink,
-                        @ModelAttribute("owner") String owner,
-                        HttpSession session) {
+                             @ModelAttribute("key") String shortLink,
+                             @ModelAttribute("owner") String owner,
+                             HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null || user.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
@@ -179,11 +179,41 @@ public class MainController {
 
         try {
             service.deleteUserLink(user, shortLink, owner);
-//                    session.setAttribute("user", user);
-//                    model.addAttribute("user", user);
             model.addAttribute("key", null);
             model.addAttribute("owner", null);
+
             return "redirect:/actions/statistics";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+    @RequestMapping(value = {"/actions/deleteuserlink"}, method =
+            RequestMethod.GET)
+    public String deleteuserlink(Model model,
+                             @ModelAttribute("key") String shortLink,
+                             @ModelAttribute("owner") String owner,
+                             HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || user.getUserName().equals("")) {
+            model.addAttribute("message", "User is not defined!");
+            return "error";
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute("message", "Link owner is not defined!");
+            return "error";
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute("message", "Link is not defined!");
+            return "error";
+        }
+
+        try {
+            service.deleteUserLink(user, shortLink, owner);
+            model.addAttribute("key", null);
+            model.addAttribute("owner", null);
+
+            return "redirect:/actions/links?owner="+owner;
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
@@ -231,7 +261,8 @@ public class MainController {
         User user = (User) session.getAttribute("user");
         if (user == null || user.isEmpty()) {
             model.addAttribute("message", "Sorry, statistics available only for logged users!");
-            return "error";        }
+            return "error";
+        }
         if (user.isAdmin()) {
             List<List<String>> shortStat = service.getShortStat();
             String p = request.getRequestURL().toString();
@@ -256,6 +287,30 @@ public class MainController {
             model.addAttribute("fullStat", fullStat);
         }
         return "statistics";
+    }
+
+    @RequestMapping(value = "/actions/links", method = RequestMethod.GET)
+    public String links(Model model,
+                        @ModelAttribute("owner") String owner,
+                        HttpServletRequest request,
+                        HttpSession session) {
+
+        User user = (User) session.getAttribute("user");
+        if (user == null || user.isEmpty()) {
+            model.addAttribute("message", "Sorry, statistics available only for logged users!");
+            return "error";
+        }
+        String p = request.getRequestURL().toString();
+        String cp = request.getServletPath();
+
+        String contextPath = "";
+        if (p.endsWith(cp)) {
+            contextPath = p.substring(0, p.length() - cp.length() + 1);
+        }
+        List<FullLink> fullStat = service.getFullStat(owner,contextPath);
+        model.addAttribute("fullStat", fullStat);
+
+        return "links";
     }
 
 //    @RequestMapping(value = "/databases", method = RequestMethod.GET)
