@@ -53,6 +53,11 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public List<User> getUsers() {
+        return repository.getUsers();
+    }
+
+    @Override
     public String getLink(String shortLink) {
         return repository.getLink(shortLink);
     }

@@ -229,6 +229,21 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public List<User> getUsers() {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        List<User> users=syncCommands.hscan(KEY_USERS).getMap()
+                .entrySet()
+                .stream()
+                .map(u -> new User(u.getKey(),u.getValue()))
+                .collect(Collectors.toList());
+
+        connection.close();
+        return users;
+    }
+
+    @Override
     public boolean checkUser(User user) {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();

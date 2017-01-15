@@ -12,17 +12,22 @@
     <h3>Users</h3>
     <table border="1" width="50%">
         <tr>
-            <td width="40%"><b>Link</b></td>
-            <td width="10%"><b>Count</b></td>
-            <td width="20%"><b>Short Link</b></td>
-            <td width="30%"><b>Image</b></td>
+            <td width="40%"><b>User name</b></td>
+            <td width="40%"><b>Password</b></td>
         </tr>
-        <c:forEach items="${fullStat}" var="column">
+        <c:forEach items="${users}" var="column">
             <tr>
-                <td width="40%"><a href="${column.getLink()}">${column.getLink()}</a></td>
-                <td width="10%">${column.getCount()}</td>
-                <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
-                <td width="30%"><img src="${column.getImageLink()}"></td>
+                <td width="40%">${column.getUserName()}</td>
+                <td width="40%">${column.getPassword()}</td>
+                <td width="10%">
+                    <a href="/actions/links?user=${column.getUserName()}">Links
+                </a></td>
+                <td width="10%">
+                    <a href="/actions/editeuser?key=${column.getUserName()}">Edit</a>
+                </td>
+                <td width="10%">
+                    <a href="/actions/deleteuser?key=${column.getUserName()}">Delete
+                </a></td>
 
             </tr>
         </c:forEach>

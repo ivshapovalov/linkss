@@ -21,4 +21,6 @@ public interface LinkRepository {
     boolean checkUser(User user);
 
     void deleteUserLink(User user, String shortLink, String owner);
+
+    List<User> getUsers();
 }

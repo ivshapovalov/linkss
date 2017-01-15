@@ -96,7 +96,9 @@ public class MainController {
             throws IOException {
         User user = (User) session.getAttribute("user");
         if (user != null && !user.isEmpty() &&user.isAdmin()) {
+            List<User> users=service.getUsers();
             model.addAttribute("user", user);
+            model.addAttribute("users", users);
             return "manage";
         }
         return "main";
