@@ -19,4 +19,6 @@ public interface LinkRepository {
     List<FullLink> getFullStat(String userName, String contextPath);
 
     boolean checkUser(User user);
+
+    void deleteUserLink(User user, String shortLink, String owner);
 }

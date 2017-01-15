@@ -4,6 +4,7 @@ import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +23,8 @@ import java.util.List;
 
 @Controller
 public class MainController {
+
+    private static final String DEFAULT_USER ="user";
 
     @Autowired
     private LinkssService service;
@@ -102,12 +105,22 @@ public class MainController {
 
     @RequestMapping(value = "/actions/register", method = RequestMethod.POST)
     public String register(Model model,
-                           @ModelAttribute("user") User user) {
+                           @ModelAttribute("user") User user,
+                           HttpServletRequest request,
+                           HttpSession session,
+                           final BindingResult binding) {
         try {
             service.createUser(user.getUserName(), user.getPassword());
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
+        }
+
+        if (request.getParameter("register") != null) {
+            return "redirect:/";
+        }
+        else if (request.getParameter("registerAndLogin") != null) {
+            return autoLogin(model,user,session);
         }
         return "redirect:/";
 
@@ -119,16 +132,7 @@ public class MainController {
                         HttpSession session) {
         if (user != null && !user.getUserName().equals("") && !user.getPassword().equals("")) {
             try {
-                boolean existedUser = service.checkUser(user);
-                if (existedUser) {
-                    user.setEmpty(false);
-                    if (user.getUserName().equals("admin")) {
-                        user.setAdmin(true);
-                    }
-                    session.setAttribute("user", user);
-                    model.addAttribute("user", user);
-                    return "redirect:/";
-                }
+                return autoLogin(model,user,session);
             } catch (RuntimeException e) {
                 model.addAttribute("message", e.getMessage());
                 return "error";
@@ -136,6 +140,52 @@ public class MainController {
         }
         return "signin";
 
+    }
+
+    private String autoLogin(Model model, User user, HttpSession session) {
+        boolean existedUser = service.checkUser(user);
+        if (existedUser) {
+            user.setEmpty(false);
+            if (user.getUserName().equals("admin")) {
+                user.setAdmin(true);
+            }
+            session.setAttribute("user", user);
+            model.addAttribute("user", user);
+            return "redirect:/";
+        }
+        return "signin";
+    }
+
+    @RequestMapping(value = "/actions/deletelink", method = RequestMethod.GET)
+    public String deletelink(Model model,
+                        @ModelAttribute("key") String shortLink,
+                        @ModelAttribute("owner") String owner,
+                        HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null || user.getUserName().equals("")) {
+            model.addAttribute("message", "User is not defined!");
+            return "error";
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute("message", "Link owner is not defined!");
+            return "error";
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute("message", "Link is not defined!");
+            return "error";
+        }
+
+        try {
+            service.deleteUserLink(user, shortLink, owner);
+//                    session.setAttribute("user", user);
+//                    model.addAttribute("user", user);
+            model.addAttribute("key", null);
+            model.addAttribute("owner", null);
+            return "redirect:/actions/statistics";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -149,7 +199,7 @@ public class MainController {
         }
         String shortLink = "";
         if (user == null || user.isEmpty()) {
-            shortLink = service.createShortLink("", link);
+            shortLink = service.createShortLink(DEFAULT_USER, link);
         } else {
             shortLink = service.createShortLink(user.getUserName(), link);
         }
@@ -178,8 +228,8 @@ public class MainController {
 
         User user = (User) session.getAttribute("user");
         if (user == null || user.isEmpty()) {
-            return "redirect:/";
-        }
+            model.addAttribute("message", "Sorry, statistics available only for logged users!");
+            return "error";        }
         if (user.isAdmin()) {
             List<List<String>> shortStat = service.getShortStat();
             String p = request.getRequestURL().toString();
@@ -190,7 +240,6 @@ public class MainController {
                 contextPath = p.substring(0, p.length() - cp.length() + 1);
             }
             List<FullLink> fullStat = service.getFullStat(contextPath);
-
             model.addAttribute("shortStat", shortStat);
             model.addAttribute("fullStat", fullStat);
         } else {

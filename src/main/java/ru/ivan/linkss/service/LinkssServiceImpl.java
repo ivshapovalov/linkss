@@ -58,6 +58,11 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public void deleteUserLink(User user, String shortLink, String owner) {
+        repository.deleteUserLink(user,shortLink, owner);
+    }
+
+    @Override
     public List<List<String>> getShortStat() {
         return repository.getShortStat();
     }

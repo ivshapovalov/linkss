@@ -30,4 +30,6 @@ public interface LinkssService {
             IOException;
 
     boolean checkUser(User user);
+
+    void deleteUserLink(User user, String shortLink, String owner);
 }

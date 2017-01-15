@@ -31,17 +31,24 @@
 
     <table border="1" width="50%">
         <tr>
+            <td width="10%"><b>Owner</b></td>
             <td width="40%"><b>Link</b></td>
             <td width="10%"><b>Count</b></td>
             <td width="20%"><b>Short Link</b></td>
             <td width="30%"><b>Image</b></td>
+            <td width="10%"><b>ACTION</b></td>
         </tr>
         <c:forEach items="${fullStat}" var="column">
             <tr>
+                <td width="10%">${column.getUserName()}</td>
                 <td width="40%"><a href="${column.getLink()}">${column.getLink()}</a></td>
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
                 <td width="30%"><img src="${column.getImageLink()}"></td>
+                <td width="10%"><button
+                        onclick="location.href='/actions/deletelink?key=${column.getKey()}&owner=${column.getUserName()}'">Delete
+                </button></td>
+
 
             </tr>
         </c:forEach>

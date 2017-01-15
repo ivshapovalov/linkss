@@ -24,10 +24,16 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     private static final String KEY_PREFERENCES = "_preferences";
     private static final String KEY_LENGTH = "key.length";
 
+    private static final String DEFAULT_USER ="user";
+    private static final String DEFAULT_PASSWORD ="user";
+    private static final String ADMIN_USER ="admin";
+    private static final String ADMIN_PASSWORD ="admin";
+
+
     //private RedisClient redisClient = RedisClient.createShortLink("redis://localhost:6379/0");
-//    private RedisClient redisClient = RedisClient.createShortLink
+//    private RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-//    private RedisClient redisClientStat = RedisClient.createShortLink
+////    private RedisClient redisClientStat = RedisClient.createShortLink
 //            ("redis://h:p7c4dd823e40671d79ccbc943c29c2f0aec03d38cc29627b165cb1f32985fd766@ec2-54-221-228-237.compute-1.amazonaws.com:18689");
     //   private RedisClient redisClientByUsers = RedisClient.createShortLink
 //            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
@@ -53,7 +59,8 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("4"));
-        syncCommands.hset(KEY_USERS, "admin", "admin");
+        syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
+        syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
         //syncCommands.hset(KEY_USERS, "USER", "USER");
         connection.close();
     }
@@ -101,16 +108,39 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
-        Map<String, String> map = syncCommands.hscan(KEY_VISITS)
-                .getMap();
-        List<FullLink> fullStat = map.entrySet().stream()
-                .map(p -> {
-                    String shortLink = contextPath + p.getKey();
-                    String link = syncCommands.hget(KEY_LINKS, p.getKey());
-                    return new FullLink(shortLink,
-                            link, String.valueOf(p.getValue()),
-                            shortLink + ".png");
-                }).collect(Collectors.toList());
+
+        List<FullLink> fullStat =new ArrayList<>();
+        Map<String, Map<String, String>> collect = syncCommands.scan()
+                .getKeys().stream().filter(u -> !u.startsWith("_"))
+                .collect(Collectors.toMap(u -> u, u -> syncCommands.hscan(u).getMap()));
+        for (Map.Entry<String, Map<String, String>> entry : collect.entrySet()) {
+            for (Map.Entry<String, String> o : entry.getValue().entrySet()) {
+                    String shortLink = contextPath + o.getKey();
+                    String link = syncCommands.hget(KEY_LINKS, o.getKey());
+                    String visits = syncCommands.hget(KEY_VISITS, o.getKey());
+
+                fullStat.add(new FullLink(o.getKey(), shortLink,
+                        link, visits,
+                        shortLink + ".png",entry.getKey()));
+            }
+
+        }
+
+//                    String shortLink = contextPath + p.getKey();
+//                    String link = syncCommands.hget(KEY_LINKS, p.getKey());
+//                    return new FullLink(p.getKey(), shortLink,
+//                            link, String.valueOf(p.getValue()),
+//                            shortLink + ".png")
+//                .collect(Collectors.toList());
+//
+//        List<FullLink> fullStat = map.entrySet().stream()
+//                .map(p -> {
+//                    String shortLink = contextPath + p.getKey();
+//                    String link = syncCommands.hget(KEY_LINKS, p.getKey());
+//                    return new FullLink(p.getKey(), shortLink,
+//                            link, String.valueOf(p.getValue()),
+//                            shortLink + ".png");
+//                }).collect(Collectors.toList());
         connection.close();
 
         return fullStat;
@@ -128,9 +158,9 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                     String visits = syncCommands.hget(KEY_VISITS, p.getKey());
                     String shortLink = contextPath + p.getKey();
                     String link = syncCommands.hget(KEY_LINKS, p.getKey());
-                    return new FullLink(shortLink,
+                    return new FullLink(p.getKey(), shortLink,
                             link, visits,
-                            shortLink + ".png");
+                            shortLink + ".png",userName);
                 }).collect(Collectors.toList());
         connection.close();
 
@@ -183,8 +213,16 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
+        if (userName.contains("_")) {
+            throw new RuntimeException(String.format("User name '%s' contains symbol '_'. Try " +
+                            "another name",
+                    userName));
+        }
+
         if (syncCommands.hexists(KEY_USERS, userName)) {
-            throw new RuntimeException(String.format("User with name '&s' already exists", userName));
+            throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
+                            "another name",
+                    userName));
         }
         syncCommands.hset(KEY_USERS, userName, password);
         connection.close();
@@ -207,6 +245,33 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         }
         connection.close();
         return true;
+    }
+
+    @Override
+    public void deleteUserLink(User user, String shortLink, String owner) {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, user.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is not exists",
+                    user.getUserName()));
+        }
+        if (!user.isAdmin()) {
+            if (!syncCommands.hexists(user.getUserName(), shortLink)) {
+                throw new RuntimeException(String.format("User '%s' does not have link '%s'",
+                        user.getUserName(), shortLink));
+            }
+        }
+        String link = syncCommands.hget(KEY_LINKS, shortLink);
+        if (link != null) {
+            int visitsCount=Integer.valueOf(syncCommands.hget(KEY_VISITS,shortLink));
+            syncCommands.hdel(KEY_VISITS, shortLink);
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1*visitsCount);
+            syncCommands.hdel(KEY_LINKS, shortLink);
+            syncCommands.hdel(owner, shortLink);
+        }
+        connection.close();
     }
 
     @Override

@@ -11,14 +11,17 @@
         <tr>
             <td>User name</td>
             <td><form:input path="userName" id="userName" value="${userName}"/></td>
+            <td>User name mustn't contain underscore '_' symbol</td>
         </tr>
         <tr>
             <td>Password</td>
-            <td><form:input path="password" id="password" value="${password}"/></td>
+            <td><form:input type="password" path="password" id="password" value="${password}"/></td>
         </tr>
         <tr>
-            <td></td>
-            <td><input type="submit" value="register" id="register"/></td>
+            <td><input type="submit" value="Register" name="register" id="register"/></td>
+            <td><input type="submit" value="Register and login" name="registerAndLogin"
+                       id="registerAndLogin"/></td>
+
         </tr>
     </table>
 </form:form>
