@@ -333,7 +333,8 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
             throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
                     oldUser.getUserName()));
         }
-        if (syncCommands.hexists(KEY_USERS, newUser.getUserName())) {
+        if (!newUser.getUserName().equals(oldUser.getUserName()) &&
+                syncCommands.hexists(KEY_USERS, newUser.getUserName())) {
             throw new RuntimeException(String.format("User '%s' is already exists. Try another " +
                             "name",
                     newUser.getUserName()));
