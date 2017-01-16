@@ -24,4 +24,8 @@ public interface LinkRepository {
     void deleteUserLink(User user, String shortLink, String owner);
 
     List<User> getUsers();
+
+    User getUser(User autorizedUser, String userName);
+
+    void updateUser(User autorizedUser, User newUser, User oldUser);
 }

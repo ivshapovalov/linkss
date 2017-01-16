@@ -21,15 +21,15 @@
         <c:forEach items="${users}" var="column">
             <tr>
                 <td width="40%">${column.getUserName()}</td>
-                <td width="40%">${column.getPassword()}</td>
+                <td width="40%" >*</td>
                 <td width="10%">
                     <a href="/actions/links?owner=${column.getUserName()}">${column.getLinkNumber()}
                 </a></td>
                 <td width="10%">
-                    <a href="/actions/editeuser?key=${column.getUserName()}">Edit</a>
+                    <a href="/actions/users?action=edit&key=${column.getUserName()}">Edit</a>
                 </td>
                 <td width="10%">
-                    <a href="/actions/deleteuser?key=${column.getUserName()}">Delete
+                    <a href="/actions/users?action=delete&key=${column.getUserName()}">Delete
                 </a></td>
 
             </tr>

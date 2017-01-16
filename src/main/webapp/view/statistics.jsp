@@ -10,7 +10,7 @@
 <section>
     <br>
     <c:choose>
-        <c:when test="${shortStat!=null}" >
+        <c:when test="${shortStat!=null}">
             <h3>Domain Statistics</h3>
             <table border="1" width="50%">
                 <c:forEach items="${shortStat}" var="column">
@@ -45,10 +45,9 @@
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
                 <td width="30%"><img src="${column.getImageLink()}"></td>
-                <td width="10%"><button
-                        onclick="location.href='/actions/deletelink?key=${column.getKey()}&owner=${column.getUserName()}'">Delete
-                </button></td>
-
+                <td width="10%"><a href="/actions/deletelink?key=${column.getKey()}&owner
+                    =${column.getUserName()}">Delete
+                </a></td>
 
             </tr>
         </c:forEach>

@@ -13,6 +13,11 @@ public class User {
     public User() {
     }
 
+    public User(String userName, String password) {
+        this.userName = userName;
+        this.password = password;
+    }
+
     public User(String userName, String password, long linkNumber) {
         this.userName = userName;
         this.password = password;

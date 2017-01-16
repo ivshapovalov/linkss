@@ -5,8 +5,6 @@
 <head>
     <title>Links</title>
 </head>
-
-
 <body>
 <%@include file="header.jsp" %>
 <section>
@@ -23,11 +21,9 @@
                 <td width="40%"><a href="${column.getLink()}">${column.getLink()}</a></td>
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
-                <td width="10%"><button
-                        onclick="location.href='/actions/deleteuserlink?key=${column.getKey()}&owner=${column.getUserName()}'">Delete
-                </button></td>
-
-
+                <td width="10%"><a href="/actions/deleteuserlink?key=${column.getKey()}&owner
+                    =${column.getUserName()}">Delete
+                </a></td>
             </tr>
         </c:forEach>
     </table>

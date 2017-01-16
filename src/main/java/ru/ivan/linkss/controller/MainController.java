@@ -32,10 +32,10 @@ public class MainController {
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
                        HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user != null && !user.isEmpty()) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser != null && !autorizedUser.isEmpty()) {
             //AuthorizedUser.valueOf(autorizedUser);
-            model.addAttribute("user", user);
+            model.addAttribute("autorizedUser", autorizedUser);
         }
         return "main";
     }
@@ -86,18 +86,18 @@ public class MainController {
     @RequestMapping(value = "/actions/logout", method = RequestMethod.GET)
     public String logout(Model model, HttpSession session)
             throws IOException {
-        model.addAttribute("user", null);
-        session.setAttribute("user", null);
+        model.addAttribute("autorizedUser", null);
+        session.setAttribute("autorizedUser", null);
         return "redirect:/";
     }
 
-    @RequestMapping(value = "/actions/manage", method = RequestMethod.GET)
+    @RequestMapping(value = "/actions/manage", method = {RequestMethod.GET,RequestMethod.POST})
     public String manage(Model model, HttpSession session)
             throws IOException {
-        User user = (User) session.getAttribute("user");
-        if (user != null && !user.isEmpty() && user.isAdmin()) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
             List<User> users = service.getUsers();
-            model.addAttribute("user", user);
+            model.addAttribute("autorizedUser", autorizedUser);
             model.addAttribute("users", users);
             return "manage";
         }
@@ -150,8 +150,8 @@ public class MainController {
             if (user.getUserName().equals("admin")) {
                 user.setAdmin(true);
             }
-            session.setAttribute("user", user);
-            model.addAttribute("user", user);
+            session.setAttribute("autorizedUser", user);
+            model.addAttribute("autorizedUser", user);
             return "redirect:/";
         }
         return "signin";
@@ -163,8 +163,8 @@ public class MainController {
                              @ModelAttribute("key") String shortLink,
                              @ModelAttribute("owner") String owner,
                              HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null || user.getUserName().equals("")) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -178,7 +178,7 @@ public class MainController {
         }
 
         try {
-            service.deleteUserLink(user, shortLink, owner);
+            service.deleteUserLink(autorizedUser, shortLink, owner);
             model.addAttribute("key", null);
             model.addAttribute("owner", null);
 
@@ -188,14 +188,15 @@ public class MainController {
             return "error";
         }
     }
+
     @RequestMapping(value = {"/actions/deleteuserlink"}, method =
             RequestMethod.GET)
     public String deleteuserlink(Model model,
                              @ModelAttribute("key") String shortLink,
                              @ModelAttribute("owner") String owner,
                              HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null || user.getUserName().equals("")) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -209,7 +210,7 @@ public class MainController {
         }
 
         try {
-            service.deleteUserLink(user, shortLink, owner);
+            service.deleteUserLink(autorizedUser, shortLink, owner);
             model.addAttribute("key", null);
             model.addAttribute("owner", null);
 
@@ -220,20 +221,81 @@ public class MainController {
         }
     }
 
+    @RequestMapping(value = {"/actions/users"}, method =
+            RequestMethod.GET)
+    public String editUser(Model model,
+                                 @ModelAttribute("key") String key,
+                                 @ModelAttribute("action") String action,
+                                 HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "Autorized user is not defined!");
+            return "error";
+        }
+        if (action == null || action.equals("")) {
+            model.addAttribute("message", "Action is not defined!");
+            return "error";
+        }
+        if (key == null || key.equals("")) {
+            model.addAttribute("message", "User name is not defined!");
+            return "error";
+        }
+        try {
+            User user=service.getUser(autorizedUser, key);
+            model.addAttribute("user", user);
+            model.addAttribute("oldUserName", user.getUserName());
+            model.addAttribute("oldPassword", user.getPassword());
+            return "user";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+
+    @RequestMapping(value = {"/actions/user"}, method =
+            RequestMethod.POST)
+    public String updateUser(Model model,
+                             @ModelAttribute("user") User newUser,
+                             @ModelAttribute("oldUserName") String oldUserName,
+                             @ModelAttribute("oldPassword") String oldPassword,
+                             HttpServletRequest request,
+                           HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "Autorized user is not defined!");
+            return "error";
+        }
+        if (newUser == null ) {
+            model.addAttribute("message", "User for update is not defined!");
+            return "error";
+        }
+        try {
+            User oldUser = new User(oldUserName, oldPassword);
+            service.updateUser(autorizedUser, newUser, oldUser);
+            model.addAttribute("oldUserName",null);
+            model.addAttribute("oldPassword",null);
+
+            return "redirect:/actions/manage";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public String createShortLink(Model model, HttpSession session,
                                   HttpServletRequest request) {
-        User user = (User) session.getAttribute("user");
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
 
         String link = request.getParameter("link");
         if ("".equals(link)) {
             return "main";
         }
         String shortLink = "";
-        if (user == null || user.isEmpty()) {
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
             shortLink = service.createShortLink(DEFAULT_USER, link);
         } else {
-            shortLink = service.createShortLink(user.getUserName(), link);
+            shortLink = service.createShortLink(autorizedUser.getUserName(), link);
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");
@@ -246,7 +308,7 @@ public class MainController {
         } catch (IOException | WriterException e) {
             e.printStackTrace();
         }
-        model.addAttribute("user", user);
+        model.addAttribute("user", autorizedUser);
         model.addAttribute("filename", shortLink + ".png");
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
@@ -258,12 +320,12 @@ public class MainController {
     public String statistics(Model model,
                              HttpServletRequest request, HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
-        if (user == null || user.isEmpty()) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, statistics available only for logged users!");
             return "error";
         }
-        if (user.isAdmin()) {
+        if (autorizedUser.isAdmin()) {
             List<List<String>> shortStat = service.getShortStat();
             String p = request.getRequestURL().toString();
             String cp = request.getServletPath();
@@ -283,7 +345,7 @@ public class MainController {
             if (p.endsWith(cp)) {
                 contextPath = p.substring(0, p.length() - cp.length() + 1);
             }
-            List<FullLink> fullStat = service.getFullStat(user.getUserName(), contextPath);
+            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(), contextPath);
             model.addAttribute("fullStat", fullStat);
         }
         return "statistics";
@@ -295,8 +357,8 @@ public class MainController {
                         HttpServletRequest request,
                         HttpSession session) {
 
-        User user = (User) session.getAttribute("user");
-        if (user == null || user.isEmpty()) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, statistics available only for logged users!");
             return "error";
         }

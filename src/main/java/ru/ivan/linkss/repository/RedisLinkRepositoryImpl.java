@@ -24,10 +24,10 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     private static final String KEY_PREFERENCES = "_preferences";
     private static final String KEY_LENGTH = "key.length";
 
-    private static final String DEFAULT_USER ="user";
-    private static final String DEFAULT_PASSWORD ="user";
-    private static final String ADMIN_USER ="admin";
-    private static final String ADMIN_PASSWORD ="admin";
+    private static final String DEFAULT_USER = "user";
+    private static final String DEFAULT_PASSWORD = "user";
+    private static final String ADMIN_USER = "admin";
+    private static final String ADMIN_PASSWORD = "admin";
 
 
     //private RedisClient redisClient = RedisClient.createShortLink("redis://localhost:6379/0");
@@ -109,19 +109,19 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
 
-        List<FullLink> fullStat =new ArrayList<>();
+        List<FullLink> fullStat = new ArrayList<>();
         Map<String, Map<String, String>> collect = syncCommands.scan()
                 .getKeys().stream().filter(u -> !u.startsWith("_"))
                 .collect(Collectors.toMap(u -> u, u -> syncCommands.hscan(u).getMap()));
         for (Map.Entry<String, Map<String, String>> entry : collect.entrySet()) {
             for (Map.Entry<String, String> o : entry.getValue().entrySet()) {
-                    String shortLink = contextPath + o.getKey();
-                    String link = syncCommands.hget(KEY_LINKS, o.getKey());
-                    String visits = syncCommands.hget(KEY_VISITS, o.getKey());
+                String shortLink = contextPath + o.getKey();
+                String link = syncCommands.hget(KEY_LINKS, o.getKey());
+                String visits = syncCommands.hget(KEY_VISITS, o.getKey());
 
                 fullStat.add(new FullLink(o.getKey(), shortLink,
                         link, visits,
-                        shortLink + ".png",entry.getKey()));
+                        shortLink + ".png", entry.getKey()));
             }
 
         }
@@ -160,7 +160,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                     String link = syncCommands.hget(KEY_LINKS, p.getKey());
                     return new FullLink(p.getKey(), shortLink,
                             link, visits,
-                            shortLink + ".png",userName);
+                            shortLink + ".png", userName);
                 }).collect(Collectors.toList());
         connection.close();
 
@@ -233,10 +233,10 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        List<User> users=syncCommands.hscan(KEY_USERS).getMap()
+        List<User> users = syncCommands.hscan(KEY_USERS).getMap()
                 .entrySet()
                 .stream()
-                .map(u -> new User(u.getKey(),u.getValue(),syncCommands.hlen(u.getKey())))
+                .map(u -> new User(u.getKey(), u.getValue(), syncCommands.hlen(u.getKey())))
                 .collect(Collectors.toList());
 
         connection.close();
@@ -263,26 +263,26 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public void deleteUserLink(User user, String shortLink, String owner) {
+    public void deleteUserLink(User autorizedUser, String shortLink, String owner) {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
-        if (!syncCommands.hexists(KEY_USERS, user.getUserName())) {
+        if (!syncCommands.hexists(KEY_USERS, autorizedUser.getUserName())) {
             throw new RuntimeException(String.format("User '%s' is not exists",
-                    user.getUserName()));
+                    autorizedUser.getUserName()));
         }
-        if (!user.isAdmin()) {
-            if (!syncCommands.hexists(user.getUserName(), shortLink)) {
+        if (!autorizedUser.isAdmin()) {
+            if (!syncCommands.hexists(autorizedUser.getUserName(), shortLink)) {
                 throw new RuntimeException(String.format("User '%s' does not have link '%s'",
-                        user.getUserName(), shortLink));
+                        autorizedUser.getUserName(), shortLink));
             }
         }
         String link = syncCommands.hget(KEY_LINKS, shortLink);
         if (link != null) {
-            int visitsCount=Integer.valueOf(syncCommands.hget(KEY_VISITS,shortLink));
+            int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
             syncCommands.hdel(KEY_VISITS, shortLink);
-            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1*visitsCount);
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
             syncCommands.hdel(KEY_LINKS, shortLink);
             syncCommands.hdel(owner, shortLink);
         }
@@ -299,5 +299,60 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
         connection.close();
         return link;
+    }
+
+    @Override
+    public User getUser(User autorizedUser, String userName) {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, userName)) {
+            throw new RuntimeException(String.format("User '%s' is not exists",
+                    userName));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to edit" +
+                            " users",
+                    autorizedUser.getUserName()));
+
+        }
+        String password = syncCommands.hget(KEY_USERS, userName);
+        User user = new User(userName, password);
+        connection.close();
+        return user;
+    }
+
+    @Override
+    public void updateUser(User autorizedUser, User newUser, User oldUser) {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, oldUser.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
+                    oldUser.getUserName()));
+        }
+        if (syncCommands.hexists(KEY_USERS, newUser.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is already exists. Try another " +
+                            "name",
+                    newUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                            "update" +
+                            " users",
+                    autorizedUser.getUserName()));
+
+        }
+        if (!newUser.getUserName().equals(oldUser.getUserName())) {
+            if (syncCommands.exists(oldUser.getUserName()) == 1) {
+                syncCommands.rename(oldUser.getUserName(), newUser.getUserName());
+            }
+            syncCommands.hdel(KEY_USERS,oldUser.getUserName());
+        }
+        syncCommands.hset(KEY_USERS, newUser.getUserName(), newUser.getPassword());
+
+        connection.close();
     }
 }
