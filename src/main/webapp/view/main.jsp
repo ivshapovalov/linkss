@@ -3,7 +3,7 @@
 
 <html>
 <head>
-    <title>Main</title>
+    <title>Linkss</title>
 </head>
 <body>
 <%@include file="header.jsp" %>

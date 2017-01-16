@@ -61,6 +61,10 @@ public class LinkssServiceImpl implements LinkssService {
     public User getUser(User autorizedUser, String userName) {
         return repository.getUser(autorizedUser,userName);
     }
+    @Override
+    public void deleteUser(User autorizedUser, String userName) {
+        repository.deleteUser(autorizedUser,userName);
+    }
 
     @Override
     public void updateUser(User autorizedUser, User newUser, User oldUser) {

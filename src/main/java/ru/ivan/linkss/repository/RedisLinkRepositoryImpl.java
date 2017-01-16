@@ -349,9 +349,50 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
             if (syncCommands.exists(oldUser.getUserName()) == 1) {
                 syncCommands.rename(oldUser.getUserName(), newUser.getUserName());
             }
-            syncCommands.hdel(KEY_USERS,oldUser.getUserName());
+            syncCommands.hdel(KEY_USERS, oldUser.getUserName());
         }
         syncCommands.hset(KEY_USERS, newUser.getUserName(), newUser.getPassword());
+
+        connection.close();
+    }
+
+    @Override
+    public void deleteUser(User autorizedUser, String userName) {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, userName)) {
+            throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
+                    userName));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                            "delete" +
+                            " users",
+                    autorizedUser.getUserName()));
+
+        }
+        if (syncCommands.exists(userName) == 1) {
+
+            syncCommands.hscan(userName)
+                    .getMap()
+                    .keySet()
+                    .stream()
+                    .map(shortLink-> {
+                        int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
+                        syncCommands.hdel(KEY_VISITS,shortLink);
+                        String link=syncCommands.hget(KEY_LINKS,shortLink);
+                        syncCommands.hdel(KEY_LINKS, shortLink);
+                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN,Util.getDomainName(link),
+                                -1*visitsCount);
+                        return shortLink;
+                        })
+                    .collect(Collectors.toList());
+            syncCommands.del(userName);
+
+        }
+        syncCommands.hdel(KEY_USERS, userName);
 
         connection.close();
     }

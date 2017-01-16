@@ -37,5 +37,7 @@ public interface LinkssService {
 
     User getUser(User autorizedUser, String userName);
 
+    void deleteUser(User autorizedUser, String userNme);
+
     void updateUser(User autorizedUser, User newUser, User oldUser);
 }

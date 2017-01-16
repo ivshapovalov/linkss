@@ -25,6 +25,8 @@ import java.util.List;
 public class MainController {
 
     private static final String DEFAULT_USER = "user";
+    private static final String ACTION_EDIT = "edit";
+    private static final String ACTION_DELETE = "delete";
 
     @Autowired
     private LinkssService service;
@@ -91,7 +93,7 @@ public class MainController {
         return "redirect:/";
     }
 
-    @RequestMapping(value = "/actions/manage", method = {RequestMethod.GET,RequestMethod.POST})
+    @RequestMapping(value = "/actions/manage", method = {RequestMethod.GET, RequestMethod.POST})
     public String manage(Model model, HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
@@ -192,9 +194,9 @@ public class MainController {
     @RequestMapping(value = {"/actions/deleteuserlink"}, method =
             RequestMethod.GET)
     public String deleteuserlink(Model model,
-                             @ModelAttribute("key") String shortLink,
-                             @ModelAttribute("owner") String owner,
-                             HttpSession session) {
+                                 @ModelAttribute("key") String shortLink,
+                                 @ModelAttribute("owner") String owner,
+                                 HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
@@ -214,7 +216,7 @@ public class MainController {
             model.addAttribute("key", null);
             model.addAttribute("owner", null);
 
-            return "redirect:/actions/links?owner="+owner;
+            return "redirect:/actions/links?owner=" + owner;
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
@@ -224,28 +226,63 @@ public class MainController {
     @RequestMapping(value = {"/actions/users"}, method =
             RequestMethod.GET)
     public String editUser(Model model,
-                                 @ModelAttribute("key") String key,
-                                 @ModelAttribute("action") String action,
-                                 HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
-        }
+                           @ModelAttribute("key") String key,
+                           @ModelAttribute("action") String action,
+                           HttpSession session) {
         if (action == null || action.equals("")) {
             model.addAttribute("message", "Action is not defined!");
             return "error";
         }
+        if (ACTION_EDIT.equalsIgnoreCase(action)) {
+            return actionEditUser(model, key, session);
+        } else if (ACTION_DELETE.equalsIgnoreCase(action)) {
+            return actionDeleteUser(model, key, session);
+
+        }
+        return "manage";
+    }
+
+    private String actionEditUser(Model model, String key, HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "Autorized user is not defined!");
+            return "error";
+        }
+
         if (key == null || key.equals("")) {
             model.addAttribute("message", "User name is not defined!");
             return "error";
         }
         try {
-            User user=service.getUser(autorizedUser, key);
+            User user = service.getUser(autorizedUser, key);
             model.addAttribute("user", user);
             model.addAttribute("oldUserName", user.getUserName());
             model.addAttribute("oldPassword", user.getPassword());
             return "user";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+
+    private String actionDeleteUser(Model model, String key, HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "Autorized user is not defined!");
+            return "error";
+        }
+
+        if (key == null || key.equals("")) {
+            model.addAttribute("message", "User name is not defined!");
+            return "error";
+        }
+        try {
+            service.deleteUser(autorizedUser, key);
+            model.addAttribute("action",null);
+            model.addAttribute("key",null);
+            return "redirect:/actions/manage";
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
@@ -259,21 +296,21 @@ public class MainController {
                              @ModelAttribute("oldUserName") String oldUserName,
                              @ModelAttribute("oldPassword") String oldPassword,
                              HttpServletRequest request,
-                           HttpSession session) {
+                             HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
-        if (newUser == null ) {
+        if (newUser == null) {
             model.addAttribute("message", "User for update is not defined!");
             return "error";
         }
         try {
             User oldUser = new User(oldUserName, oldPassword);
             service.updateUser(autorizedUser, newUser, oldUser);
-            model.addAttribute("oldUserName",null);
-            model.addAttribute("oldPassword",null);
+            model.addAttribute("oldUserName", null);
+            model.addAttribute("oldPassword", null);
 
             return "redirect:/actions/manage";
         } catch (RuntimeException e) {
@@ -369,7 +406,7 @@ public class MainController {
         if (p.endsWith(cp)) {
             contextPath = p.substring(0, p.length() - cp.length() + 1);
         }
-        List<FullLink> fullStat = service.getFullStat(owner,contextPath);
+        List<FullLink> fullStat = service.getFullStat(owner, contextPath);
         model.addAttribute("fullStat", fullStat);
 
         return "links";

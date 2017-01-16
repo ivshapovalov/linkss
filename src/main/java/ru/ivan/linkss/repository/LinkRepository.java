@@ -28,4 +28,6 @@ public interface LinkRepository {
     User getUser(User autorizedUser, String userName);
 
     void updateUser(User autorizedUser, User newUser, User oldUser);
+
+    void deleteUser(User autorizedUser, String userName);
 }
