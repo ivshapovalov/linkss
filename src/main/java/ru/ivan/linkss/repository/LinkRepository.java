@@ -1,5 +1,6 @@
 package ru.ivan.linkss.repository;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public interface LinkRepository {
@@ -30,4 +31,8 @@ public interface LinkRepository {
     void updateUser(User autorizedUser, User newUser, User oldUser);
 
     void deleteUser(User autorizedUser, String userName);
+
+    BigInteger updateFreeLinks();
+
+    boolean updateFreeLinksInProgress();
 }

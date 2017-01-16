@@ -17,6 +17,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -26,7 +27,19 @@ public class LinkssServiceImpl implements LinkssService {
     @Autowired
     private LinkRepository repository;
 
+    private boolean updateKeysInProgress;
+
     public LinkssServiceImpl() {
+    }
+
+    @Override
+    public BigInteger updateFreeLinks() {
+        return repository.updateFreeLinks();
+    }
+
+    @Override
+    public boolean updateFreeLinksInProgress() {
+        return repository.updateFreeLinksInProgress();
     }
 
     @Override

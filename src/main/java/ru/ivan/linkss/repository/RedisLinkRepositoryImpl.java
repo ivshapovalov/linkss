@@ -4,11 +4,12 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.service.KeyCreator;
 import ru.ivan.linkss.util.Util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -16,6 +17,8 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
 
     private static final int DB_WORK_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
+
+    private static final long MIN_FREE_LINK_SIZE=1000000;
 
     private static final String KEY_USERS = "_users";
     private static final String KEY_LINKS = "_links";
@@ -38,6 +41,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     //   private RedisClient redisClientByUsers = RedisClient.createShortLink
 //            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+    private boolean updateFreeLinksInProgress;
 
     public RedisLinkRepositoryImpl() {
 //        StatefulRedisConnection<String, String> connection = redisClient.connect();
@@ -58,7 +62,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
-        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("4"));
+        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("2"));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
         //syncCommands.hset(KEY_USERS, "USER", "USER");
@@ -396,5 +400,48 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.hdel(KEY_USERS, userName);
 
         connection.close();
+    }
+
+    @Override
+    public BigInteger updateFreeLinks() {
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        String key=syncCommands.hget(KEY_PREFERENCES,KEY_LENGTH);
+        syncCommands.select(DB_FREELINK_NUMBER);
+        long size=syncCommands.dbsize();
+        BigInteger addedKeys=BigInteger.ZERO;
+        if (size<=MIN_FREE_LINK_SIZE) {
+            updateFreeLinksInProgress=true;
+            //ищем макс ключ, увеличиваем и запускаем потом формирования ключей
+            String[] keys=key.split("|");
+            int maxKey= Arrays.asList(keys).stream()
+                    .map(p->Integer.valueOf(p))
+                    .mapToInt(i -> i).max().getAsInt();
+
+            int newKeyLength=maxKey+1;
+            boolean updated=syncCommands.hset(KEY_PREFERENCES,KEY_LENGTH,key+"|"+String.valueOf
+                    (newKeyLength));
+            FutureTask<BigInteger> futureTask = new FutureTask<>(() -> new KeyCreator().create(newKeyLength));
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+            executor.execute(futureTask);
+            try {
+                addedKeys = futureTask.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            updateFreeLinksInProgress=false;
+        }
+
+        connection.close();
+        return addedKeys;
+    }
+
+    @Override
+    public boolean updateFreeLinksInProgress() {
+        return updateFreeLinksInProgress;
     }
 }

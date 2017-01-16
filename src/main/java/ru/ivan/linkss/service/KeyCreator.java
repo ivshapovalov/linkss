@@ -1,9 +1,11 @@
-package ru.ivan.linkss;
+package ru.ivan.linkss.service;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.math.BigInteger;
 
 /**
  * Created by Ivan on 31.12.2016.
@@ -18,7 +20,10 @@ public class KeyCreator {
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
 
-    public void create(final int length) {
+    private BigInteger keyCount=BigInteger.valueOf(1L);
+
+
+    public BigInteger create(final int length) {
 
         redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 //        redisClient = RedisClient.create
@@ -41,7 +46,7 @@ public class KeyCreator {
 
         System.out.println(Thread.currentThread().getName()+":формирование ключей: " + ((endTime -
                 startTime) / 1000000000));
-
+        return keyCount;
     }
 
     private void recursive(char[] key, int index, int length) {
@@ -49,6 +54,7 @@ public class KeyCreator {
             key[index] = alphabet[j];
             if (index == length-1) {
                 addKey(String.valueOf(key));
+                keyCount=keyCount.add(BigInteger.ONE);
             } else {
                 int nextIndex=index+1;
                 recursive(key, nextIndex, length);

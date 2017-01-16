@@ -141,13 +141,13 @@ CodeCache: size=245760Kb used=1178Kb max_used=1194Kb free=244581Kb
 Compilation events (10 events):
 Event: 33.061 Thread 0x0000000025062800   60       4       java.util.ArrayList::add (29 bytes)
 Event: 33.061 Thread 0x000000002505c000   61       4       java.lang.String::valueOf (9 bytes)
-Event: 33.061 Thread 0x0000000025071000   62       3       ru.ivan.linkss.KeyCreator::recursive (60 bytes)
+Event: 33.061 Thread 0x0000000025071000   62       3       ru.ivan.linkss.service.KeyCreator::recursive (60 bytes)
 Event: 33.062 Thread 0x0000000025071000 nmethod 62 0x0000000003520b10 code [0x0000000003520ce0, 0x0000000003521488]
 Event: 33.062 Thread 0x0000000025062800 nmethod 60 0x0000000003524750 code [0x00000000035248a0, 0x0000000003524aa8]
 Event: 33.062 Thread 0x000000002505c000 nmethod 61 0x0000000003524c90 code [0x0000000003524de0, 0x0000000003524fd8]
-Event: 33.064 Thread 0x0000000025062800   63 %     4       ru.ivan.linkss.KeyCreator::recursive @ 2 (60 bytes)
+Event: 33.064 Thread 0x0000000025062800   63 %     4       ru.ivan.linkss.service.KeyCreator::recursive @ 2 (60 bytes)
 Event: 33.082 Thread 0x0000000025062800 nmethod 63% 0x0000000003527b10 code [0x0000000003527d20, 0x0000000003528f70]
-Event: 33.082 Thread 0x000000002505c000   64       4       ru.ivan.linkss.KeyCreator::recursive (60 bytes)
+Event: 33.082 Thread 0x000000002505c000   64       4       ru.ivan.linkss.service.KeyCreator::recursive (60 bytes)
 Event: 33.098 Thread 0x000000002505c000 nmethod 64 0x0000000003529e50 code [0x000000000352a060, 0x000000000352b450]
 
 GC Heap History (10 events):

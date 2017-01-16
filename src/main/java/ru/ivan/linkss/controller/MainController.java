@@ -2,6 +2,7 @@ package ru.ivan.linkss.controller;
 
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,6 +23,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 @Controller
+@EnableScheduling
 public class MainController {
 
     private static final String DEFAULT_USER = "user";

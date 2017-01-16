@@ -2,7 +2,9 @@ package ru.ivan.linkss;
 
 
 import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
+import ru.ivan.linkss.service.KeyCreator;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -54,7 +56,8 @@ public class InitialPopulator {
 //            }
 //        },"t5").start();
 
-        new KeyCreator().create(4);
+        BigInteger keyCount=new KeyCreator().create(2);
+        System.out.println(String.format("'%s' ключей добавлено",keyCount.toString()));
 
 
     }

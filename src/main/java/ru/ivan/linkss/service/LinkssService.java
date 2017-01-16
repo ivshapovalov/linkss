@@ -5,6 +5,7 @@ import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.User;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 
 public interface LinkssService {
@@ -40,4 +41,8 @@ public interface LinkssService {
     void deleteUser(User autorizedUser, String userNme);
 
     void updateUser(User autorizedUser, User newUser, User oldUser);
+
+    BigInteger updateFreeLinks();
+
+    boolean updateFreeLinksInProgress();
 }
