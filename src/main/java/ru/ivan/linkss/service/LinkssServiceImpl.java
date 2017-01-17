@@ -32,15 +32,15 @@ public class LinkssServiceImpl implements LinkssService {
     public LinkssServiceImpl() {
     }
 
+    public void setRepository(LinkRepository repository) {
+        this.repository = repository;
+    }
+
     @Override
     public BigInteger updateFreeLinks() {
         return repository.updateFreeLinks();
     }
 
-    @Override
-    public boolean updateFreeLinksInProgress() {
-        return repository.updateFreeLinksInProgress();
-    }
 
     @Override
     public boolean checkUser(User user) {

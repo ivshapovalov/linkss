@@ -43,6 +43,4 @@ public interface LinkssService {
     void updateUser(User autorizedUser, User newUser, User oldUser);
 
     BigInteger updateFreeLinks();
-
-    boolean updateFreeLinksInProgress();
 }

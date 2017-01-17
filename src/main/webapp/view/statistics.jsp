@@ -45,8 +45,7 @@
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
                 <td width="30%"><img src="${column.getImageLink()}"></td>
-                <td width="10%"><a href="/actions/deletelink?key=${column.getKey()}&owner
-                    =${column.getUserName()}">Delete
+                <td width="10%"><a href="/actions/deletelink?key=${column.getKey()}&owner=${column.getUserName()}">Delete
                 </a></td>
 
             </tr>

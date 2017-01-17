@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 
 public class Util {
 
-    public static String getDomainName(String url) {
+    public static String getDomainName(String url) throws NullPointerException {
         URI uri = null;
         try {
             if (url.contains("://")) {
@@ -16,6 +16,8 @@ public class Util {
             String domain = uri.getHost();
             return domain.startsWith("www") ? domain.substring(domain.indexOf(".")+1) : domain;
         } catch (URISyntaxException e) {
+            System.out.println("Ошибка:" +url);
+
             return "";
         }
     }

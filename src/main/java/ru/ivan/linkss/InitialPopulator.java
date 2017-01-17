@@ -56,7 +56,7 @@ public class InitialPopulator {
 //            }
 //        },"t5").start();
 
-        BigInteger keyCount=new KeyCreator().create(2);
+        BigInteger keyCount=new KeyCreator().create(1);
         System.out.println(String.format("'%s' ключей добавлено",keyCount.toString()));
 
 

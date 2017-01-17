@@ -3,13 +3,9 @@ package ru.ivan.linkss.service;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 
-/**
- * Created by Ivan on 31.12.2016.
- */
 public class KeyCreator {
 
     private static char[] alphabet = "abcdefghijklmnopqrstuvwxyz01234956789ABCDEFGHIJKLMNOPQRSTUVWZYZ"
@@ -20,7 +16,7 @@ public class KeyCreator {
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> syncCommands;
 
-    private BigInteger keyCount=BigInteger.valueOf(1L);
+    private BigInteger keyCount = BigInteger.ZERO;
 
 
     public BigInteger create(final int length) {
@@ -33,18 +29,14 @@ public class KeyCreator {
         syncCommands.select(1);
 
         long startTime = System.nanoTime();
-
-        for (int i = 0; i < alphabet.length; i++) {
-            char[] key = new char[length];
-            key[0] = alphabet[i];
-            recursive(key, 1, length);
-        }
+        char[] key = new char[length];
+        recursive(key, 0, length);
         long endTime = System.nanoTime();
 
         connection.close();
         redisClient.shutdown();
 
-        System.out.println(Thread.currentThread().getName()+":формирование ключей: " + ((endTime -
+        System.out.println(Thread.currentThread().getName() + ":формирование ключей: " + ((endTime -
                 startTime) / 1000000000));
         return keyCount;
     }
@@ -52,11 +44,11 @@ public class KeyCreator {
     private void recursive(char[] key, int index, int length) {
         for (int j = 0; j < alphabet.length; j++) {
             key[index] = alphabet[j];
-            if (index == length-1) {
+            if (index == length - 1) {
                 addKey(String.valueOf(key));
-                keyCount=keyCount.add(BigInteger.ONE);
+                keyCount = keyCount.add(BigInteger.ONE);
             } else {
-                int nextIndex=index+1;
+                int nextIndex = index + 1;
                 recursive(key, nextIndex, length);
             }
         }

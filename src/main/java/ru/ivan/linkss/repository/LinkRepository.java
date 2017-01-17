@@ -34,5 +34,4 @@ public interface LinkRepository {
 
     BigInteger updateFreeLinks();
 
-    boolean updateFreeLinksInProgress();
 }
