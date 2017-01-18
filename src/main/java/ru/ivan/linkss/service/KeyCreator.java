@@ -8,7 +8,8 @@ import java.math.BigInteger;
 
 public class KeyCreator {
 
-    private static char[] alphabet = "abcdefghijklmnopqrstuvwxyz01234956789ABCDEFGHIJKLMNOPQRSTUVWZYZ"
+    private static char[] alphabet =
+            "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             .toCharArray();
 
     private RedisClient redisClient;

@@ -7,6 +7,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
@@ -25,9 +26,8 @@ import java.util.List;
 public class LinkssServiceImpl implements LinkssService {
 
     @Autowired
+    @Qualifier(value = "repositoryOne")
     private LinkRepository repository;
-
-    private boolean updateKeysInProgress;
 
     public LinkssServiceImpl() {
     }

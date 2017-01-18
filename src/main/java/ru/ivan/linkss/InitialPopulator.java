@@ -1,7 +1,8 @@
 package ru.ivan.linkss;
 
 
-import ru.ivan.linkss.repository.RedisLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.service.KeyCreator;
 
 import java.math.BigInteger;
@@ -29,7 +30,7 @@ public class InitialPopulator {
 
     private static void init() {
 
-        new RedisLinkRepositoryImpl().init();
+        new RedisOneDBLinkRepositoryImpl().init();
 
 //        new Thread(new Runnable() {
 //            @Override

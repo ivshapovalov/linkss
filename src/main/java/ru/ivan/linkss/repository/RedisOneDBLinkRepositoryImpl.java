@@ -3,6 +3,7 @@ package ru.ivan.linkss.repository;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.service.KeyCreator;
 import ru.ivan.linkss.util.Util;
@@ -19,7 +20,8 @@ import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
 @Component
-public class RedisLinkRepositoryImpl implements LinkRepository {
+@Qualifier(value = "repositoryOne")
+public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     private static final int DB_WORK_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
@@ -47,7 +49,7 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
 //            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
-    public RedisLinkRepositoryImpl() {
+    public RedisOneDBLinkRepositoryImpl() {
     }
 
     public void init() {
@@ -175,11 +177,17 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_FREELINK_NUMBER);
         String shortLink = null;
         synchronized (redisClient) {
-            shortLink = syncCommands.randomkey();
-            if (shortLink == null) {
-                return null;
-            }
-            syncCommands.del(shortLink);
+            boolean failed = false;
+            do {
+                shortLink = syncCommands.randomkey();
+                syncCommands.watch(shortLink);
+                syncCommands.multi();
+                if (shortLink == null) {
+                    return null;
+                }
+                syncCommands.del(shortLink);
+                failed = syncCommands.exec().wasRolledBack();
+            } while (failed);
         }
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -192,14 +200,13 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         String domainName = "";
 
         domainName = Util.getDomainName(link);
-        syncCommands.multi();
-        if (!domainName.equals("")
-                && (syncCommands.hget(KEY_VISITS_BY_DOMAIN, domainName) == null
-        )) {
-            syncCommands.hset(KEY_VISITS_BY_DOMAIN, domainName, "0");
+        synchronized (redisClient) {
+            if (!domainName.equals("")
+                    && (syncCommands.hget(KEY_VISITS_BY_DOMAIN, domainName) == null
+            )) {
+                syncCommands.hset(KEY_VISITS_BY_DOMAIN, domainName, "0");
+            }
         }
-        syncCommands.exec();
-
         connection.close();
         return shortLink;
     }
@@ -216,14 +223,17 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                     userName));
         }
 
-        syncCommands.multi();
-        if (syncCommands.hexists(KEY_USERS, userName)) {
-            throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
-                            "another name",
-                    userName));
-        }
-        syncCommands.hset(KEY_USERS, userName, password);
-        syncCommands.exec();
+        boolean failed = false;
+        do {
+            syncCommands.multi();
+            if (syncCommands.hexists(KEY_USERS, userName)) {
+                throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
+                                "another name",
+                        userName));
+            }
+            syncCommands.hset(KEY_USERS, userName, password);
+            failed = syncCommands.exec().wasRolledBack();
+        } while (failed);
         connection.close();
     }
 
@@ -231,7 +241,6 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
     public List<User> getUsers() {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
-
 
         List<User> users = syncCommands.hkeys(KEY_USERS)
                 .stream()
@@ -282,13 +291,13 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         }
         String link = syncCommands.hget(KEY_LINKS, shortLink);
         if (link != null) {
-            syncCommands.multi();
-            int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
-            syncCommands.hdel(KEY_VISITS, shortLink);
-            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
-            syncCommands.hdel(KEY_LINKS, shortLink);
-            syncCommands.hdel(owner, shortLink);
-            syncCommands.exec();
+            synchronized (redisClient) {
+                int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
+                syncCommands.hdel(KEY_VISITS, shortLink);
+                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
+                syncCommands.hdel(KEY_LINKS, shortLink);
+                syncCommands.hdel(owner, shortLink);
+            }
         }
         connection.close();
     }
@@ -298,9 +307,12 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = redisClient.connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
-        String link = syncCommands.hget(KEY_LINKS, shortLink);
-        syncCommands.hincrby(KEY_VISITS, shortLink, 1);
-        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
+        String link = null;
+        synchronized (redisClient) {
+            link = syncCommands.hget(KEY_LINKS, shortLink);
+            syncCommands.hincrby(KEY_VISITS, shortLink, 1);
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
+        }
         connection.close();
         return link;
     }
@@ -350,15 +362,15 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                     autorizedUser.getUserName()));
 
         }
-        syncCommands.multi();
-        if (!newUser.getUserName().equals(oldUser.getUserName())) {
-            if (syncCommands.exists(oldUser.getUserName()) == 1) {
-                syncCommands.rename(oldUser.getUserName(), newUser.getUserName());
+        synchronized (redisClient) {
+            if (!newUser.getUserName().equals(oldUser.getUserName())) {
+                if (syncCommands.exists(oldUser.getUserName()) == 1) {
+                    syncCommands.rename(oldUser.getUserName(), newUser.getUserName());
+                }
+                syncCommands.hdel(KEY_USERS, oldUser.getUserName());
             }
-            syncCommands.hdel(KEY_USERS, oldUser.getUserName());
+            syncCommands.hset(KEY_USERS, newUser.getUserName(), newUser.getPassword());
         }
-        syncCommands.hset(KEY_USERS, newUser.getUserName(), newUser.getPassword());
-        syncCommands.exec();
         connection.close();
     }
 
@@ -383,15 +395,15 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
             syncCommands.hkeys(userName)
                     .stream()
                     .map(shortLink -> {
-                        syncCommands.multi();
-                        int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
-                        syncCommands.hdel(KEY_VISITS, shortLink);
-                        String link = syncCommands.hget(KEY_LINKS, shortLink);
-                        syncCommands.hdel(KEY_LINKS, shortLink);
-                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link),
-                                -1 * visitsCount);
-                        syncCommands.exec();
-                        return shortLink;
+                        synchronized (redisClient) {
+                            int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
+                            syncCommands.hdel(KEY_VISITS, shortLink);
+                            String link = syncCommands.hget(KEY_LINKS, shortLink);
+                            syncCommands.hdel(KEY_LINKS, shortLink);
+                            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link),
+                                    -1 * visitsCount);
+                            return shortLink;
+                        }
                     })
                     .collect(Collectors.toList());
             syncCommands.del(userName);
@@ -413,7 +425,6 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
         long size = syncCommands.dbsize();
         BigInteger addedKeys = BigInteger.ZERO;
         if (size <= MIN_FREE_LINK_SIZE) {
-            //ищем макс ключ, увеличиваем и запускаем потом формирования ключей
             String[] keys = key.split("\\|");
             int maxKey = Arrays.asList(keys).stream()
                     .map(p -> Integer.valueOf(p))
@@ -434,7 +445,6 @@ public class RedisLinkRepositoryImpl implements LinkRepository {
                 e.printStackTrace();
             }
         }
-
         connection.close();
         return addedKeys;
     }
