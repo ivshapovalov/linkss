@@ -18,14 +18,18 @@ public class ScheduledTasks {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 1000)
     public void updateFreeLinks() {
 //        System.out.println(String.format("The time is now %s. Check free links count",
 //                dateFormat.format(new Date())));
+        long startTime = System.nanoTime();
         BigInteger addedKeys = service.updateFreeLinks();
         if (!addedKeys.equals(BigInteger.ZERO)) {
-            System.out.println(String.format("The time is now %s. The %s key added in free link " +
-                    "db ",dateFormat.format(new Date()), addedKeys));
+            long endTime = System.nanoTime();
+
+            System.out.println(String.format("%s. Free link DB updated by %s keys in %s seconds",
+                    dateFormat.format(new Date()), addedKeys,(endTime -
+                            startTime) / 1000000000));
         } else {
             //System.out.println("There is no need to increase free links value");
         }

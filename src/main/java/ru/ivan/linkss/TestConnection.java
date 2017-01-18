@@ -1,19 +1,21 @@
 package ru.ivan.linkss;
 
 
-import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 import ru.ivan.linkss.service.LinkssServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static int sizeOfPool = 5;
-    private static int requests = 1000;
+    private static int sizeOfPool = 50;
+    private static int requests = 300000;
 
     private static LinkssServiceImpl service;
 
@@ -35,75 +37,78 @@ public class TestConnection {
 
     public static void main(String[] args) {
 
+        InitialPopulator.main(new String [1]);
 
         service = new LinkssServiceImpl();
-        service.setRepository(new RedisTwoDBLinkRepositoryImpl());
-        //String shortLink = service.getRandomShortLink();
-        //System.out.println(shortLink);
-
-        ///WRITE
+        service.setRepository(new RedisOneDBLinkRepositoryImpl());
 
         long startTime = System.nanoTime();
-
-        executeCreateInOneThread();
-        //ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
-//        for (int i = 1; i <= requests; i++) {
-//            Runnable creator = new Thread(new Creator(i), "t" + i);
-//            executor.execute(creator);
-//        }
-//        executor.shutdown();
-//        while (!executor.isTerminated()) {
-//        }
+        //executeCreateInOneThread();
+        executeCreateMultiThread();
         long endTime = System.nanoTime();
-//
-        System.out.println(String.valueOf(requests)+" write: "+(endTime -
-                startTime) / 1000000000+" seconds");
+        System.out.println(String.valueOf(requests) + " write: " + (endTime -
+                startTime) / 1000 + " millis");
 
-        //READ
 
         startTime = System.nanoTime();
-//        executor = Executors.newFixedThreadPool(sizeOfPool);
-//        for (int i = 1; i <= requests; i++) {
-//            Runnable reader = new Thread(new Reader(i), "t" + i);
-//            executor.execute(reader);
-//        }
-//        executor.shutdown();
-//        while (!executor.isTerminated()) {
-//        }
-
-        executeReadInOneThread();
-
+        //executeReadInOneThread();
+        //executeReadMultiThread();
         endTime = System.nanoTime();
-
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
-                startTime) / 1000000000 + " seconds");
+                startTime) / 1000 + " millis");
 
-//        //READ & WRITE
-//        Random random = new Random();
-//        boolean isWrite = false;
-//        startTime = System.nanoTime();
-//        executor = Executors.newFixedThreadPool(sizeOfPool);
-//        for (int i = 1; i <= requests; i++) {
-//            isWrite = false;
-//
+
+        startTime = System.nanoTime();
+        //executeCreateReadMultiThread();
+        endTime = System.nanoTime();
+        System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
+                startTime) / 1000 + " millis");
+    }
+
+    private static void executeCreateReadMultiThread() {
+        Random random = new Random();
+        boolean isWrite = false;
+        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
+        isWrite = true;
+        for (int i = 1; i <= requests; i++) {
+
 //            if (random.nextInt(10000) % 2 == 0) {
 //                isWrite = true;
 //            }
-//            Runnable client;
-//            if (isWrite) {
-//                client = new Thread(new Creator(i), "t" + i);
-//            } else {
-//                client = new Thread(new Reader(i), "t" + i);
-//            }
-//            executor.execute(client);
-//        }
-//        executor.shutdown();
-//        while (!executor.isTerminated()) {
-//        }
-        endTime = System.nanoTime();
+            Runnable client;
+            if (isWrite) {
+                client = new Creator(i);
+            } else {
+                client = new Reader(i);
+            }
+            executor.execute(client);
+            isWrite = !isWrite;
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
+    }
 
-        System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
-                startTime) / 1000000000 + " seconds");
+    private static void executeReadMultiThread() {
+        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
+        for (int i = 1; i <= requests; i++) {
+            Runnable reader = new Reader(i);
+            executor.execute(reader);
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
+    }
+
+    private static void executeCreateMultiThread() {
+        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
+        for (int i = 1; i <= requests; i++) {
+            Runnable creator = new Creator(i);
+            executor.execute(creator);
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
     }
 
     private static void executeCreateInOneThread() {
@@ -112,10 +117,12 @@ public class TestConnection {
         }
 
     }
+
     private static void executeReadInOneThread() {
 
         for (int i = 1; i <= requests; i++) {
             new Reader(i).run();
+            System.out.println(i);
         }
     }
 
@@ -127,13 +134,14 @@ public class TestConnection {
 
         @Override
         public void run() {
-            super.run();
+            Thread.currentThread().setName("t" + number);
+
             String link = getRandomDomain() + "/" + number;
             String shortLink = service.createShortLink("user", link);
             if (shortLink == null) {
 //                    System.out.println(Thread.currentThread().getName() +
 //                            ": free short links ended ");
-            } else {
+//            } else {
 //                    System.out.println(Thread.currentThread().getName() +
 //                           ": create '" + shortLink + "' - link '" + link + "'");
             }
@@ -148,24 +156,20 @@ public class TestConnection {
 
         @Override
         public void run() {
-            super.run();
-            boolean failed = false;
+            Thread.currentThread().setName("t" + number);
+
+            boolean failed = true;
             do {
                 String shortLink = service.getRandomShortLink();
                 if (shortLink != null && !"".equals(shortLink)) {
                     String link = null;
-                    try {
-                        link = service.getLink(shortLink);
-//                        System.out.println(Thread.currentThread().getName() +
-//                                ": get s '" + shortLink + "': l '" + link + "'");
-                    } catch
-                            (Exception e) {
-                        System.out.println(shortLink);
-
-                    }
-
+                    link = service.getLink(shortLink);
+//                            System.out.println(Thread.currentThread().getName() +
+//                                    ": get '" + shortLink + "': '" + link + "'");
+                    failed=false;
                 } else {
                     failed = true;
+                    System.out.println("random link null. retry");
                 }
             } while (failed);
 

@@ -3,7 +3,6 @@ package ru.ivan.linkss;
 
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
-import ru.ivan.linkss.service.KeyCreator;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -30,34 +29,9 @@ public class InitialPopulator {
 
     private static void init() {
 
-        new RedisOneDBLinkRepositoryImpl().init();
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                new KeyCreator().createShortLink(3);
-//            }
-//        },"t3").start();
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                new KeyCreator().createShortLink(2);
-//            }
-//        },"t2").start();
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                new KeyCreator().createShortLink(6);
-//            }
-//        },"t6").start();
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                new KeyCreator().createShortLink(5);
-//            }
-//        },"t5").start();
-
-        BigInteger keyCount=new KeyCreator().create(1);
+        RedisOneDBLinkRepositoryImpl redisOneDBLinkRepository = new RedisOneDBLinkRepositoryImpl();
+        redisOneDBLinkRepository.init();
+        BigInteger keyCount=redisOneDBLinkRepository.new KeyCreator().create(1);
         System.out.println(String.format("'%s' ключей добавлено",keyCount.toString()));
 
 

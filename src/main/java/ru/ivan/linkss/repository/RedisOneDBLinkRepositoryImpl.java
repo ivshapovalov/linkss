@@ -5,14 +5,11 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import ru.ivan.linkss.service.KeyCreator;
 import ru.ivan.linkss.util.Util;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,7 +50,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     public void init() {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
@@ -63,9 +60,23 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         connection.close();
     }
 
+    private StatefulRedisConnection<String, String> connect() {
+        boolean connectionFailed = true;
+        StatefulRedisConnection<String, String> connection=null;
+        do {
+            try {
+                connection = redisClient.connect();
+                connectionFailed=false;
+            } catch (Exception e) {
+                connectionFailed = true;
+            }
+        } while (connectionFailed);
+        return connection;
+    }
+
     @Override
     public List<List<String>> getShortStat() {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
         List<List<String>> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
@@ -83,7 +94,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public List<List<String>> getShortStat(String autorizedUser) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
         List<List<String>> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
@@ -101,10 +112,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public List<FullLink> getFullStat(String contextPath) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
-        syncCommands.select(DB_WORK_NUMBER);
 
+        syncCommands.select(DB_WORK_NUMBER);
         List<FullLink> fullStat = syncCommands.keys("*")
                 .stream()
                 .filter(user -> !user.startsWith("_"))
@@ -131,7 +142,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public List<FullLink> getFullStat(String userName, String contextPath) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
 
@@ -151,44 +162,80 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public String getRandomShortLink() {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
-        RedisCommands<String, String> syncCommands = connection.sync();
-        syncCommands.select(DB_WORK_NUMBER);
-        long count = syncCommands.hlen(KEY_LINKS);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        long count = 0;
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = null;
+        try {
+            syncCommands = connection.sync();
+        } catch (Exception e) {
+            System.out.println("sync:" + dateFormat.format(new Date()));
+            throw new RuntimeException();
+        }
+        try {
+            syncCommands.select(DB_WORK_NUMBER);
+            count = syncCommands.hlen(KEY_LINKS);
+        } catch (Exception e) {
+            System.out.println("select:" + dateFormat.format(new Date()));
+            throw new RuntimeException();
+        }
         if (count == 0) return "";
         Random r = new Random();
-        long randomIndex = count <= Integer.MAX_VALUE ? r.nextInt((int) count) :
-                r.longs(1, 0, count).findFirst().orElseThrow(AssertionError::new);
-        String shortLink = syncCommands.hkeys(KEY_LINKS)
-                .stream()
-                .skip(randomIndex)
-                .findFirst().get();
+        long randomIndex = 0L;
+        try {
+            randomIndex = count <= Integer.MAX_VALUE ? r.nextInt((int) count) :
+                    r.longs(1, 0, count).findFirst().orElseThrow(AssertionError::new);
+        } catch (Exception e) {
+            System.out.println("randomindex:" + dateFormat.format(new Date()));
+            throw new RuntimeException();
+        }
+        String shortLink = null;
+        try {
+            shortLink = syncCommands.hkeys(KEY_LINKS)
+                    .stream()
+                    .skip(randomIndex)
+                    .findFirst().get();
+        } catch (Exception e) {
+            System.out.println("hkeys: " + dateFormat.format(new Date()));
+            throw new RuntimeException();
+        }
 
         connection.close();
         return shortLink;
+
     }
 
     @Override
     public String createShortLink(String user, String link) {
 
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_FREELINK_NUMBER);
         String shortLink = null;
-        synchronized (redisClient) {
-            boolean failed = false;
-            do {
-                shortLink = syncCommands.randomkey();
-                syncCommands.watch(shortLink);
-                syncCommands.multi();
-                if (shortLink == null) {
-                    return null;
-                }
-                syncCommands.del(shortLink);
-                failed = syncCommands.exec().wasRolledBack();
-            } while (failed);
-        }
+        //synchronized (redisClient) {
+        boolean failed = false;
+        boolean failedOld = false;
+        do {
+            shortLink = syncCommands.randomkey();
+            syncCommands.watch(shortLink);
+            syncCommands.multi();
+            if (shortLink == null) {
+                return null;
+            }
+            syncCommands.del(shortLink);
+            if (failed) {
+                failedOld=true;
+            }
+            failed = syncCommands.exec().wasRolledBack();
+            if (failed) {
+                System.out.println("failed. shortLink=" + shortLink);
+            } else if (failedOld) {
+                System.out.println("retry. shortLink=" + shortLink);
+                failedOld=false;
+            }
+        } while (failed);
+        //}
 
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_LINKS, shortLink, link);
@@ -213,7 +260,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public void createUser(String userName, String password) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -222,7 +269,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                             "another name",
                     userName));
         }
-
         boolean failed = false;
         do {
             syncCommands.multi();
@@ -234,12 +280,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.hset(KEY_USERS, userName, password);
             failed = syncCommands.exec().wasRolledBack();
         } while (failed);
+
         connection.close();
     }
 
     @Override
     public List<User> getUsers() {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         List<User> users = syncCommands.hkeys(KEY_USERS)
@@ -256,7 +303,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public boolean checkUser(User user) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -275,7 +322,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public void deleteUserLink(User autorizedUser, String shortLink, String owner) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -304,7 +351,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public String getLink(String shortLink) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
         String link = null;
@@ -319,7 +366,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public User getUser(User autorizedUser, String userName) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -341,7 +388,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public void updateUser(User autorizedUser, User newUser, User oldUser) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -376,7 +423,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public void deleteUser(User autorizedUser, String userName) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -416,7 +463,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public BigInteger updateFreeLinks() {
-        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -447,5 +494,50 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         }
         connection.close();
         return addedKeys;
+    }
+
+    public class KeyCreator {
+
+        private char[] alphabet =
+                "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        .toCharArray();
+
+        private StatefulRedisConnection<String, String> connection;
+        private RedisCommands<String, String> syncCommands;
+        private BigInteger keyCount = BigInteger.ZERO;
+
+        public BigInteger create(final int length) {
+
+//        redisClient = RedisClient.create
+//                ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
+            connection = connect();
+            syncCommands = connection.sync();
+            syncCommands.select(DB_FREELINK_NUMBER);
+
+            long startTime = System.nanoTime();
+            char[] key = new char[length];
+            recursive(key, 0, length);
+            long endTime = System.nanoTime();
+
+            connection.close();
+            return keyCount;
+        }
+
+        private void recursive(char[] key, int index, int length) {
+            for (int j = 0; j < alphabet.length; j++) {
+                key[index] = alphabet[j];
+                if (index == length - 1) {
+                    addKey(String.valueOf(key));
+                    keyCount = keyCount.add(BigInteger.ONE);
+                } else {
+                    int nextIndex = index + 1;
+                    recursive(key, nextIndex, length);
+                }
+            }
+        }
+
+        private void addKey(String key) {
+            syncCommands.set(key, "");
+        }
     }
 }
