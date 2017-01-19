@@ -44,8 +44,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     public RedisOneDBLinkRepositoryImpl() {
     }
 
-    public void setRedisClient(RedisClient redisClient) {
-        this.redisClient = redisClient;
+    public RedisOneDBLinkRepositoryImpl(RedisClient redisClient) {
+        this.redisClient=redisClient;
     }
 
     @Override
@@ -57,6 +57,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
+        createKeys(1);
         connection.close();
     }
 

@@ -43,9 +43,8 @@ public class TestConnection {
         RedisClient redisClient = RedisClient.create
             ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
 
-        RedisOneDBLinkRepositoryImpl repository=new RedisOneDBLinkRepositoryImpl();
-        repository.setRedisClient(redisClient);
-        new InitialPopulator(repository).init();
+        RedisOneDBLinkRepositoryImpl repository=new RedisOneDBLinkRepositoryImpl(redisClient);
+        repository.init();
         service = new LinkssServiceImpl();
         service.setRepository(repository);
 
