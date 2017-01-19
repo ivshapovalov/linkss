@@ -44,6 +44,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     public RedisOneDBLinkRepositoryImpl() {
     }
 
+    public void setRedisClient(RedisClient redisClient) {
+        this.redisClient = redisClient;
+    }
+
     @Override
     public void init() {
         StatefulRedisConnection<String, String> connection = connect();
