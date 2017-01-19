@@ -42,4 +42,5 @@ public interface LinkRepository {
     BigInteger checkFreeLinksDB();
 
     BigInteger createKeys(final int length);
+
 }
