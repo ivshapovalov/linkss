@@ -50,7 +50,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
-        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf(""));
+        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
         connection.close();

@@ -2,8 +2,8 @@ package ru.ivan.linkss;
 
 
 import ru.ivan.linkss.repository.LinkRepository;
+import ru.ivan.linkss.repository.RedisLocalDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
-import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.service.LinkssServiceImpl;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static int sizeOfPool = 10;
+    private static int sizeOfPool = 5;
     private static int requests = 10000;
 
     private static LinkssServiceImpl service;
@@ -56,7 +56,19 @@ public class TestConnection {
 
 
         startTime = System.nanoTime();
+        //executeCreateInOneThread();
+        requests=10000;
+        executeCreateMultiThread();
+        endTime = System.nanoTime();
+        System.out.println(String.valueOf(requests) + " write: " + (endTime -
+                startTime) / 1000 + " millis");
+        System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
+
+
+
+        startTime = System.nanoTime();
         //executeReadInOneThread();
+
         executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
