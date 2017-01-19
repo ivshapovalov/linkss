@@ -28,6 +28,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     private static final int DB_LINK_NUMBER = 0;
 
     private static final long MIN_FREE_LINK_SIZE = 10;
+    private static final long SECONDS_IN_DAY = 3600 * 24;
 
     private static final String KEY_USERS = "_users";
     private static final String KEY_VISITS = "_visits";
@@ -56,11 +57,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     public RedisTwoDBLinkRepositoryImpl() {
     }
 
+    @Override
     public void init() {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.flushall();
@@ -70,21 +72,56 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.hset(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD, String.valueOf("30"));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
+        connectionLinks.close();
         connection.close();
     }
 
     private StatefulRedisConnection<String, String> connect() {
         boolean connectionFailed = true;
-        StatefulRedisConnection<String, String> connection=null;
+        StatefulRedisConnection<String, String> connection = null;
         do {
             try {
                 connection = redisClient.connect();
-                connectionFailed=false;
+                connectionFailed = false;
             } catch (Exception e) {
                 connectionFailed = true;
             }
         } while (connectionFailed);
         return connection;
+    }
+
+    private StatefulRedisConnection<String, String> connectLinks() {
+        boolean connectionFailed = true;
+        StatefulRedisConnection<String, String> connection = null;
+        do {
+            try {
+                connection = redisClientLinks.connect();
+                connectionFailed = false;
+            } catch (Exception e) {
+                connectionFailed = true;
+            }
+        } while (connectionFailed);
+        return connection;
+    }
+
+    @Override
+    public long getDBLinksSize() {
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+        syncCommandsLinks.select(DB_LINK_NUMBER);
+        long size = syncCommandsLinks.dbsize();
+        connectionLinks.close();
+        return size;
+    }
+
+    @Override
+    public long getDBFreeLinksSize() {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_FREELINK_NUMBER);
+        long size = syncCommands.dbsize();
+        connection.close();
+        return size;
     }
 
     @Override
@@ -127,7 +164,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     public List<FullLink> getFullStat(String contextPath) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
         syncCommands.select(DB_WORK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
@@ -152,6 +189,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 .flatMap(links -> links.stream())
                 .collect(Collectors.toList());
 
+        connectionLinks.close();
         connection.close();
         return fullStat;
     }
@@ -161,7 +199,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -177,13 +215,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                             link, visits,
                             shortLinkWithContext + ".png", userName);
                 }).collect(Collectors.toList());
+        connectionLinks.close();
         connection.close();
         return fullStat;
     }
 
     @Override
     public String getRandomShortLink() {
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
         syncCommandsLinks.select(DB_LINK_NUMBER);
         String shortLink = syncCommandsLinks.randomkey();
@@ -197,37 +236,33 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.select(DB_FREELINK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
         String shortLink = null;
-        //synchronized (redisClient) {
-        boolean failed = false;
-        boolean failedOld = false;
-        do {
-            shortLink = syncCommands.randomkey();
-            syncCommands.watch(shortLink);
-            syncCommands.multi();
-            if (shortLink == null) {
-                return null;
-            }
-            syncCommands.del(shortLink);
-            if (failed) {
-                failedOld=true;
-            }
-            failed = syncCommands.exec().wasRolledBack();
-            if (failed) {
-                System.out.println("failed. shortLink=" + shortLink);
-            } else if (failedOld) {
-                System.out.println("retry. shortLink=" + shortLink);
-                failedOld=false;
-            }
-        } while (failed);
-        //}
+        String period = syncCommands.hget(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD);
+
+        synchronized (redisClient) {
+            boolean failed = false;
+            do {
+                shortLink = syncCommands.randomkey();
+                if (shortLink == null) {
+                    failed = true;
+                } else {
+                    failed = false;
+                }
+                syncCommands.del(shortLink);
+            } while (failed);
+        }
 
         syncCommandsLinks.set(shortLink, link);
+        int days = 0;
+        if (period != null && !"".equals(period)) {
+            days = Integer.valueOf(period);
+            syncCommandsLinks.expire(shortLink, days * SECONDS_IN_DAY);
+        }
         syncCommands.select(DB_WORK_NUMBER);
 
         if (user != null && !user.equals("")) {
@@ -244,6 +279,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 syncCommands.hset(KEY_VISITS_BY_DOMAIN, domainName, "0");
             }
         }
+        connectionLinks.close();
         connection.close();
         return shortLink;
     }
@@ -260,17 +296,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     userName));
         }
 
-        boolean failed = false;
-        do {
-            syncCommands.multi();
+        synchronized (redisClient) {
             if (syncCommands.hexists(KEY_USERS, userName)) {
                 throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
                                 "another name",
                         userName));
             }
             syncCommands.hset(KEY_USERS, userName, password);
-            failed = syncCommands.exec().wasRolledBack();
-        } while (failed);
+        }
         connection.close();
     }
 
@@ -315,7 +348,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -342,6 +375,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 }
             }
         }
+        connectionLinks.close();
         connection.close();
     }
 
@@ -350,7 +384,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -360,6 +394,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.hincrby(KEY_VISITS, shortLink, 1);
         syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
 
+        connectionLinks.close();
         connection.close();
         return link;
     }
@@ -426,7 +461,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
-        StatefulRedisConnection<String, String> connectionLinks = redisClientLinks.connect();
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommands.select(DB_WORK_NUMBER);
@@ -462,11 +497,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         }
         syncCommands.hdel(KEY_USERS, userName);
 
+        connectionLinks.close();
         connection.close();
     }
 
     @Override
-    public BigInteger updateFreeLinks() {
+    public BigInteger checkFreeLinksDB() {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -475,28 +511,43 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_FREELINK_NUMBER);
         long size = syncCommands.dbsize();
         BigInteger addedKeys = BigInteger.ZERO;
-        if (size <= MIN_FREE_LINK_SIZE) {
-            String[] keys = key.split("\\|");
-            int maxKey = Arrays.asList(keys).stream()
-                    .map(p -> Integer.valueOf(p))
-                    .mapToInt(i -> i).max().getAsInt();
-
-            int newKeyLength = maxKey + 1;
-            syncCommands.select(DB_WORK_NUMBER);
-            boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
-                    (newKeyLength));
-            FutureTask<BigInteger> futureTask = new FutureTask<>(() -> new KeyCreator().create(newKeyLength));
-            ExecutorService executor = Executors.newFixedThreadPool(1);
-            executor.execute(futureTask);
-            try {
-                addedKeys = futureTask.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+        if (key != null && "".equals(key)) {
+            if (size <= MIN_FREE_LINK_SIZE) {
+                addedKeys = updateFreeLinksDB(syncCommands, key);
             }
         }
         connection.close();
+        return addedKeys;
+    }
+
+    private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, String key) {
+        BigInteger addedKeys = BigInteger.ZERO;
+        String[] keys = key.split("\\|");
+        int maxKey = Arrays.asList(keys).stream()
+                .map(p -> Integer.valueOf(p))
+                .mapToInt(i -> i).max().getAsInt();
+
+        int newKeyLength = maxKey + 1;
+        syncCommands.select(DB_WORK_NUMBER);
+        boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
+                (newKeyLength));
+        addedKeys = createKeys(newKeyLength);
+        return addedKeys;
+    }
+
+    @Override
+    public BigInteger createKeys(int length) {
+        BigInteger addedKeys = BigInteger.ZERO;
+        FutureTask<BigInteger> futureTask = new FutureTask<>(() -> new KeyCreator().create(length));
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        executor.execute(futureTask);
+        try {
+            addedKeys = futureTask.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
         return addedKeys;
     }
 

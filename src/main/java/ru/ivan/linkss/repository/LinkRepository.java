@@ -4,6 +4,13 @@ import java.math.BigInteger;
 import java.util.List;
 
 public interface LinkRepository {
+
+    void init();
+
+    long getDBLinksSize();
+
+    long getDBFreeLinksSize();
+
     String createShortLink(String autorizedUser, String link);
 
     void createUser(String userName, String password);
@@ -32,6 +39,7 @@ public interface LinkRepository {
 
     void deleteUser(User autorizedUser, String userName);
 
-    BigInteger updateFreeLinks();
+    BigInteger checkFreeLinksDB();
 
+    BigInteger createKeys(final int length);
 }

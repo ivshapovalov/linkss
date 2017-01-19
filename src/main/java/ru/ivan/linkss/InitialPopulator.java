@@ -1,6 +1,7 @@
 package ru.ivan.linkss;
 
 
+import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 
@@ -10,10 +11,16 @@ import java.net.URISyntaxException;
 
 public class InitialPopulator {
 
+    private LinkRepository repository;
+
     public static void main(String[] args) {
-        init();
-//        String domain=getDomainName("http://ya.ru/sdfasfas");
-//        System.out.println(domain);
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
+        new InitialPopulator(repository).init();
+
+    }
+
+    public InitialPopulator(LinkRepository repository) {
+        this.repository = repository;
     }
 
     public static String getDomainName(String url) {
@@ -27,11 +34,10 @@ public class InitialPopulator {
         }
     }
 
-    private static void init() {
+    public void init() {
 
-        RedisOneDBLinkRepositoryImpl redisOneDBLinkRepository = new RedisOneDBLinkRepositoryImpl();
-        redisOneDBLinkRepository.init();
-        BigInteger keyCount=redisOneDBLinkRepository.new KeyCreator().create(1);
+        repository.init();
+        BigInteger keyCount=repository.createKeys(1);
         System.out.println(String.format("'%s' ключей добавлено",keyCount.toString()));
 
 

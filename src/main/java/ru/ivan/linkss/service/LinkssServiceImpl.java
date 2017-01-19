@@ -32,13 +32,23 @@ public class LinkssServiceImpl implements LinkssService {
     public LinkssServiceImpl() {
     }
 
+    @Override
+    public long getDBLinksSize() {
+        return repository.getDBLinksSize();
+    }
+
+    @Override
+    public long getDBFreeLinksSize() {
+        return repository.getDBFreeLinksSize();
+    }
+
     public void setRepository(LinkRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public BigInteger updateFreeLinks() {
-        return repository.updateFreeLinks();
+        return repository.checkFreeLinksDB();
     }
 
 

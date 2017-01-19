@@ -37,24 +37,20 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private static final String ADMIN_PASSWORD = "admin";
 
 
-    //private RedisClient redisClient = RedisClient.createShortLink("redis://localhost:6379/0");
 //    private RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-////    private RedisClient redisClientStat = RedisClient.createShortLink
-//            ("redis://h:p7c4dd823e40671d79ccbc943c29c2f0aec03d38cc29627b165cb1f32985fd766@ec2-54-221-228-237.compute-1.amazonaws.com:18689");
-    //   private RedisClient redisClientByUsers = RedisClient.createShortLink
-//            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
     public RedisOneDBLinkRepositoryImpl() {
     }
 
+    @Override
     public void init() {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.flushall();
         syncCommands.select(DB_WORK_NUMBER);
-        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
+        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf(""));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
         connection.close();
@@ -62,16 +58,34 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     private StatefulRedisConnection<String, String> connect() {
         boolean connectionFailed = true;
-        StatefulRedisConnection<String, String> connection=null;
+        StatefulRedisConnection<String, String> connection = null;
         do {
             try {
                 connection = redisClient.connect();
-                connectionFailed=false;
+                connectionFailed = false;
             } catch (Exception e) {
                 connectionFailed = true;
             }
         } while (connectionFailed);
         return connection;
+    }
+
+    @Override
+    public long getDBLinksSize() {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_WORK_NUMBER);
+        long size = syncCommands.hlen(KEY_LINKS);
+        return size;
+    }
+
+    @Override
+    public long getDBFreeLinksSize() {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_FREELINK_NUMBER);
+        long size = syncCommands.dbsize();
+        return size;
     }
 
     @Override
@@ -213,29 +227,21 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
         syncCommands.select(DB_FREELINK_NUMBER);
         String shortLink = null;
-        //synchronized (redisClient) {
-        boolean failed = false;
-        boolean failedOld = false;
-        do {
-            shortLink = syncCommands.randomkey();
-            syncCommands.watch(shortLink);
-            syncCommands.multi();
-            if (shortLink == null) {
-                return null;
-            }
-            syncCommands.del(shortLink);
-            if (failed) {
-                failedOld=true;
-            }
-            failed = syncCommands.exec().wasRolledBack();
-            if (failed) {
-                System.out.println("failed. shortLink=" + shortLink);
-            } else if (failedOld) {
-                System.out.println("retry. shortLink=" + shortLink);
-                failedOld=false;
-            }
-        } while (failed);
-        //}
+        synchronized (redisClient) {
+            boolean failed = false;
+            do {
+                shortLink = syncCommands.randomkey();
+                if (shortLink == null) {
+                    failed = true;
+                    //System.out.println(shortLink + ":" + Thread.currentThread().getName() +
+                    //        ":ended");
+                    continue;
+                } else {
+                    failed = false;
+                }
+                syncCommands.del(shortLink);
+            } while (failed);
+        }
 
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_LINKS, shortLink, link);
@@ -269,18 +275,14 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                             "another name",
                     userName));
         }
-        boolean failed = false;
-        do {
-            syncCommands.multi();
+        synchronized (redisClient) {
             if (syncCommands.hexists(KEY_USERS, userName)) {
                 throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
                                 "another name",
                         userName));
             }
             syncCommands.hset(KEY_USERS, userName, password);
-            failed = syncCommands.exec().wasRolledBack();
-        } while (failed);
-
+        }
         connection.close();
     }
 
@@ -462,7 +464,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public BigInteger updateFreeLinks() {
+    public BigInteger checkFreeLinksDB() {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -471,28 +473,43 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_FREELINK_NUMBER);
         long size = syncCommands.dbsize();
         BigInteger addedKeys = BigInteger.ZERO;
-        if (size <= MIN_FREE_LINK_SIZE) {
-            String[] keys = key.split("\\|");
-            int maxKey = Arrays.asList(keys).stream()
-                    .map(p -> Integer.valueOf(p))
-                    .mapToInt(i -> i).max().getAsInt();
-
-            int newKeyLength = maxKey + 1;
-            syncCommands.select(DB_WORK_NUMBER);
-            boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
-                    (newKeyLength));
-            FutureTask<BigInteger> futureTask = new FutureTask<>(() -> new KeyCreator().create(newKeyLength));
-            ExecutorService executor = Executors.newFixedThreadPool(1);
-            executor.execute(futureTask);
-            try {
-                addedKeys = futureTask.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+        if (key != null && !"".equals(key)) {
+            if (size <= MIN_FREE_LINK_SIZE) {
+                addedKeys = updateFreeLinksDB(syncCommands, key);
             }
         }
         connection.close();
+        return addedKeys;
+    }
+
+    private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, String key) {
+        BigInteger addedKeys = BigInteger.ZERO;
+        String[] keys = key.split("\\|");
+        int maxKey = Arrays.asList(keys).stream()
+                .map(p -> Integer.valueOf(p))
+                .mapToInt(i -> i).max().getAsInt();
+
+        int newKeyLength = maxKey + 1;
+        syncCommands.select(DB_WORK_NUMBER);
+        boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
+                (newKeyLength));
+        addedKeys = createKeys(newKeyLength);
+        return addedKeys;
+    }
+
+    @Override
+    public BigInteger createKeys(int length) {
+        BigInteger addedKeys = BigInteger.ZERO;
+        FutureTask<BigInteger> futureTask = new FutureTask<>(() -> new KeyCreator().create(length));
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        executor.execute(futureTask);
+        try {
+            addedKeys = futureTask.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
         return addedKeys;
     }
 

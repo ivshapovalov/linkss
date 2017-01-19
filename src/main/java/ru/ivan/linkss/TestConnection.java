@@ -1,7 +1,9 @@
 package ru.ivan.linkss;
 
 
+import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.service.LinkssServiceImpl;
 
 import java.util.ArrayList;
@@ -14,8 +16,8 @@ import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static int sizeOfPool = 50;
-    private static int requests = 300000;
+    private static int sizeOfPool = 10;
+    private static int requests = 10000;
 
     private static LinkssServiceImpl service;
 
@@ -37,29 +39,32 @@ public class TestConnection {
 
     public static void main(String[] args) {
 
-        InitialPopulator.main(new String [1]);
-
+        LinkRepository repository=new RedisOneDBLinkRepositoryImpl();
+        new InitialPopulator(repository).init();
         service = new LinkssServiceImpl();
-        service.setRepository(new RedisOneDBLinkRepositoryImpl());
+        service.setRepository(repository);
 
         long startTime = System.nanoTime();
         //executeCreateInOneThread();
         executeCreateMultiThread();
+        long linksSize=service.getDBLinksSize();
+        long freeLinksSize=service.getDBFreeLinksSize();
         long endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " write: " + (endTime -
                 startTime) / 1000 + " millis");
+        System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
 
 
         startTime = System.nanoTime();
         //executeReadInOneThread();
-        //executeReadMultiThread();
+        executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        //executeCreateReadMultiThread();
+        executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
@@ -139,8 +144,8 @@ public class TestConnection {
             String link = getRandomDomain() + "/" + number;
             String shortLink = service.createShortLink("user", link);
             if (shortLink == null) {
-//                    System.out.println(Thread.currentThread().getName() +
-//                            ": free short links ended ");
+                    System.out.println(Thread.currentThread().getName() +
+                            ": free short links ended ");
 //            } else {
 //                    System.out.println(Thread.currentThread().getName() +
 //                           ": create '" + shortLink + "' - link '" + link + "'");
