@@ -222,7 +222,7 @@ public class MainController {
     public String updateuserlink(Model model,
                                  @ModelAttribute("key") String shortLink,
                                  @ModelAttribute("owner") String owner,
-                                 @ModelAttribute("days") long days,
+                                 @ModelAttribute("days") Long days,
                                  HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.getUserName().equals("")) {

@@ -25,8 +25,7 @@
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a></td>
                 <td width="10%"><a href="/actions/deleteuserlink?key=${column.getKey()}&owner=${column.getUserName()}">Delete
-                <td width="10%"><a href="/actions/updateuserlink?key=${column.getKey()}&owner
-                =${column.getUserName()}&days=${column.getDays()}">Delete
+                <td width="10%"><a href="/actions/updateuserlink?key=${column.getKey()}&owner=${column.getUserName()}&days=${days}">Update
                 </a></td>
             </tr>
         </c:forEach>
