@@ -4,17 +4,14 @@ package ru.ivan.linkss;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.Assert;
+import org.junit.*;
 
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class RepositoryTest {
 
     private static final LinkRepository repository=new RedisOneDBLinkRepositoryImpl();

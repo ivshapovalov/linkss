@@ -36,8 +36,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private static final String ADMIN_USER = "admin";
     private static final String ADMIN_PASSWORD = "admin";
 
-
-//    private RedisClient redisClient = RedisClient.create
+   // private RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
     private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
