@@ -111,24 +111,6 @@ public class RedisLocalDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<List<String>> getShortStat(String autorizedUser) {
-        StatefulRedisConnection<String, String> connection = connect();
-        RedisCommands<String, String> syncCommands = connection.sync();
-        syncCommands.select(DB_WORK_NUMBER);
-        List<List<String>> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
-                .stream()
-                .map(domain -> {
-                    List<String> l = new ArrayList<>();
-                    String count = syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain);
-                    l.add(domain);
-                    l.add(count);
-                    return l;
-                }).collect(Collectors.toList());
-        connection.close();
-        return shortStat;
-    }
-
-    @Override
     public List<FullLink> getFullStat(String contextPath) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
@@ -161,7 +143,7 @@ public class RedisLocalDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<FullLink> getFullStat(String userName, String contextPath) {
+    public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);

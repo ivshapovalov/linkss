@@ -1,6 +1,7 @@
 package ru.ivan.linkss.repository;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 
 public interface LinkRepository {
@@ -21,11 +22,12 @@ public interface LinkRepository {
 
     List<List<String>> getShortStat();
 
-    List<List<String>> getShortStat(String autorizedUser);
-
     List<FullLink> getFullStat(String contextPath);
 
-    List<FullLink> getFullStat(String userName, String contextPath);
+    default List<FullLink> getFullStat(String userName, String contextPath, int offset, int
+            recordsOnPage){
+        return Collections.emptyList();
+    };
 
     boolean checkUser(User user);
 
@@ -47,4 +49,6 @@ public interface LinkRepository {
             days) {
 
     };
+
+    default long getUserLinksSize(User autorizedUser, String owner) {return 0;};
 }

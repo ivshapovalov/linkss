@@ -20,11 +20,9 @@ public interface LinkssService {
 
     List<List<String>> getShortStat();
 
-    List<List<String>> getShortStat(String autorizedUser);
-
     List<FullLink> getFullStat(String contextPath);
 
-    List<FullLink> getFullStat(String userName,String contextPath);
+    List<FullLink> getFullStat(String userName,String contextPath, int offset, int recordsOnPage);
 
     void createQRImage(String path,String shortLink, String fullShortLink) throws
             WriterException,
@@ -49,4 +47,6 @@ public interface LinkssService {
     long getDBFreeLinksSize();
 
     void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
+
+    long getUserLinksSize(User autorizedUser, String owner);
 }

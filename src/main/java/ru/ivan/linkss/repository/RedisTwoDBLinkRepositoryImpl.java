@@ -148,24 +148,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<List<String>> getShortStat(String autorizedUser) {
-        StatefulRedisConnection<String, String> connection = connect();
-        RedisCommands<String, String> syncCommands = connection.sync();
-        syncCommands.select(DB_WORK_NUMBER);
-        List<List<String>> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
-                .stream()
-                .map(domain -> {
-                    List<String> l = new ArrayList<>();
-                    String count = syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain);
-                    l.add(domain);
-                    l.add(count);
-                    return l;
-                }).collect(Collectors.toList());
-        connection.close();
-        return shortStat;
-    }
-
-    @Override
     public List<FullLink> getFullStat(String contextPath) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
@@ -184,9 +166,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                 String shortLinkWithContext = contextPath + shortLink;
                                 String visits = syncCommands.hget(KEY_VISITS, shortLink);
 
-                                    return new FullLink(shortLink, shortLinkWithContext,
-                                            link, visits,
-                                            shortLinkWithContext + ".png", user);
+                                return new FullLink(shortLink, shortLinkWithContext,
+                                        link, visits,
+                                        shortLinkWithContext + ".png", user);
                             }).collect(Collectors.toList());
 
                     return links;
@@ -200,7 +182,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<FullLink> getFullStat(String userName, String contextPath) {
+    public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -211,6 +193,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommandsLinks.select(DB_LINK_NUMBER);
         List<FullLink> fullStat = syncCommands.hkeys(userName)
                 .stream()
+                .sorted()
+                .skip(offset)
+                .limit(recordsOnPage)
                 .map(shortLink -> {
                     String link = syncCommandsLinks.get(shortLink);
                     String shortLinkWithContext = contextPath + shortLink;
@@ -223,7 +208,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     } else {
                         return new FullLink(shortLink, shortLinkWithContext,
                                 link, visits,
-                                shortLinkWithContext + ".png", userName, pttl/1000/SECONDS_IN_DAY);
+                                shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY);
                     }
 
                 }).collect(Collectors.toList());
@@ -231,7 +216,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         connection.close();
         return fullStat;
     }
-
 
 
     @Override
@@ -263,6 +247,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             boolean failed = false;
             do {
                 shortLink = syncCommands.randomkey();
+                //shortLink = link;
                 if (shortLink == null) {
                     failed = true;
                 } else {
@@ -418,7 +403,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         if (link != null) {
             synchronized (redisClient) {
                 synchronized (redisClientLinks) {
-                    syncCommandsLinks.expire(shortLink,days*SECONDS_IN_DAY);
+                    syncCommandsLinks.expire(shortLink, days * SECONDS_IN_DAY);
                 }
             }
         }
@@ -546,6 +531,34 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         connectionLinks.close();
         connection.close();
+    }
+
+    @Override
+    public long getUserLinksSize(User autorizedUser, String owner) {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, owner)) {
+            throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
+                    owner));
+        }
+//        if (syncCommands.exists(owner) != 1) {
+////            throw new RuntimeException(String.format("User '%s' do not have links. Try another " +
+////                            "name",
+////                    owner))
+//
+//                    ;
+//        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                            "watch user link",
+                    autorizedUser.getUserName()));
+
+        }
+        long size=syncCommands.hlen(owner);
+        connection.close();
+        return size;
     }
 
     @Override

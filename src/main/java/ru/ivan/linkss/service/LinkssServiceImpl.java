@@ -115,17 +115,17 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
-    public List<List<String>> getShortStat(String autorizedUser ) {
-        return repository.getShortStat(autorizedUser);
-    }
-
-    @Override
     public List<FullLink> getFullStat(String contextPath) {
         return repository.getFullStat(contextPath);
     }
     @Override
-    public List<FullLink> getFullStat(String userName, String contextPath) {
-        return repository.getFullStat(userName, contextPath );
+    public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
+        return repository.getFullStat(userName, contextPath, offset, recordsOnPage );
+    }
+
+    @Override
+    public long getUserLinksSize(User autorizedUser, String owner) {
+        return repository.getUserLinksSize(autorizedUser,owner);
     }
 
     private void sendFileToS3(String fileName) {

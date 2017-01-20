@@ -408,7 +408,8 @@ public class MainController {
             if (p.endsWith(cp)) {
                 contextPath = p.substring(0, p.length() - cp.length() + 1);
             }
-            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(), contextPath);
+            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
+                    contextPath,1,1);
             model.addAttribute("fullStat", fullStat);
         }
         return "statistics";
@@ -419,12 +420,18 @@ public class MainController {
                         @ModelAttribute("owner") String owner,
                         HttpServletRequest request,
                         HttpSession session) {
-
+        int currentPage = 1;
+        int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, statistics available only for logged users!");
             return "error";
         }
+
+        if (request.getParameter("page") != null) {
+            currentPage = Integer.parseInt(request.getParameter("page"));
+        }
+
         String p = request.getRequestURL().toString();
         String cp = request.getServletPath();
 
@@ -432,8 +439,21 @@ public class MainController {
         if (p.endsWith(cp)) {
             contextPath = p.substring(0, p.length() - cp.length() + 1);
         }
-        List<FullLink> fullStat = service.getFullStat(owner, contextPath);
-        model.addAttribute("fullStat", fullStat);
+        int offset=(currentPage-1) * recordsOnPage;
+        List<FullLink> list = service.getFullStat(owner, contextPath,offset,recordsOnPage);
+        long productCount = (int) service.getUserLinksSize(autorizedUser,owner);
+        if (productCount == 0) {
+            model.addAttribute("message", "Sorry, User don't have links. Try another!");
+            return "error";
+        }
+        int numberOfPages = (int) Math.ceil(productCount / recordsOnPage);
+
+        model.addAttribute("list", list);
+        model.addAttribute("numberOfPages", numberOfPages);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("productCount", productCount);
+        model.addAttribute("owner", owner);
+
 
         return "links";
     }

@@ -41,13 +41,15 @@ public class TestConnection {
 
     public static void main(String[] args) {
 
-        RedisClient redisClient = RedisClient.create
-            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-       RedisClient redisClientLinks = RedisClient.create
-            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
+//        RedisClient redisClient = RedisClient.create
+//            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
+//       RedisClient redisClientLinks = RedisClient.create
+//            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
        // RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
-        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,redisClientLinks);
+        //RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
+        //        redisClientLinks);
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
         repository.init();
         service = new LinkssServiceImpl();
         service.setRepository(repository);
@@ -66,14 +68,14 @@ public class TestConnection {
         startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        //executeReadMultiThread();
+        executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        //executeCreateReadMultiThread();
+        executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
