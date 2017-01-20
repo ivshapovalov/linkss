@@ -47,4 +47,6 @@ public interface LinkssService {
     long getDBLinksSize();
 
     long getDBFreeLinksSize();
+
+    void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
 }

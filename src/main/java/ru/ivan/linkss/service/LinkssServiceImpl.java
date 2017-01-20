@@ -26,10 +26,15 @@ import java.util.List;
 public class LinkssServiceImpl implements LinkssService {
 
     @Autowired
-    @Qualifier(value = "repositoryOne")
+    @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
 
     public LinkssServiceImpl() {
+    }
+
+    @Override
+    public void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days) {
+        repository.updateUserLinkDays(autorizedUser, shortLink, owner,days);
     }
 
     @Override

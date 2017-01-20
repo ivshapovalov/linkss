@@ -43,4 +43,8 @@ public interface LinkRepository {
 
     BigInteger createKeys(final int length);
 
+    default void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long
+            days) {
+
+    };
 }

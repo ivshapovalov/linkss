@@ -57,6 +57,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     public RedisTwoDBLinkRepositoryImpl() {
     }
 
+    public RedisTwoDBLinkRepositoryImpl(RedisClient redisClient, RedisClient redisClientLinks) {
+        this.redisClient = redisClient;
+        this.redisClientLinks = redisClientLinks;
+    }
+
     @Override
     public void init() {
         StatefulRedisConnection<String, String> connection = connect();
@@ -168,7 +173,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
         syncCommands.select(DB_WORK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
-
         List<FullLink> fullStat = syncCommands.keys("*")
                 .stream()
                 .filter(user -> !user.startsWith("_"))
@@ -179,9 +183,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                 String link = syncCommandsLinks.get(shortLink);
                                 String shortLinkWithContext = contextPath + shortLink;
                                 String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                                return new FullLink(shortLink, shortLinkWithContext,
-                                        link, visits,
-                                        shortLinkWithContext + ".png", user);
+
+                                    return new FullLink(shortLink, shortLinkWithContext,
+                                            link, visits,
+                                            shortLinkWithContext + ".png", user);
                             }).collect(Collectors.toList());
 
                     return links;
@@ -204,21 +209,30 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         syncCommands.select(DB_WORK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
-
         List<FullLink> fullStat = syncCommands.hkeys(userName)
                 .stream()
                 .map(shortLink -> {
                     String link = syncCommandsLinks.get(shortLink);
                     String shortLinkWithContext = contextPath + shortLink;
                     String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                    return new FullLink(shortLink, shortLinkWithContext,
-                            link, visits,
-                            shortLinkWithContext + ".png", userName);
+                    long pttl = syncCommandsLinks.pttl(shortLink);
+                    if (pttl < 0) {
+                        return new FullLink(shortLink, shortLinkWithContext,
+                                link, visits,
+                                shortLinkWithContext + ".png", userName);
+                    } else {
+                        return new FullLink(shortLink, shortLinkWithContext,
+                                link, visits,
+                                shortLinkWithContext + ".png", userName, pttl/1000/SECONDS_IN_DAY);
+                    }
+
                 }).collect(Collectors.toList());
         connectionLinks.close();
         connection.close();
         return fullStat;
     }
+
+
 
     @Override
     public String getRandomShortLink() {
@@ -373,6 +387,38 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
                     syncCommandsLinks.del(shortLink);
                     syncCommands.hdel(owner, shortLink);
+                }
+            }
+        }
+        connectionLinks.close();
+        connection.close();
+    }
+
+    @Override
+    public void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days) {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+        syncCommands.select(DB_WORK_NUMBER);
+        syncCommandsLinks.select(DB_LINK_NUMBER);
+        if (!syncCommands.hexists(KEY_USERS, autorizedUser.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is not exists",
+                    autorizedUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            if (!syncCommands.hexists(autorizedUser.getUserName(), shortLink)) {
+                throw new RuntimeException(String.format("User '%s' does not have link '%s'",
+                        autorizedUser.getUserName(), shortLink));
+            }
+        }
+        String link = syncCommandsLinks.get(shortLink);
+        if (link != null) {
+            synchronized (redisClient) {
+                synchronized (redisClientLinks) {
+                    syncCommandsLinks.expire(shortLink,days*SECONDS_IN_DAY);
                 }
             }
         }

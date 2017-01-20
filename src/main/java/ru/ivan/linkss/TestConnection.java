@@ -5,6 +5,7 @@ import com.lambdaworks.redis.RedisClient;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisLocalDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.service.LinkssServiceImpl;
 
 import java.util.ArrayList;
@@ -17,8 +18,8 @@ import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static int sizeOfPool = 5;
-    private static int requests = 10000;
+    private static int sizeOfPool = 4;
+    private static int requests = 1000;
 
     private static LinkssServiceImpl service;
 
@@ -40,11 +41,13 @@ public class TestConnection {
 
     public static void main(String[] args) {
 
-//        RedisClient redisClient = RedisClient.create
-//            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-        //RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+        RedisClient redisClient = RedisClient.create
+            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
+       RedisClient redisClientLinks = RedisClient.create
+            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
+       // RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
-        RedisOneDBLinkRepositoryImpl repository=new RedisOneDBLinkRepositoryImpl();
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,redisClientLinks);
         repository.init();
         service = new LinkssServiceImpl();
         service.setRepository(repository);
@@ -61,26 +64,16 @@ public class TestConnection {
 
 
         startTime = System.nanoTime();
-        //executeCreateInOneThread();
-        executeCreateMultiThread();
-        endTime = System.nanoTime();
-        System.out.println(String.valueOf(requests) + " write: " + (endTime -
-                startTime) / 1000 + " millis");
-        System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
-
-
-
-        startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        executeReadMultiThread();
+        //executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        executeCreateReadMultiThread();
+        //executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");

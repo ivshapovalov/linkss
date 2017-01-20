@@ -9,6 +9,18 @@ public class FullLink {
     private String count;
     private String imageLink;
     private String userName;
+    private long days;
+
+    public FullLink(String key, String shortLink, String link, String count, String imageLink,
+                    String userName,long days) {
+        this.key=key;
+        this.shortLink = shortLink;
+        this.link = link;
+        this.count = count;
+        this.imageLink = imageLink;
+        this.userName = userName;
+        this.days = days;
+    }
 
     public FullLink(String key, String shortLink, String link, String count, String imageLink,
                     String userName) {
@@ -18,6 +30,10 @@ public class FullLink {
         this.count = count;
         this.imageLink = imageLink;
         this.userName = userName;
+    }
+
+    public long getDays() {
+        return days;
     }
 
     public String getKey() {

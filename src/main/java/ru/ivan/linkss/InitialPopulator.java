@@ -14,7 +14,7 @@ public class InitialPopulator {
     private LinkRepository repository;
 
     public static void main(String[] args) {
-        RedisOneDBLinkRepositoryImpl repository=new RedisOneDBLinkRepositoryImpl();
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
         new InitialPopulator(repository).init();
 
     }

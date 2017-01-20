@@ -217,6 +217,38 @@ public class MainController {
         }
     }
 
+    @RequestMapping(value = {"/actions/updateuserlink"}, method =
+            RequestMethod.GET)
+    public String updateuserlink(Model model,
+                                 @ModelAttribute("key") String shortLink,
+                                 @ModelAttribute("owner") String owner,
+                                 @ModelAttribute("days") long days,
+                                 HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "User is not defined!");
+            return "error";
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute("message", "Link owner is not defined!");
+            return "error";
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute("message", "Link is not defined!");
+            return "error";
+        }
+
+        try {
+            service.updateUserLinkDays(autorizedUser, shortLink, owner,days);
+            model.addAttribute("key", null);
+            model.addAttribute("owner", null);
+            return "redirect:/actions/links?owner=" + owner;
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+
     @RequestMapping(value = {"/actions/users"}, method =
             RequestMethod.GET)
     public String editUser(Model model,
