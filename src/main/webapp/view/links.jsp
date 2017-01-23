@@ -132,14 +132,15 @@
         <c:forEach items="${list}" var="column">
             <tr>
                 <td width="40%"><a href="${column.getLink()}">${column.getLink()}</a></td>
-                <td width="10%"><input type="text" name="days" value=${column.getDays()}></td>
+                <td width="10%">${column.getDays()}</td>
                 <td width="10%">${column.getCount()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a>
                 </td>
                 <td width="10%"><a
-                        href="/actions/deleteuserlink?key=${column.getKey()}&owner=${column.getUserName()}">Delete
+                        href="/actions/user/${column.getUserName()}/links/delete/?key=${column.getKey()}">Delete
+                </a></td>
                 <td width="10%"><a
-                        href="/actions/updateuserlink?key=${column.getKey()}&owner=${column.getUserName()}&days=${days}">Update
+                        href="/actions/user/${column.getUserName()}/links/edit/?key=${column.getKey()}">Edit
                 </a></td>
             </tr>
         </c:forEach>

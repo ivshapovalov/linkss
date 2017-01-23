@@ -18,6 +18,8 @@ public interface LinkssService {
 
     String getLink(String shortLink);
 
+    long getLinkDays(String shortLink);
+
     List<List<String>> getShortStat();
 
     List<FullLink> getFullStat(String contextPath);
@@ -49,4 +51,5 @@ public interface LinkssService {
     void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
 
     long getUserLinksSize(User autorizedUser, String owner);
+
 }

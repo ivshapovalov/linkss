@@ -165,7 +165,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                 String link = syncCommandsLinks.get(shortLink);
                                 String shortLinkWithContext = contextPath + shortLink;
                                 String visits = syncCommands.hget(KEY_VISITS, shortLink);
-
                                 return new FullLink(shortLink, shortLinkWithContext,
                                         link, visits,
                                         shortLinkWithContext + ".png", user);
@@ -424,11 +423,26 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         String link = syncCommandsLinks.get(shortLink);
         syncCommands.hincrby(KEY_VISITS, shortLink, 1);
-        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
+        if (link != null && !link.equals("")) {
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
+        }
 
         connectionLinks.close();
         connection.close();
         return link;
+    }
+
+    @Override
+    public long getLinkDays(String shortLink) {
+
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+        syncCommandsLinks.select(DB_LINK_NUMBER);
+        long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY;
+
+        connectionLinks.close();
+        return days;
     }
 
     @Override
@@ -556,7 +570,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     autorizedUser.getUserName()));
 
         }
-        long size=syncCommands.hlen(owner);
+        long size = syncCommands.hlen(owner);
         connection.close();
         return size;
     }

@@ -11,6 +11,7 @@ public class User {
     private long linkNumber;
 
     public User() {
+
     }
 
     public User(String userName, String password) {

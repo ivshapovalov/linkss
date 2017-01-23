@@ -105,6 +105,11 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public long getLinkDays(String shortLink) {
+        return repository.getLinkDays(shortLink);
+    }
+
+    @Override
     public void deleteUserLink(User user, String shortLink, String owner) {
         repository.deleteUserLink(user,shortLink, owner);
     }

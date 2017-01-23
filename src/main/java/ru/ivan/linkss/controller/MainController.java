@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -68,18 +67,18 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = "/actions/registration", method = RequestMethod.GET)
+    @RequestMapping(value = "/actions/signup", method = RequestMethod.GET)
     public String registration(Model model, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         model.addAttribute("user", new User());
-        return "registration";
+        return "signup";
     }
 
-    @RequestMapping(value = "/actions/signin", method = RequestMethod.GET)
+    @RequestMapping(value = "/actions/login", method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
         model.addAttribute("user", new User());
-        return "signin";
+        return "login";
     }
 
     @RequestMapping(value = "/actions/logout", method = RequestMethod.GET)
@@ -107,8 +106,7 @@ public class MainController {
     public String register(Model model,
                            @ModelAttribute("user") User user,
                            HttpServletRequest request,
-                           HttpSession session,
-                           final BindingResult binding) {
+                           HttpSession session) {
         try {
             service.createUser(user.getUserName(), user.getPassword());
         } catch (RuntimeException e) {
@@ -136,7 +134,7 @@ public class MainController {
                 return "error";
             }
         }
-        return "signin";
+        return "login";
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {
@@ -185,7 +183,7 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = {"/actions/deleteuserlink"}, method =
+    @RequestMapping(value = {"/actions/user/{owner}/links/delete"}, method =
             RequestMethod.GET)
     public String deleteuserlink(Model model,
                                  @ModelAttribute("key") String shortLink,
@@ -217,13 +215,13 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = {"/actions/updateuserlink"}, method =
+    @RequestMapping(value = {"/actions/user/{owner}/links/edit"}, method =
             RequestMethod.GET)
     public String updateuserlink(Model model,
                                  @ModelAttribute("key") String shortLink,
                                  @ModelAttribute("owner") String owner,
-                                 @ModelAttribute("days") Long days,
-                                 HttpSession session) {
+                                 HttpSession session,
+                                 HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
@@ -239,10 +237,15 @@ public class MainController {
         }
 
         try {
-            service.updateUserLinkDays(autorizedUser, shortLink, owner,days);
-            model.addAttribute("key", null);
-            model.addAttribute("owner", null);
-            return "redirect:/actions/links?owner=" + owner;
+            String link=service.getLink(shortLink);
+            String contextPath=getContextPath(request);
+            FullLink fullLink=new FullLink(shortLink,contextPath+shortLink,link,
+                    "",contextPath+shortLink+".png",
+                    owner,service.getLinkDays(shortLink));
+            model.addAttribute("fullLink", fullLink);
+            model.addAttribute("oldFullLink", fullLink);
+            model.addAttribute("owner", owner);
+            return "link";
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
@@ -345,6 +348,36 @@ public class MainController {
         }
     }
 
+    @RequestMapping(value = {"/actions/link"}, method =
+            RequestMethod.POST)
+    public String updateUser(Model model,
+                             @ModelAttribute("fullLink") FullLink fullLink,
+                             @ModelAttribute("oldFullLink") FullLink oldFullLink,
+                             @ModelAttribute("owner") String owner,
+                             HttpSession session) {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute("message", "Autorized user is not defined!");
+            return "error";
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute("message", "Link owner is not defined!");
+            return "error";
+        }
+        if (fullLink == null) {
+            model.addAttribute("message", "Link is not defined!");
+            return "error";
+        }
+        try {
+            //TODO сравнить сущности, произвести действия
+            String message=updateLink(oldFullLink,fullLink);
+            return "redirect:links";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public String createShortLink(Model model, HttpSession session,
                                   HttpServletRequest request) {
@@ -390,29 +423,28 @@ public class MainController {
         }
         if (autorizedUser.isAdmin()) {
             List<List<String>> shortStat = service.getShortStat();
-            String p = request.getRequestURL().toString();
-            String cp = request.getServletPath();
-
-            String contextPath = "";
-            if (p.endsWith(cp)) {
-                contextPath = p.substring(0, p.length() - cp.length() + 1);
-            }
+            String contextPath = getContextPath(request);
             List<FullLink> fullStat = service.getFullStat(contextPath);
             model.addAttribute("shortStat", shortStat);
             model.addAttribute("fullStat", fullStat);
         } else {
-            String p = request.getRequestURL().toString();
-            String cp = request.getServletPath();
-
-            String contextPath = "";
-            if (p.endsWith(cp)) {
-                contextPath = p.substring(0, p.length() - cp.length() + 1);
-            }
+            String contextPath = getContextPath(request);
             List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
                     contextPath,1,1);
             model.addAttribute("fullStat", fullStat);
         }
         return "statistics";
+    }
+
+    private String getContextPath(HttpServletRequest request) {
+        String p = request.getRequestURL().toString();
+        String cp = request.getServletPath();
+
+        String contextPath = "";
+        if (p.endsWith(cp)) {
+            contextPath = p.substring(0, p.length() - cp.length() + 1);
+        }
+        return contextPath;
     }
 
     @RequestMapping(value = "/actions/links", method = RequestMethod.GET)
@@ -432,13 +464,7 @@ public class MainController {
             currentPage = Integer.parseInt(request.getParameter("page"));
         }
 
-        String p = request.getRequestURL().toString();
-        String cp = request.getServletPath();
-
-        String contextPath = "";
-        if (p.endsWith(cp)) {
-            contextPath = p.substring(0, p.length() - cp.length() + 1);
-        }
+        String contextPath = getContextPath(request);
         int offset=(currentPage-1) * recordsOnPage;
         List<FullLink> list = service.getFullStat(owner, contextPath,offset,recordsOnPage);
         long productCount = (int) service.getUserLinksSize(autorizedUser,owner);
@@ -456,6 +482,37 @@ public class MainController {
 
 
         return "links";
+    }
+
+    public String updateLink(FullLink oldFullLink, FullLink newFullLink) {
+        String newKey=newFullLink.getKey();
+        String oldKey=newFullLink.getKey();
+        StringBuilder message=new StringBuilder();
+        if(oldKey==null || "".equals(oldKey)) {
+            message.append("Updated link has empty key").append("\r\n");
+        }
+        if(newKey==null || "".equals(newKey)) {
+            message.append("New link has empty key").append("\r\n");
+        }
+        if(oldFullLink.getUserName()==null || "".equals(oldFullLink.getUserName())) {
+            message.append("Updated link has empty user").append("\r\n");
+        }
+        if(newFullLink.getUserName()==null || "".equals(newFullLink.getUserName())) {
+            message.append("New link has empty user").append("\r\n");
+        }
+        if (message.equals("")) {
+            return message.toString();
+        }
+        if(newKey.equals(oldKey)) {
+            message.append("New link has empty key").append("\r\n");
+            service.updateLink(newFullLink);
+        } else {
+            service.updateLink(newFullLink);
+
+        }
+
+        return message.toString();
+
     }
 
 }

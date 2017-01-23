@@ -51,4 +51,8 @@ public interface LinkRepository {
     };
 
     default long getUserLinksSize(User autorizedUser, String owner) {return 0;};
+
+    default long getLinkDays(String shortLink) {
+       return  0;
+    }
 }

@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
 <head>
-    <title>Linkss</title>
+    <title>SQLCmd</title>
 </head>
 <body>
 <B>
