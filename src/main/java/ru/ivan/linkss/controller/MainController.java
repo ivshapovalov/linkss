@@ -505,9 +505,9 @@ public class MainController {
         }
         if(newKey.equals(oldKey)) {
             message.append("New link has empty key").append("\r\n");
-            service.updateLink(newFullLink);
+            //service.updateLink(newFullLink);
         } else {
-            service.updateLink(newFullLink);
+            //service.updateLink(newFullLink);
 
         }
 

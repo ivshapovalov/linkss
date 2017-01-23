@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
@@ -20,7 +20,7 @@
             </td>
             <td>
                 <c:choose>
-                    <c:when test="${currentPage lt 6}">
+                    <c:when test="${currentPage lt 7}">
                         <button disabled="disabled"> << </button>
                     </c:when>
                     <c:otherwise>
@@ -45,7 +45,7 @@
                 </c:choose>
             </td>
             <c:choose>
-                <c:when test="${currentPage-3 lt 0}">
+                <c:when test="${currentPage-3 lt 1}">
                     <c:set var="min" value="1"></c:set>
                 </c:when>
                 <c:otherwise>

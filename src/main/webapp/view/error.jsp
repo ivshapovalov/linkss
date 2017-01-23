@@ -5,8 +5,9 @@
         <title>Linkss</title>
     </head>
     <body>
-        Something wrong: ${message}<br>
+    <%@include file="header.jsp" %>
 
+    Something wrong: ${message}<br>
     </body>
 
 </html>
