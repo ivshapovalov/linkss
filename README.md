@@ -1,10 +1,10 @@
 Short link repo service
 ===============================
 
-####DB client:lettuce
-####WEB:Servlet + Spring web + Spring MVC
-####Other:zxing QR code
 ####DB: Redis
+####DB client:lettuce
+####WEB:Servlet + Spring MVC
+####Other:zxing QR code
 
 
 ####REDIS DB 1

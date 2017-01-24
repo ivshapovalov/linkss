@@ -169,7 +169,7 @@ public class LinkssServiceImpl implements LinkssService {
     public void createQRImage(String path, String shortLink, String fullShortLink) throws WriterException,
             IOException {
 
-        String filePath = path + shortLink + ".png";
+        String filePath = path +"resources//" +shortLink + ".png";
         int size = 125;
         String fileType = "png";
         File qrFile = new File(filePath);

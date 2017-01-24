@@ -21,7 +21,7 @@
             <td>
                 <c:choose>
                     <c:when test="${currentPage lt 7}">
-                        <button disabled="disabled"> << </button>
+                        <button disabled="disabled"> <<</button>
                     </c:when>
                     <c:otherwise>
                         <button
@@ -34,7 +34,7 @@
             <td>
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
-                        <button disabled="disabled"> < </button>
+                        <button disabled="disabled"> <</button>
                     </c:when>
                     <c:otherwise>
                         <button
@@ -53,8 +53,15 @@
                 </c:otherwise>
             </c:choose>
             <c:choose>
-                <c:when test="${currentPage+3 gt numberOfPages}">
-                    <c:set var="min" value="${numberOfPages-6}"></c:set>
+                <c:when test="${currentPage+6 gt numberOfPages}">
+                    <c:choose>
+                        <c:when test="${currentPage-6 lt 0}">
+                            <c:set var="min" value="1"></c:set>
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="min" value="${numberOfPages-6}"></c:set>
+                        </c:otherwise>
+                    </c:choose>
                     <c:set var="max" value="${numberOfPages}"></c:set>
                 </c:when>
                 <c:otherwise>
@@ -85,7 +92,7 @@
             <td>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
-                        <button disabled="disabled"> > </button>
+                        <button disabled="disabled"> ></button>
                     </c:when>
                     <c:otherwise>
                         <button
@@ -98,7 +105,7 @@
             <td>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
-                        <button disabled="disabled"> >> </button>
+                        <button disabled="disabled"> >></button>
                     </c:when>
                     <c:otherwise>
                         <button
@@ -118,7 +125,7 @@
         </tr>
     </table>
 
-   <br>
+    <br>
 
     <table border="1" width="50%">
         <tr>

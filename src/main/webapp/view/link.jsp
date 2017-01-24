@@ -10,7 +10,7 @@
 <%@include file="header.jsp" %>
 
 <B>
-    Link ${fullLink.getKey()}
+    Link '${fullLink.getKey()}'
 </B>
 <br><br>
 

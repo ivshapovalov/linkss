@@ -23,7 +23,7 @@ import java.util.List;
 
 @Controller
 @EnableScheduling
-public class MainController {
+public class LinksController {
 
     private static final String DEFAULT_USER = "user";
     private static final String ACTION_EDIT = "edit";
@@ -54,7 +54,7 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = "*.png", method = RequestMethod.GET)
+    @RequestMapping(value = "/resources/*.png", method = RequestMethod.GET)
     public void openImage(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
@@ -405,7 +405,7 @@ public class MainController {
             e.printStackTrace();
         }
         model.addAttribute("user", autorizedUser);
-        model.addAttribute("filename", shortLink + ".png");
+        model.addAttribute("image", "/resources/"+shortLink + ".png");
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
 
@@ -472,7 +472,7 @@ public class MainController {
             model.addAttribute("message", "Sorry, User don't have links. Try another!");
             return "error";
         }
-        int numberOfPages = (int) Math.ceil(productCount / recordsOnPage);
+        int numberOfPages = Math.max(1,(int) Math.ceil((double)productCount / recordsOnPage));
 
         model.addAttribute("list", list);
         model.addAttribute("numberOfPages", numberOfPages);

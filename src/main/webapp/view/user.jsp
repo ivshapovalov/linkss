@@ -7,7 +7,7 @@
 <body>
 <%@include file="header.jsp" %>
 <B>
-    User ${user.getUserName()}
+    User '${user.getUserName()}'
 </B>
 <br><br>
 <form action="/actions/user" method="post">
