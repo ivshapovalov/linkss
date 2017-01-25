@@ -168,7 +168,7 @@ public class TestConnection {
             boolean failed = true;
             do {
                 String shortLink = service.getRandomShortLink();
-                if (shortLink != null && !"".equals(shortLink)) {
+                if (!"".equals(shortLink)) {
                     String link = null;
                     link = service.getLink(shortLink);
 //                            System.out.println(Thread.currentThread().getName() +

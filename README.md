@@ -3,7 +3,7 @@ Short link repo service
 
 ####DB: Redis
 ####DB client:lettuce
-####WEB:Servlet + Spring MVC
+####WEB:JSP + Spring MVC
 ####Other:zxing QR code
 
 

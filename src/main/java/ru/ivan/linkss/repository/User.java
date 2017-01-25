@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class User implements Serializable{
     private String userName;
-    private String password;
+    private String password="";
     private boolean isAdmin;
     private boolean isEmpty=true;
     private long linkNumber;

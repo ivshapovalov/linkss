@@ -23,7 +23,7 @@ public class ScheduledTasks {
 //                dateFormat.format(new Date())));
         long startTime = System.nanoTime();
         BigInteger addedKeys = service.updateFreeLinks();
-        if (!addedKeys.equals(BigInteger.ZERO)) {
+        if (!BigInteger.ZERO.equals(addedKeys)) {
             long endTime = System.nanoTime();
 
             System.out.println(String.format("%s. Free link DB updated by %s keys in %s seconds",

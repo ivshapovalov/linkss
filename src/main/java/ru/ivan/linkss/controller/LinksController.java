@@ -160,7 +160,7 @@ public class LinksController {
     public String login(Model model,
                         @ModelAttribute("user") User user,
                         HttpSession session) {
-        if (user != null && !user.getUserName().equals("") && !user.getPassword().equals("")) {
+        if (user != null && user.getUserName()!=null && !user.getUserName().equals("") && user.getPassword()!=null && !user.getPassword().equals("")) {
             try {
                 return autoLogin(model, user, session);
             } catch (RuntimeException e) {
@@ -175,7 +175,7 @@ public class LinksController {
         boolean existedUser = service.checkUser(user);
         if (existedUser) {
             user.setEmpty(false);
-            if (user.getUserName().equals("admin")) {
+            if ("admin".equals(user.getUserName())) {
                 user.setAdmin(true);
             }
             session.setAttribute("autorizedUser", user);
@@ -192,7 +192,7 @@ public class LinksController {
                              @ModelAttribute("owner") String owner,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || autorizedUser.getUserName()==null ||autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -224,7 +224,7 @@ public class LinksController {
                                  @ModelAttribute("owner") String owner,
                                  HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || autorizedUser.getUserName()==null ||autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -257,7 +257,7 @@ public class LinksController {
                                  HttpSession session,
                                  HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null ||autorizedUser.getUserName()==null|| autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -308,7 +308,7 @@ public class LinksController {
     private String actionEditUser(Model model, String key, HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
 
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || autorizedUser.getUserName()==null || "".equals(autorizedUser.getUserName())) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
@@ -332,7 +332,7 @@ public class LinksController {
     private String actionDeleteUser(Model model, String key, HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
 
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || "".equals(autorizedUser.getUserName())) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
@@ -361,7 +361,7 @@ public class LinksController {
                              HttpServletRequest request,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null ||autorizedUser.getUserName()==null|| autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
@@ -391,7 +391,7 @@ public class LinksController {
                              HttpServletRequest request,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || autorizedUser.getUserName()==null|| autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
@@ -426,7 +426,7 @@ public class LinksController {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
 
         String link = request.getParameter("link");
-        if ("".equals(link)) {
+        if (link==null|| "".equals(link)) {
             return "main";
         }
         String shortLink = "";

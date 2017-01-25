@@ -7,9 +7,10 @@ import java.util.stream.Collectors;
 
 public class MAin {
     public static void main(String[] args) {
-String a=null;
-int b=Integer.parseInt(a);
-        System.out.println(b);
+        String a=null;
+        if ("".equals(a)) {
+            System.out.println(a);
+        }
 
 
     }

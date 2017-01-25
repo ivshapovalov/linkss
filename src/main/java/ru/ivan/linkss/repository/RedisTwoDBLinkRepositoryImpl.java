@@ -294,12 +294,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         syncCommandsLinks.set(shortLink, link);
         int days = 0;
-        if (period != null && !"".equals(period)) {
+        if (!"".equals(period)) {
             syncCommandsLinks.expire(shortLink, Integer.parseInt(period) * SECONDS_IN_DAY);
         }
         syncCommands.select(DB_WORK_NUMBER);
 
-        if (autorizedUser != null && !autorizedUser.getUserName().equals("")) {
+        if (autorizedUser != null && !"".equals(autorizedUser.getUserName())) {
             syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
         } else {
             syncCommands.hset(DEFAULT_USER, shortLink, link);
@@ -373,7 +373,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             throw new RuntimeException(String.format("User with name '%s' is not exists",
                     user.getUserName()));
         }
-        if (!syncCommands.hget(KEY_USERS, user.getUserName()).equals(user.getPassword())) {
+        String password=syncCommands.hget(KEY_USERS, user.getUserName());
+        if (!user.getPassword().equals(password)) {
             throw new RuntimeException(String.format("Password for user '%s' is " +
                             "wrong",
                     user.getUserName()));
@@ -473,7 +474,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommandsLinks.select(DB_LINK_NUMBER);
         String link = syncCommandsLinks.get(shortLink);
         syncCommands.hincrby(KEY_VISITS, shortLink, 1);
-        if (link != null && !link.equals("")) {
+        if (!"".equals(link)) {
             syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
         }
 
@@ -738,7 +739,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_FREELINK_NUMBER);
         long size = syncCommands.dbsize();
         BigInteger addedKeys = BigInteger.ZERO;
-        if (key != null && !"".equals(key)) {
+        if (!"".equals(key)) {
             if (size <= MIN_FREE_LINK_SIZE) {
                 addedKeys = updateFreeLinksDB(syncCommands, key);
             }
