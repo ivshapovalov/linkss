@@ -143,10 +143,10 @@
                     <a href="/actions/links?owner=${column.getUserName()}">${column.getLinkNumber()}
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/?action=edit&key=${column.getUserName()}">Edit</a>
+                    <a href="/actions/users/${column.getUserName()}/?action=edit&key=${column.getUserName()}">Edit</a>
                 </td>
                 <td width="10%">
-                    <a href="/actions/users/?action=delete&key=${column.getUserName()}">Delete
+                    <a href="/actions/users/${column.getUserName()}/?action=delete&key=${column.getUserName()}">Delete
                     </a></td>
 
             </tr>

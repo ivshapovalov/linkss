@@ -3,7 +3,7 @@ package ru.ivan.linkss.repository;
 
 public class Domain {
     private String name;
-    private String visits;
+    private String visits="0";
 
     public Domain(String name, String visits) {
         this.name = name;

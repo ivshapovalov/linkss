@@ -277,6 +277,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         syncCommands.select(DB_WORK_NUMBER);
         String period = syncCommands.hget(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD);
+        if (period==null) period="0";
         syncCommands.select(DB_FREELINK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
         String shortLink = null;
@@ -406,7 +407,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             synchronized (redisClient) {
                 synchronized (redisClientLinks) {
                     syncCommands.hdel(KEY_VISITS, shortLink);
-                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * Integer.parseInt(syncCommands.hget(KEY_VISITS, shortLink)));
+                    String visits = syncCommands.hget(KEY_VISITS, shortLink);
+                    if (visits==null) visits="0";
+                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * Integer.parseInt(visits));
                     syncCommandsLinks.del(shortLink);
                     syncCommands.hdel(owner, shortLink);
                 }

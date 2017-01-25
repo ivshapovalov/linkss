@@ -286,7 +286,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/users/&action"}, method =
+    @RequestMapping(value = {"/actions/users/{owner}/"}, method =
             RequestMethod.GET)
     public String editUser(Model model,
                            @ModelAttribute("key") String key,
@@ -302,7 +302,7 @@ public class LinksController {
             return actionDeleteUser(model, key, session);
 
         }
-        return "users1";
+        return "users";
     }
 
     private String actionEditUser(Model model, String key, HttpSession session) {
@@ -345,7 +345,7 @@ public class LinksController {
             service.deleteUser(autorizedUser, key);
             model.addAttribute("action",null);
             model.addAttribute("key",null);
-            return "redirect:/actions/manage";
+            return "redirect:/actions/users";
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
             return "error";
