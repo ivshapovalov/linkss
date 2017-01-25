@@ -113,6 +113,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
+    public String visitLink(String shortLink) {
+        return repository.visitLink(shortLink);
+    }
+
+    @Override
     public FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath) {
         return repository.getFullLink(autorizedUser, shortLink, owner, contextPath);
     }

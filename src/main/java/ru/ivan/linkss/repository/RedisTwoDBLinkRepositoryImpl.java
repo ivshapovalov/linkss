@@ -10,6 +10,7 @@ import ru.ivan.linkss.util.Util;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -175,7 +176,13 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 .skip(offset)
                 .limit(recordsOnPage)
                 .map(domain -> new Domain(domain, syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain)))
-                .collect(Collectors.toList());
+                .sorted(new Comparator<Domain>() {
+                    @Override
+                    public int compare(Domain d1, Domain d2) {
+                        return Integer.parseInt(d2.getVisits())
+                                -Integer.parseInt(d1.getVisits());
+                    }
+                }).collect(Collectors.toList());
         connection.close();
         return shortStat;
     }
@@ -443,6 +450,16 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public String getLink(String shortLink) {
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+        syncCommandsLinks.select(DB_LINK_NUMBER);
+        String link = syncCommandsLinks.get(shortLink);
+        connectionLinks.close();
+        return link;
+    }
+
+    @Override
+    public String visitLink(String shortLink) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -451,7 +468,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
         syncCommands.select(DB_WORK_NUMBER);
         syncCommandsLinks.select(DB_LINK_NUMBER);
-
         String link = syncCommandsLinks.get(shortLink);
         syncCommands.hincrby(KEY_VISITS, shortLink, 1);
         if (link != null && !link.equals("")) {

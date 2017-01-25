@@ -17,6 +17,8 @@ public interface LinksService {
 
     void createUser(String userName, String password);
 
+    String visitLink(String shortLink);
+
     String getLink(String shortLink);
 
     long getLinkDays(String shortLink);

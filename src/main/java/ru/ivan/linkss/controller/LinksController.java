@@ -47,7 +47,7 @@ public class LinksController {
     public String redirect(HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
-        String link = service.getLink(shortLink.substring(1));
+        String link = service.visitLink(shortLink.substring(1));
         if (link.contains(":")) {
             return "redirect:" + link;
         } else {

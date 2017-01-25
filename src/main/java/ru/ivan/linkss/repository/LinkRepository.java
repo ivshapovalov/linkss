@@ -22,6 +22,8 @@ public interface LinkRepository {
 
     String getLink(String key);
 
+    String visitLink(String key);
+
     String getRandomShortLink();
 
     List<Domain> getShortStat(int offset, int recordsOnPage);
