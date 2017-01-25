@@ -70,9 +70,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public String createShortLink(String user, String link) {
 
-        String shortLink = repository.createShortLink(user,link);
-
-        return shortLink;
+        return repository.createShortLink(user,link);
     }
 
     @Override

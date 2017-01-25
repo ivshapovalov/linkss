@@ -10,6 +10,7 @@ import ru.ivan.linkss.util.Util;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -50,11 +51,13 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 //            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
     //   private RedisClient redisClientByUsers = RedisClient.createShortLink
 //            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
-    private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
-    private RedisClient redisClientLinks = RedisClient.create(System.getenv
-            ("HEROKU_REDIS_AMBER_URL"));
+    private final RedisClient redisClient;
+    private final RedisClient redisClientLinks;
 
     public RedisTwoDBLinkRepositoryImpl() {
+        this.redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+        this.redisClientLinks = RedisClient.create(System.getenv
+                ("HEROKU_REDIS_AMBER_URL"));
     }
 
     public RedisTwoDBLinkRepositoryImpl(RedisClient redisClient, RedisClient redisClientLinks) {
@@ -159,21 +162,17 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         List<FullLink> fullStat = syncCommands.keys("*")
                 .stream()
                 .filter(user -> !user.startsWith("_"))
-                .map(user -> {
-                    List<FullLink> links = syncCommands.hkeys(user)
-                            .stream()
-                            .map(shortLink -> {
-                                String link = syncCommandsLinks.get(shortLink);
-                                String shortLinkWithContext = contextPath + shortLink;
-                                String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                                return new FullLink(shortLink, shortLinkWithContext,
-                                        link, visits,
-                                        shortLinkWithContext + ".png", user);
-                            }).collect(Collectors.toList());
-
-                    return links;
-                })
-                .flatMap(links -> links.stream())
+                .map(user -> syncCommands.hkeys(user)
+                        .stream()
+                        .map(shortLink -> {
+                            String link = syncCommandsLinks.get(shortLink);
+                            String shortLinkWithContext = contextPath + shortLink;
+                            String visits = syncCommands.hget(KEY_VISITS, shortLink);
+                            return new FullLink(shortLink, shortLinkWithContext,
+                                    link, visits,
+                                    shortLinkWithContext + ".png", user);
+                        }).collect(Collectors.toList()))
+                .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
         connectionLinks.close();
@@ -248,11 +247,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             do {
                 shortLink = syncCommands.randomkey();
                 //shortLink = link;
-                if (shortLink == null) {
-                    failed = true;
-                } else {
-                    failed = false;
-                }
+                failed = shortLink == null;
                 syncCommands.del(shortLink);
             } while (failed);
         }
@@ -260,8 +255,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommandsLinks.set(shortLink, link);
         int days = 0;
         if (period != null && !"".equals(period)) {
-            days = Integer.valueOf(period);
-            syncCommandsLinks.expire(shortLink, days * SECONDS_IN_DAY);
+            syncCommandsLinks.expire(shortLink, Integer.parseInt(period) * SECONDS_IN_DAY);
         }
         syncCommands.select(DB_WORK_NUMBER);
 
@@ -316,8 +310,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 .stream()
                 .map(userName -> {
                     String password = syncCommands.hget(KEY_USERS, userName);
-                    User user = new User(userName, password, syncCommands.hlen(userName));
-                    return user;
+                    return new User(userName, password, syncCommands.hlen(userName));
                 })
                 .collect(Collectors.toList());
         connection.close();
@@ -367,9 +360,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         if (link != null) {
             synchronized (redisClient) {
                 synchronized (redisClientLinks) {
-                    int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
                     syncCommands.hdel(KEY_VISITS, shortLink);
-                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
+                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * Integer.parseInt(syncCommands.hget(KEY_VISITS, shortLink)));
                     syncCommandsLinks.del(shortLink);
                     syncCommands.hdel(owner, shortLink);
                 }
@@ -701,13 +693,13 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, String key) {
         BigInteger addedKeys = BigInteger.ZERO;
         String[] keys = key.split("\\|");
-        int maxKey = Arrays.asList(keys).stream()
-                .map(p -> Integer.valueOf(p))
+        int maxKey = Arrays.stream(keys)
+                .map(Integer::valueOf)
                 .mapToInt(i -> i).max().getAsInt();
 
         int newKeyLength = maxKey + 1;
         syncCommands.select(DB_WORK_NUMBER);
-        boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
+        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
                 (newKeyLength));
         addedKeys = createKeys(newKeyLength);
         return addedKeys;
@@ -721,9 +713,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         executor.execute(futureTask);
         try {
             addedKeys = futureTask.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
         return addedKeys;
@@ -731,7 +721,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     public class KeyCreator {
 
-        private char[] alphabet =
+        private final char[] alphabet =
                 "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         .toCharArray();
 
@@ -747,18 +737,16 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands = connection.sync();
             syncCommands.select(DB_FREELINK_NUMBER);
 
-            long startTime = System.nanoTime();
             char[] key = new char[length];
             recursive(key, 0, length);
-            long endTime = System.nanoTime();
 
             connection.close();
             return keyCount;
         }
 
         private void recursive(char[] key, int index, int length) {
-            for (int j = 0; j < alphabet.length; j++) {
-                key[index] = alphabet[j];
+            for (char anAlphabet : alphabet) {
+                key[index] = anAlphabet;
                 if (index == length - 1) {
                     addKey(String.valueOf(key));
                     keyCount = keyCount.add(BigInteger.ONE);

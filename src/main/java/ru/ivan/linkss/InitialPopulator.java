@@ -2,7 +2,6 @@ package ru.ivan.linkss;
 
 
 import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 
 import java.math.BigInteger;
@@ -11,7 +10,7 @@ import java.net.URISyntaxException;
 
 public class InitialPopulator {
 
-    private LinkRepository repository;
+    private final LinkRepository repository;
 
     public static void main(String[] args) {
         RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
@@ -34,7 +33,7 @@ public class InitialPopulator {
         }
     }
 
-    public void init() {
+    private void init() {
 
         repository.init();
         BigInteger keyCount=repository.createKeys(1);

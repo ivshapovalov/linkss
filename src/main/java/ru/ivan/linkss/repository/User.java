@@ -1,9 +1,11 @@
 package ru.ivan.linkss.repository;
 
+import java.io.Serializable;
+
 /**
  * Created by Ivan on 14.01.2017.
  */
-public class User {
+public class User implements Serializable{
     private String userName;
     private String password;
     private boolean isAdmin;

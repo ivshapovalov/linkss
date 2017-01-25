@@ -14,8 +14,8 @@ import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static int sizeOfPool = 4;
-    private static int requests = 1000;
+    private static final int sizeOfPool = 4;
+    private static final int requests = 1000;
 
     private static LinksServiceImpl service;
 
@@ -78,15 +78,9 @@ public class TestConnection {
     }
 
     private static void executeCreateReadMultiThread() {
-        Random random = new Random();
-        boolean isWrite = false;
+        boolean isWrite=true;
         ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
-        isWrite = true;
         for (int i = 1; i <= requests; i++) {
-
-//            if (random.nextInt(10000) % 2 == 0) {
-//                isWrite = true;
-//            }
             Runnable client;
             if (isWrite) {
                 client = new Creator(i);
@@ -189,8 +183,8 @@ public class TestConnection {
     }
 
     private static abstract class Client implements Runnable {
-        protected int number;
-        protected Random random = new Random();
+        protected final int number;
+        protected final Random random = new Random();
 
         public Client(int number) {
             this.number = number;

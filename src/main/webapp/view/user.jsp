@@ -15,15 +15,12 @@
     <input type="hidden" name="oldPassword" value="${oldPassword}">
     <table border="1">
         <tr>
-            <td>
-                Name
-            </td>
+            <td><label path="userName">User</label></td>
             <td>
                 <input type="text" name="userName" value=${user.getUserName()}></td>
-            </td>
         </tr>
         <tr>
-            <td>Password</td>
+            <td><label path="password">Password</label></td>
             <td>
                 <input type="password" name="password" value=${user.getPassword()}></td>
         </tr>

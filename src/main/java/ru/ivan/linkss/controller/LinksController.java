@@ -65,6 +65,7 @@ public class LinksController {
         while ((bytes = fis.read()) != -1) {
             os.write(bytes);
         }
+        fis.close();
     }
 
     @RequestMapping(value = "/actions/signup", method = RequestMethod.GET)
@@ -498,7 +499,7 @@ public class LinksController {
         return "links";
     }
 
-    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+    private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
         String newKey=newFullLink.getKey();
         String oldKey=oldFullLink.getKey();
         StringBuilder message=new StringBuilder();

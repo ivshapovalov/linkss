@@ -27,7 +27,6 @@ public class AllTests {
             if (!failed) {
                 System.out.println("failed");
                 //failed = !failed;
-                continue;
             }
         } while (failed);
     }

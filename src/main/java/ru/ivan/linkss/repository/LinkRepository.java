@@ -27,7 +27,7 @@ public interface LinkRepository {
     default List<FullLink> getFullStat(String userName, String contextPath, int offset, int
             recordsOnPage){
         return Collections.emptyList();
-    };
+    }
 
     boolean checkUser(User user);
 
@@ -48,9 +48,9 @@ public interface LinkRepository {
     default void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long
             days) {
 
-    };
+    }
 
-    default long getUserLinksSize(User autorizedUser, String owner) {return 0;};
+    default long getUserLinksSize(User autorizedUser, String owner) {return 0;}
 
     default long getLinkDays(String shortLink) {
        return  0;
@@ -58,9 +58,9 @@ public interface LinkRepository {
 
     default FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath) {
         return null;
-    };
+    }
 
     default void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
 
-    };
+    }
 }

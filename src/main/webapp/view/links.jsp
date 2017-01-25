@@ -7,7 +7,6 @@
 </head>
 <body>
 <%@include file="header.jsp" %>
-<h3>Links</h3>
 <section>
 
     <c:choose>
@@ -27,6 +26,7 @@
         </c:when>
     </c:choose>
 
+    <h3>Links</h3>
     <table border="1" cellpadding="3" cellspacing="0">
         <tr>
             <td>

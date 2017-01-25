@@ -38,9 +38,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
    // private RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-    private RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+    private final RedisClient redisClient;
 
     public RedisOneDBLinkRepositoryImpl() {
+        redisClient = RedisClient.create(System.getenv("REDIS_URL"));
     }
 
     public RedisOneDBLinkRepositoryImpl(RedisClient redisClient) {
@@ -79,8 +80,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
-        long size = syncCommands.hlen(KEY_LINKS);
-        return size;
+        return syncCommands.hlen(KEY_LINKS);
     }
 
     @Override
@@ -88,8 +88,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_FREELINK_NUMBER);
-        long size = syncCommands.dbsize();
-        return size;
+        return syncCommands.dbsize();
     }
 
     @Override
@@ -121,7 +120,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 .stream()
                 .filter(user -> !user.startsWith("_"))
                 .map(user -> {
-                    List<FullLink> links = syncCommands.hkeys(user)
+
+                    return syncCommands.hkeys(user)
                             .stream()
                             .map(shortLink -> {
                                 String link = syncCommands.hget(KEY_LINKS, shortLink);
@@ -131,8 +131,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                         link, visits,
                                         shortLinkWithContext + ".png", user);
                             }).collect(Collectors.toList());
-
-                    return links;
                 })
                 .flatMap(links -> links.stream())
                 .collect(Collectors.toList());
@@ -282,8 +280,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 .stream()
                 .map(userName -> {
                     String password = syncCommands.hget(KEY_USERS, userName);
-                    User user = new User(userName, password, syncCommands.hlen(userName));
-                    return user;
+                    return new User(userName, password, syncCommands.hlen(userName));
                 })
                 .collect(Collectors.toList());
         connection.close();
@@ -328,9 +325,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         String link = syncCommands.hget(KEY_LINKS, shortLink);
         if (link != null) {
             synchronized (redisClient) {
-                int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
                 syncCommands.hdel(KEY_VISITS, shortLink);
-                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * visitsCount);
+                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * Integer.parseInt(syncCommands.hget(KEY_VISITS, shortLink)));
                 syncCommands.hdel(KEY_LINKS, shortLink);
                 syncCommands.hdel(owner, shortLink);
             }
@@ -478,7 +474,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
         int newKeyLength = maxKey + 1;
         syncCommands.select(DB_WORK_NUMBER);
-        boolean updated = syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
+        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
                 (newKeyLength));
         addedKeys = createKeys(newKeyLength);
         return addedKeys;
@@ -502,7 +498,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     public class KeyCreator {
 
-        private char[] alphabet =
+        private final char[] alphabet =
                 "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         .toCharArray();
 
@@ -518,12 +514,9 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             syncCommands = connection.sync();
             syncCommands.select(DB_FREELINK_NUMBER);
 
-            long startTime = System.nanoTime();
             char[] key = new char[length];
             recursive(key, 0, length);
-            long endTime = System.nanoTime();
 
-            connection.close();
             return keyCount;
         }
 

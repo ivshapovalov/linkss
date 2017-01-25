@@ -26,7 +26,7 @@
             <td><form:input path="link" id="link" value="${link}"/></td>
         </tr>
         <tr>
-            <td><form:label path="days">Days</form:label></td>
+            <td><label path="days">Days</label></td>
             <td><input type="number" name="days" id="days" value="${fullLink.getDays()}"></td>
 
         <%--<td><form:input path="days" id="days" value="${days}"/></td>--%>
