@@ -70,7 +70,7 @@ public class LinksController {
     }
 
     @RequestMapping(value = "/actions/signup", method = RequestMethod.GET)
-    public String registration(Model model, HttpServletRequest request, HttpServletResponse response)
+    public String registration(Model model, HttpServletResponse response)
             throws IOException {
         model.addAttribute("user", new User());
         return "signup";
@@ -103,17 +103,38 @@ public class LinksController {
     }
 
     @RequestMapping(value = "/actions/users", method = {RequestMethod.GET, RequestMethod.POST})
-    public String users(Model model, HttpSession session)
+    public String users(Model model, HttpSession session,HttpServletRequest request)
             throws IOException {
+
+        int currentPage = 1;
+        int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
-            List<User> users = service.getUsers();
-            model.addAttribute("autorizedUser", autorizedUser);
-            model.addAttribute("users", users);
-            return "users";
+        if (autorizedUser != null && !autorizedUser.isEmpty()&&!autorizedUser.isAdmin() ) {
+            model.addAttribute("message", "Sorry, users available only for logged admin users!");
+            return "error";
         }
-        return "main";
+
+        if (request.getParameter("page") != null) {
+            currentPage = Integer.parseInt(request.getParameter("page"));
+        }
+
+        int offset=(currentPage-1) * recordsOnPage;
+        List<User> users = service.getUsers(offset,recordsOnPage);
+        long usersCount = (int) service.getUsersSize(autorizedUser);
+        if (usersCount == 0) {
+            model.addAttribute("message", "Sorry, DB don't have users. Try later!");
+            return "error";
+        }
+        int numberOfPages = Math.max(1,(int) Math.ceil((double)usersCount / recordsOnPage));
+
+        model.addAttribute("users", users);
+        model.addAttribute("numberOfPages", numberOfPages);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("autorizedUser", autorizedUser);
+        return "users";
+
     }
+
 
     @RequestMapping(value = "/actions/register", method = RequestMethod.POST)
     public String register(Model model,
@@ -265,7 +286,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/users"}, method =
+    @RequestMapping(value = {"/actions/users/&action"}, method =
             RequestMethod.GET)
     public String editUser(Model model,
                            @ModelAttribute("key") String key,
@@ -281,7 +302,7 @@ public class LinksController {
             return actionDeleteUser(model, key, session);
 
         }
-        return "users";
+        return "users1";
     }
 
     private String actionEditUser(Model model, String key, HttpSession session) {
@@ -410,9 +431,9 @@ public class LinksController {
         }
         String shortLink = "";
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(DEFAULT_USER, link);
+            shortLink = service.createShortLink(null, link);
         } else {
-            shortLink = service.createShortLink(autorizedUser.getUserName(), link);
+            shortLink = service.createShortLink(autorizedUser, link);
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");
@@ -485,10 +506,6 @@ public class LinksController {
             currentPage = Integer.parseInt(request.getParameter("page"));
         }
 
-        if (autorizedUser.isAdmin()) {
-            List<List<String>> shortStat = service.getShortStat();
-            model.addAttribute("shortStat", shortStat);
-        }
         if (owner==null || owner.equals("")) {
             owner=autorizedUser.getUserName();
         }
@@ -530,10 +547,9 @@ public class LinksController {
             model.addAttribute("message", "Sorry, domains available only for admin users!");
             return "error";
         }
-        List<Domain> list = service.getShortStat(offset,recordsOnPage);
-
         int offset=(currentPage-1) * recordsOnPage;
-        long domainsSize = (int) service.getDomainsSize();
+        List<Domain> list = service.getShortStat(offset,recordsOnPage);
+        long domainsSize = (int) service.getDomainsSize(autorizedUser);
         if (domainsSize == 0) {
             model.addAttribute("message", "Sorry, DB don't have domains visits. Try later!");
             return "error";
@@ -544,7 +560,7 @@ public class LinksController {
         model.addAttribute("numberOfPages", numberOfPages);
         model.addAttribute("currentPage", currentPage);
 
-        return "links";
+        return "domains";
     }
 
     private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {

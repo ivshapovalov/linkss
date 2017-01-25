@@ -134,7 +134,7 @@
         <c:forEach items="${list}" var="column">
             <tr>
                 <td width="20%">${column.getVisits()}</td>
-                <td width="80%">${column.getDomain()}</td>
+                <td width="80%">${column.getName()}</td>
 
             </tr>
         </c:forEach>

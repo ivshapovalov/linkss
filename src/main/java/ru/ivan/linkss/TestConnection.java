@@ -2,6 +2,7 @@ package ru.ivan.linkss;
 
 
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.User;
 import ru.ivan.linkss.service.LinksServiceImpl;
 
 import java.util.ArrayList;
@@ -143,7 +144,7 @@ public class TestConnection {
             Thread.currentThread().setName("t" + number);
 
             String link = getRandomDomain() + "/" + number;
-            String shortLink = service.createShortLink("user", link);
+            String shortLink = service.createShortLink(new User(), link);
             if (shortLink == null) {
                     System.out.println(Thread.currentThread().getName() +
                             ": free short links ended ");

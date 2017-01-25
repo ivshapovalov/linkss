@@ -12,9 +12,11 @@ public interface LinkRepository {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize();
+    long getDomainsSize(User autorizedUser);
 
-    String createShortLink(String autorizedUser, String link);
+    long getUsersSize(User autorizedUser);
+
+    String createShortLink(User autorizedUser, String link);
 
     void createUser(String userName, String password);
 
@@ -22,9 +24,9 @@ public interface LinkRepository {
 
     String getRandomShortLink();
 
-    List<Domain> getShortStat();
+    List<Domain> getShortStat(int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String contextPath);
+    List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage);
 
     default List<FullLink> getFullStat(String userName, String contextPath, int offset, int
             recordsOnPage){
@@ -35,7 +37,7 @@ public interface LinkRepository {
 
     void deleteUserLink(User user, String shortLink, String owner);
 
-    List<User> getUsers();
+    List<User> getUsers(int offset, int recordsOnPage);
 
     User getUser(User autorizedUser, String userName);
 

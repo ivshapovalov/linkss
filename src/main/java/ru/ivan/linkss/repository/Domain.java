@@ -3,9 +3,9 @@ package ru.ivan.linkss.repository;
 
 public class Domain {
     private String name;
-    private long visits;
+    private String visits;
 
-    public Domain(String name, long visits) {
+    public Domain(String name, String visits) {
         this.name = name;
         this.visits = visits;
     }
@@ -18,11 +18,11 @@ public class Domain {
         this.name = name;
     }
 
-    public long getVisits() {
+    public String getVisits() {
         return visits;
     }
 
-    public void setVisits(long visits) {
+    public void setVisits(String visits) {
         this.visits = visits;
     }
 }

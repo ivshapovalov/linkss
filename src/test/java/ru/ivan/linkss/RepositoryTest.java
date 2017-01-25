@@ -7,14 +7,15 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.*;
 
 import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.User;
 
 import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class RepositoryTest {
 
-    private static final LinkRepository repository=new RedisOneDBLinkRepositoryImpl();
+    private static final LinkRepository repository=new RedisTwoDBLinkRepositoryImpl();
     private static final RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
     private static final int DB_WORK_NUMBER = 0;
@@ -123,7 +124,7 @@ public class RepositoryTest {
         syncCommands.append("shortLink","");
         String expected="shortLink";
         String expectedLink="link";
-        String actual=repository.createShortLink("user",expectedLink);
+        String actual=repository.createShortLink(new User(),expectedLink);
         String actualLink=repository.getLink(actual);
         assertEquals(expected,actual);
         assertEquals(expectedLink,actualLink);

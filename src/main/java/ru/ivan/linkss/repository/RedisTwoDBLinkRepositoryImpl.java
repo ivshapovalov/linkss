@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import ru.ivan.linkss.util.Util;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -132,8 +131,15 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         connection.close();
         return size;
     }
+
     @Override
-    public long getDomainsSize() {
+    public long getDomainsSize(User autorizedUser) {
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
+        }
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to see domains stat", autorizedUser.getUserName()));
+        }
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
@@ -143,25 +149,39 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<Domain> getShortStat() {
+    public long getUsersSize(User autorizedUser) {
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
+        }
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to see domains stat", autorizedUser.getUserName()));
+        }
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);
-        List<List<String>> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
+        long size = syncCommands.hlen(KEY_USERS);
+        connection.close();
+        return size;
+    }
+
+    @Override
+    public List<Domain> getShortStat(int offset, int recordsOnPage) {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_WORK_NUMBER);
+        List<Domain> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
                 .stream()
-                .map(domain -> {
-                    List<String> l = new ArrayList<>();
-                    String count = syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain);
-                    l.add(domain);
-                    l.add(count);
-                    return l;
-                }).collect(Collectors.toList());
+                .sorted()
+                .skip(offset)
+                .limit(recordsOnPage)
+                .map(domain -> new Domain(domain, syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain)))
+                .collect(Collectors.toList());
         connection.close();
         return shortStat;
     }
 
     @Override
-    public List<FullLink> getFullStat(String contextPath) {
+    public List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         StatefulRedisConnection<String, String> connectionLinks = connectLinks();
@@ -170,6 +190,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommandsLinks.select(DB_LINK_NUMBER);
         List<FullLink> fullStat = syncCommands.keys("*")
                 .stream()
+                .sorted()
+                .skip(offset)
+                .limit(recordsOnPage)
                 .filter(user -> !user.startsWith("_"))
                 .map(user -> syncCommands.hkeys(user)
                         .stream()
@@ -216,7 +239,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     } else {
                         return new FullLink(shortLink, shortLinkWithContext,
                                 link, visits,
-                                shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY+1);
+                                shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY + 1);
                     }
 
                 }).collect(Collectors.toList());
@@ -237,7 +260,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String createShortLink(String user, String link) {
+    public String createShortLink(User autorizedUser, String link) {
 
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
@@ -268,8 +291,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         }
         syncCommands.select(DB_WORK_NUMBER);
 
-        if (user != null && !user.equals("")) {
-            syncCommands.hset(user, shortLink, link);
+        if (autorizedUser != null && !autorizedUser.getUserName().equals("")) {
+            syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
+        } else {
+            syncCommands.hset(DEFAULT_USER, shortLink, link);
+
         }
         syncCommands.hset(KEY_VISITS, shortLink, "0");
         String domainName = "";
@@ -311,12 +337,15 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<User> getUsers() {
+    public List<User> getUsers(int offset, int recordsOnPage) {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
 
         List<User> users = syncCommands.hkeys(KEY_USERS)
                 .stream()
+                .sorted()
+                .skip(offset)
+                .limit(recordsOnPage)
                 .map(userName -> {
                     String password = syncCommands.hget(KEY_USERS, userName);
                     return new User(userName, password, syncCommands.hlen(userName));
@@ -485,7 +514,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 if (newFullLink.getDays() == 0) {
                     syncCommandsLinks.persist(newFullLink.getKey());
                 } else {
-                    syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY+1);
+                    syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY + 1);
                 }
             }
 
@@ -543,7 +572,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommandsLinks.select(DB_LINK_NUMBER);
-        long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY+1;
+        long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY + 1;
 
         connectionLinks.close();
         return days;

@@ -9,23 +9,6 @@
 <%@include file="header.jsp" %>
 <section>
 
-    <c:choose>
-        <c:when test="${shortStat!=null}">
-            <h3>Domain Statistics</h3>
-            <table border="1" width="50%">
-                <c:forEach items="${shortStat}" var="column">
-                    <tr>
-                        <c:forEach items="${column}" var="row">
-                            <td width="50%">
-                                    ${row}
-                            </td>
-                        </c:forEach>
-                    </tr>
-                </c:forEach>
-            </table>
-        </c:when>
-    </c:choose>
-
     <h3>Links</h3>
     <table border="1" cellpadding="3" cellspacing="0">
         <tr>

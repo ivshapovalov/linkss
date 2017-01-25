@@ -13,7 +13,7 @@ public interface LinksService {
 
     String getRandomShortLink();
 
-    String createShortLink(String user, String link);
+    String createShortLink(User autorizedUser, String link);
 
     void createUser(String userName, String password);
 
@@ -21,9 +21,9 @@ public interface LinksService {
 
     long getLinkDays(String shortLink);
 
-    List<Domain> getShortStat();
+    List<Domain> getShortStat(int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String contextPath);
+    List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage);
 
     List<FullLink> getFullStat(String userName,String contextPath, int offset, int recordsOnPage);
 
@@ -35,7 +35,7 @@ public interface LinksService {
 
     void deleteUserLink(User user, String shortLink, String owner);
 
-    List<User> getUsers();
+    List<User> getUsers(int offset, int recordsOnPage);
 
     User getUser(User autorizedUser, String userName);
 
@@ -49,7 +49,9 @@ public interface LinksService {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize();
+    long getDomainsSize(User autorizedUser);
+
+    long getUsersSize(User autorizedUser);
 
     void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
 

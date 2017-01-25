@@ -49,8 +49,12 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public long getDomainsSize() {
-        return repository.getDomainsSize();
+    public long getDomainsSize(User autorizedUser) {
+        return repository.getDomainsSize(autorizedUser);
+    }
+
+    public long getUsersSize(User autorizedUser) {
+        return repository.getUsersSize(autorizedUser);
     }
 
     public void setRepository(LinkRepository repository) {
@@ -74,9 +78,9 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String createShortLink(String user, String link) {
+    public String createShortLink(User autorizedUser, String link) {
 
-        return repository.createShortLink(user,link);
+        return repository.createShortLink(autorizedUser,link);
     }
 
     @Override
@@ -85,8 +89,8 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<User> getUsers() {
-        return repository.getUsers();
+    public List<User> getUsers(int offset, int recordsOnPage) {
+        return repository.getUsers(offset, recordsOnPage);
     }
 
     @Override
@@ -124,13 +128,13 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<Domain> getShortStat() {
-        return repository.getShortStat();
+    public List<Domain> getShortStat(int offset, int recordsOnPage) {
+        return repository.getShortStat(offset,recordsOnPage);
     }
 
     @Override
-    public List<FullLink> getFullStat(String contextPath) {
-        return repository.getFullStat(contextPath);
+    public List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage) {
+        return repository.getFullStat(contextPath,offset,recordsOnPage);
     }
     @Override
     public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
