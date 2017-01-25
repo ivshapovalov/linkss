@@ -74,6 +74,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommandsLinks.flushall();
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
+        createKeys(1);
         syncCommands.hset(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD, String.valueOf("30"));
         syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
         syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
@@ -207,7 +208,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     } else {
                         return new FullLink(shortLink, shortLinkWithContext,
                                 link, visits,
-                                shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY);
+                                shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY+1);
                     }
 
                 }).collect(Collectors.toList());
@@ -433,13 +434,115 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) {
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+        if (!autorizedUser.getUserName().equals(owner)) {
+            if (!autorizedUser.isAdmin()) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to edit link", shortLink));
+            }
+        }
+
+        String link = getLink(shortLink);
+        String shortLinkWithContext = contextPath + shortLink;
+        long pttl = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY;
+        if (pttl < 0) {
+            pttl = 0;
+        }
+
+        connectionLinks.close();
+        return new FullLink(shortLink, shortLinkWithContext,
+                link, "",
+                shortLinkWithContext + ".png", owner, pttl);
+
+    }
+
+    @Override
+    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+
+        StatefulRedisConnection<String, String> connectionLinks = connectLinks();
+        RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+        if (!syncCommands.hexists(KEY_USERS, autorizedUser.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is not exists",
+                    autorizedUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            if (!autorizedUser.getUserName().equals(oldFullLink.getUserName())) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to update '%s'", autorizedUser, oldFullLink.getKey()));
+            }
+
+        }
+        if (!syncCommands.hexists(KEY_USERS, newFullLink.getUserName())) {
+            throw new RuntimeException(String.format("User '%s' is not exists",
+                    newFullLink.getUserName()));
+        }
+        if (oldFullLink.getKey().equals(newFullLink.getKey())) {
+            //days
+            if (newFullLink.getDays() != oldFullLink.getDays()) {
+                if (newFullLink.getDays() == 0) {
+                    syncCommandsLinks.persist(newFullLink.getKey());
+                } else {
+                    syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY+1);
+                }
+            }
+
+            //userName
+            if (!newFullLink.getUserName().equals(oldFullLink.getUserName())) {
+                synchronized (redisClient) {
+                    syncCommands.hdel(oldFullLink.getUserName(), oldFullLink.getKey());
+                    syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
+                            .getLink());
+                }
+            } else {
+                //link
+                if (!newFullLink.getLink().equals(oldFullLink.getLink())) {
+                    syncCommandsLinks.set(newFullLink.getKey(), newFullLink.getLink());
+                    synchronized (redisClient) {
+                        syncCommands.hdel(newFullLink.getUserName(), oldFullLink.getKey());
+                        syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
+                                .getLink());
+                    }
+                }
+            }
+        } else {
+            String existedKey = syncCommandsLinks.get(newFullLink.getKey());
+            if (existedKey != null) {
+                throw new RuntimeException(String.format("Short link with key '%s' already exists" +
+                                ". Try another.",
+                        newFullLink.getKey()));
+            }
+
+            synchronized (redisClientLinks) {
+                syncCommandsLinks.del(oldFullLink.getKey());
+                syncCommandsLinks.set(newFullLink.getKey(), newFullLink.getLink());
+                if (newFullLink.getDays() == 0) {
+                    syncCommandsLinks.persist(newFullLink.getKey());
+                } else {
+                    syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY);
+                }
+            }
+            synchronized (redisClient) {
+                syncCommands.hdel(oldFullLink.getUserName(), oldFullLink.getKey());
+                syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
+                        .getLink());
+            }
+
+        }
+
+        connectionLinks.close();
+        connection.close();
+    }
+
+    @Override
     public long getLinkDays(String shortLink) {
 
         StatefulRedisConnection<String, String> connectionLinks = connectLinks();
         RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
         syncCommandsLinks.select(DB_LINK_NUMBER);
-        long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY;
+        long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY+1;
 
         connectionLinks.close();
         return days;
@@ -565,10 +668,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 //                    ;
 //        }
         if (!autorizedUser.isAdmin()) {
-            throw new RuntimeException(String.format("User '%s' does not have permissions to " +
-                            "watch user link",
-                    autorizedUser.getUserName()));
-
+            if (!autorizedUser.getUserName().equals(owner)) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                "watch user link",
+                        autorizedUser.getUserName()));
+            }
         }
         long size = syncCommands.hlen(owner);
         connection.close();

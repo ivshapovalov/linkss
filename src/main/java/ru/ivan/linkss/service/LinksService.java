@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 
-public interface LinkssService {
+public interface LinksService {
 
     String getRandomShortLink();
 
@@ -52,4 +52,7 @@ public interface LinkssService {
 
     long getUserLinksSize(User autorizedUser, String owner);
 
+    FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath);
+
+    void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 }

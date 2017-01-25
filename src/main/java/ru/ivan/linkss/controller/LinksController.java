@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.User;
-import ru.ivan.linkss.service.LinkssService;
+import ru.ivan.linkss.service.LinksService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +30,7 @@ public class LinksController {
     private static final String ACTION_DELETE = "delete";
 
     @Autowired
-    private LinkssService service;
+    private LinksService service;
 
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
@@ -239,11 +239,11 @@ public class LinksController {
         try {
             String link=service.getLink(shortLink);
             String contextPath=getContextPath(request);
-            FullLink fullLink=new FullLink(shortLink,contextPath+shortLink,link,
+            FullLink fullLink=new FullLink(shortLink,contextPath+shortLink,             link,
                     "",contextPath+shortLink+".png",
                     owner,service.getLinkDays(shortLink));
             model.addAttribute("fullLink", fullLink);
-            model.addAttribute("oldFullLink", fullLink);
+            model.addAttribute("oldKey", shortLink);
             model.addAttribute("owner", owner);
             return "link";
         } catch (RuntimeException e) {
@@ -352,8 +352,9 @@ public class LinksController {
             RequestMethod.POST)
     public String updateUser(Model model,
                              @ModelAttribute("fullLink") FullLink fullLink,
-                             @ModelAttribute("oldFullLink") FullLink oldFullLink,
+                             @ModelAttribute("oldKey") String shortLink,
                              @ModelAttribute("owner") String owner,
+                             HttpServletRequest request,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.getUserName().equals("")) {
@@ -364,13 +365,20 @@ public class LinksController {
             model.addAttribute("message", "Link owner is not defined!");
             return "error";
         }
+        if (shortLink == null || owner.equals("")) {
+            model.addAttribute("message", "Old link is not defined!");
+            return "error";
+        }
         if (fullLink == null) {
             model.addAttribute("message", "Link is not defined!");
             return "error";
         }
         try {
-            //TODO сравнить сущности, произвести действия
-            String message=updateLink(oldFullLink,fullLink);
+            String contextPath=getContextPath(request);
+            FullLink oldFullLink=service.getFullLink(
+                    autorizedUser, shortLink, owner, contextPath);
+            updateLink(autorizedUser,oldFullLink,fullLink);
+            model.addAttribute("oldKey",null);
             return "redirect:links";
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
@@ -412,30 +420,30 @@ public class LinksController {
         return "main";
     }
 
-    @RequestMapping(value = "/actions/statistics", method = RequestMethod.GET)
-    public String statistics(Model model,
-                             HttpServletRequest request, HttpSession session) {
-
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, statistics available only for logged users!");
-            return "error";
-        }
-        if (autorizedUser.isAdmin()) {
-            List<List<String>> shortStat = service.getShortStat();
-            String contextPath = getContextPath(request);
-            List<FullLink> fullStat = service.getFullStat(contextPath);
-            model.addAttribute("shortStat", shortStat);
-            model.addAttribute("fullStat", fullStat);
-        } else {
-            String contextPath = getContextPath(request);
-            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
-                    contextPath,1,1);
-            model.addAttribute("fullStat", fullStat);
-        }
-        return "statistics";
-    }
-
+//    @RequestMapping(value = "/actions/statistics", method = RequestMethod.GET)
+//    public String statistics(Model model,
+//                             HttpServletRequest request, HttpSession session) {
+//
+//        User autorizedUser = (User) session.getAttribute("autorizedUser");
+//        if (autorizedUser == null || autorizedUser.isEmpty()) {
+//            model.addAttribute("message", "Sorry, statistics available only for logged users!");
+//            return "error";
+//        }
+//        if (autorizedUser.isAdmin()) {
+//            List<List<String>> shortStat = service.getShortStat();
+//            String contextPath = getContextPath(request);
+//            List<FullLink> fullStat = service.getFullStat(contextPath);
+//            model.addAttribute("shortStat", shortStat);
+//            model.addAttribute("fullStat", fullStat);
+//        } else {
+//            String contextPath = getContextPath(request);
+//            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
+//                    contextPath,1,1);
+//            model.addAttribute("fullStat", fullStat);
+//        }
+//        return "statistics";
+//    }
+//
     private String getContextPath(HttpServletRequest request) {
         String p = request.getRequestURL().toString();
         String cp = request.getServletPath();
@@ -456,7 +464,7 @@ public class LinksController {
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, statistics available only for logged users!");
+            model.addAttribute("message", "Sorry, links available only for logged users!");
             return "error";
         }
 
@@ -464,6 +472,13 @@ public class LinksController {
             currentPage = Integer.parseInt(request.getParameter("page"));
         }
 
+        if (autorizedUser.isAdmin()) {
+            List<List<String>> shortStat = service.getShortStat();
+            model.addAttribute("shortStat", shortStat);
+        }
+        if (owner==null || owner.equals("")) {
+            owner=autorizedUser.getUserName();
+        }
         String contextPath = getContextPath(request);
         int offset=(currentPage-1) * recordsOnPage;
         List<FullLink> list = service.getFullStat(owner, contextPath,offset,recordsOnPage);
@@ -480,38 +495,29 @@ public class LinksController {
         model.addAttribute("productCount", productCount);
         model.addAttribute("owner", owner);
 
-
         return "links";
     }
 
-    public String updateLink(FullLink oldFullLink, FullLink newFullLink) {
+    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
         String newKey=newFullLink.getKey();
-        String oldKey=newFullLink.getKey();
+        String oldKey=oldFullLink.getKey();
         StringBuilder message=new StringBuilder();
         if(oldKey==null || "".equals(oldKey)) {
-            message.append("Updated link has empty key").append("\r\n");
+            message.append("Updated link has empty key").append(System.lineSeparator());
         }
         if(newKey==null || "".equals(newKey)) {
-            message.append("New link has empty key").append("\r\n");
+            message.append("New link has empty key").append(System.lineSeparator());
         }
         if(oldFullLink.getUserName()==null || "".equals(oldFullLink.getUserName())) {
-            message.append("Updated link has empty user").append("\r\n");
+            message.append("Updated link has empty user").append(System.lineSeparator());
         }
         if(newFullLink.getUserName()==null || "".equals(newFullLink.getUserName())) {
-            message.append("New link has empty user").append("\r\n");
+            message.append("New link has empty user").append(System.lineSeparator());
         }
-        if (message.equals("")) {
-            return message.toString();
+        if (!message.toString().equals("")) {
+            throw new RuntimeException(message.toString());
         }
-        if(newKey.equals(oldKey)) {
-            message.append("New link has empty key").append("\r\n");
-            //service.updateLink(newFullLink);
-        } else {
-            //service.updateLink(newFullLink);
-
-        }
-
-        return message.toString();
+        service.updateLink(autorizedUser,oldFullLink,newFullLink);
 
     }
 

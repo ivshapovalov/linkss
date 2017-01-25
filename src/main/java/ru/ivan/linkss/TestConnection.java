@@ -1,12 +1,8 @@
 package ru.ivan.linkss;
 
 
-import com.lambdaworks.redis.RedisClient;
-import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.RedisLocalDBLinkRepositoryImpl;
-import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
-import ru.ivan.linkss.service.LinkssServiceImpl;
+import ru.ivan.linkss.service.LinksServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +17,7 @@ public class TestConnection {
     private static int sizeOfPool = 4;
     private static int requests = 1000;
 
-    private static LinkssServiceImpl service;
+    private static LinksServiceImpl service;
 
     final static List<String> domains = new ArrayList<>();
 
@@ -51,7 +47,7 @@ public class TestConnection {
         //        redisClientLinks);
         RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
         repository.init();
-        service = new LinkssServiceImpl();
+        service = new LinksServiceImpl();
         service.setRepository(repository);
 
         long startTime = System.nanoTime();
@@ -68,14 +64,14 @@ public class TestConnection {
         startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        executeReadMultiThread();
+        //executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        executeCreateReadMultiThread();
+        //executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");

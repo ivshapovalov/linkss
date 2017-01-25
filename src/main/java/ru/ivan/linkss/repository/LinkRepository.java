@@ -55,4 +55,12 @@ public interface LinkRepository {
     default long getLinkDays(String shortLink) {
        return  0;
     }
+
+    default FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath) {
+        return null;
+    };
+
+    default void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+
+    };
 }

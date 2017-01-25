@@ -10,6 +10,23 @@
 <h3>Links</h3>
 <section>
 
+    <c:choose>
+        <c:when test="${shortStat!=null}">
+            <h3>Domain Statistics</h3>
+            <table border="1" width="50%">
+                <c:forEach items="${shortStat}" var="column">
+                    <tr>
+                        <c:forEach items="${column}" var="row">
+                            <td width="50%">
+                                    ${row}
+                            </td>
+                        </c:forEach>
+                    </tr>
+                </c:forEach>
+            </table>
+        </c:when>
+    </c:choose>
+
     <table border="1" cellpadding="3" cellspacing="0">
         <tr>
             <td>
@@ -129,18 +146,20 @@
 
     <table border="1" width="50%">
         <tr>
+            <td width="10%"><b>Key</b></td>
             <td width="40%"><b>Link</b></td>
             <td width="10%"><b>Days</b></td>
-            <td width="10%"><b>Count</b></td>
+            <td width="10%"><b>Visits</b></td>
             <td width="20%"><b>Short Link</b></td>
             <td width="10%"><b>Delete</b></td>
             <td width="10%"><b>Update</b></td>
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
-                <td width="40%"><a href="${column.getLink()}">${column.getLink()}</a></td>
+                <td width="10%">${column.getKey()}</td>
+                <td width="40%"><a href="//${column.getLink()}">${column.getLink()}</a></td>
                 <td width="10%">${column.getDays()}</td>
-                <td width="10%">${column.getCount()}</td>
+                <td width="10%">${column.getVisits()}</td>
                 <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a>
                 </td>
                 <td width="10%"><a

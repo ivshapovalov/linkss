@@ -6,7 +6,7 @@ public class FullLink {
     private String key;
     private String shortLink;
     private String link;
-    private String count;
+    private String visits;
     private String imageLink;
     private String userName;
     private long days;
@@ -15,23 +15,23 @@ public class FullLink {
 
     }
 
-    public FullLink(String key, String shortLink, String link, String count, String imageLink,
+    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
                     String userName, long days) {
         this.key=key;
         this.shortLink = shortLink;
         this.link = link;
-        this.count = count;
+        this.visits = visits;
         this.imageLink = imageLink;
         this.userName = userName;
         this.days = days;
     }
 
-    public FullLink(String key, String shortLink, String link, String count, String imageLink,
+    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
                     String userName) {
         this.key=key;
         this.shortLink = shortLink;
         this.link = link;
-        this.count = count;
+        this.visits = visits;
         this.imageLink = imageLink;
         this.userName = userName;
     }
@@ -53,8 +53,8 @@ public class FullLink {
         return link;
     }
 
-    public String getCount() {
-        return count;
+    public String getVisits() {
+        return visits;
     }
 
     public String getImageLink() {

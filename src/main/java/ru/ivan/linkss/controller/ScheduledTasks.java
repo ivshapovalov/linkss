@@ -1,10 +1,9 @@
-package ru.ivan.linkss.service;
+package ru.ivan.linkss.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.service.LinksService;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
@@ -14,7 +13,7 @@ import java.util.Date;
 public class ScheduledTasks {
 
     @Autowired
-    private LinkssService service;
+    private LinksService service;
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 

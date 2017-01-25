@@ -23,13 +23,13 @@ import java.util.Hashtable;
 import java.util.List;
 
 @Component
-public class LinkssServiceImpl implements LinkssService {
+public class LinksServiceImpl implements LinksService {
 
     @Autowired
     @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
 
-    public LinkssServiceImpl() {
+    public LinksServiceImpl() {
     }
 
     @Override
@@ -105,6 +105,11 @@ public class LinkssServiceImpl implements LinkssService {
     }
 
     @Override
+    public FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath) {
+        return repository.getFullLink(autorizedUser, shortLink, owner, contextPath);
+    }
+
+    @Override
     public long getLinkDays(String shortLink) {
         return repository.getLinkDays(shortLink);
     }
@@ -131,6 +136,11 @@ public class LinkssServiceImpl implements LinkssService {
     @Override
     public long getUserLinksSize(User autorizedUser, String owner) {
         return repository.getUserLinksSize(autorizedUser,owner);
+    }
+
+    @Override
+    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+        repository.updateLink(autorizedUser,oldFullLink,newFullLink);
     }
 
     private void sendFileToS3(String fileName) {

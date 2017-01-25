@@ -7,7 +7,7 @@
 </head>
 <body>
 <%@include file="header.jsp" %>
-<button onclick="location.href='/actions/statistics'">Statistics</button>
+<button onclick="location.href='/actions/links'">Links</button>
 <c:choose>
     <c:when test="${autorizedUser!=null && autorizedUser.isAdmin()}" >
         <button onclick="location.href='/actions/manage'">Manage</button>
