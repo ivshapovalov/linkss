@@ -9,6 +9,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.repository.Domain;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.User;
@@ -45,6 +46,11 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public long getDBFreeLinksSize() {
         return repository.getDBFreeLinksSize();
+    }
+
+    @Override
+    public long getDomainsSize() {
+        return repository.getDomainsSize();
     }
 
     public void setRepository(LinkRepository repository) {
@@ -118,7 +124,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<List<String>> getShortStat() {
+    public List<Domain> getShortStat() {
         return repository.getShortStat();
     }
 

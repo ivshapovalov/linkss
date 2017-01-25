@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import ru.ivan.linkss.repository.Domain;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.User;
 import ru.ivan.linkss.service.LinksService;
@@ -95,10 +96,21 @@ public class LinksController {
             throws IOException {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
+            return "manage";
+        }
+        return "main";
+
+    }
+
+    @RequestMapping(value = "/actions/users", method = {RequestMethod.GET, RequestMethod.POST})
+    public String users(Model model, HttpSession session)
+            throws IOException {
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
             List<User> users = service.getUsers();
             model.addAttribute("autorizedUser", autorizedUser);
             model.addAttribute("users", users);
-            return "manage";
+            return "users";
         }
         return "main";
     }
@@ -269,7 +281,7 @@ public class LinksController {
             return actionDeleteUser(model, key, session);
 
         }
-        return "manage";
+        return "users";
     }
 
     private String actionEditUser(Model model, String key, HttpSession session) {
@@ -483,18 +495,54 @@ public class LinksController {
         String contextPath = getContextPath(request);
         int offset=(currentPage-1) * recordsOnPage;
         List<FullLink> list = service.getFullStat(owner, contextPath,offset,recordsOnPage);
-        long productCount = (int) service.getUserLinksSize(autorizedUser,owner);
-        if (productCount == 0) {
+        long linksCount = (int) service.getUserLinksSize(autorizedUser,owner);
+        if (linksCount == 0) {
             model.addAttribute("message", "Sorry, User don't have links. Try another!");
             return "error";
         }
-        int numberOfPages = Math.max(1,(int) Math.ceil((double)productCount / recordsOnPage));
+        int numberOfPages = Math.max(1,(int) Math.ceil((double)linksCount / recordsOnPage));
 
         model.addAttribute("list", list);
         model.addAttribute("numberOfPages", numberOfPages);
         model.addAttribute("currentPage", currentPage);
-        model.addAttribute("productCount", productCount);
         model.addAttribute("owner", owner);
+
+        return "links";
+    }
+
+    @RequestMapping(value = "/actions/domains", method = RequestMethod.GET)
+    public String domains(Model model,
+                        HttpServletRequest request,
+                        HttpSession session) {
+        int currentPage = 1;
+        int recordsOnPage = 10;
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute("message", "Sorry, links available only for logged users!");
+            return "error";
+        }
+
+        if (request.getParameter("page") != null) {
+            currentPage = Integer.parseInt(request.getParameter("page"));
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute("message", "Sorry, domains available only for admin users!");
+            return "error";
+        }
+        List<Domain> list = service.getShortStat(offset,recordsOnPage);
+
+        int offset=(currentPage-1) * recordsOnPage;
+        long domainsSize = (int) service.getDomainsSize();
+        if (domainsSize == 0) {
+            model.addAttribute("message", "Sorry, DB don't have domains visits. Try later!");
+            return "error";
+        }
+        int numberOfPages = Math.max(1,(int) Math.ceil((double)domainsSize / recordsOnPage));
+
+        model.addAttribute("list", list);
+        model.addAttribute("numberOfPages", numberOfPages);
+        model.addAttribute("currentPage", currentPage);
 
         return "links";
     }

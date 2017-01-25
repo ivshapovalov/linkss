@@ -12,6 +12,8 @@ public interface LinkRepository {
 
     long getDBFreeLinksSize();
 
+    long getDomainsSize();
+
     String createShortLink(String autorizedUser, String link);
 
     void createUser(String userName, String password);
@@ -20,7 +22,7 @@ public interface LinkRepository {
 
     String getRandomShortLink();
 
-    List<List<String>> getShortStat();
+    List<Domain> getShortStat();
 
     List<FullLink> getFullStat(String contextPath);
 

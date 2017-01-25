@@ -132,9 +132,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         connection.close();
         return size;
     }
+    @Override
+    public long getDomainsSize() {
+        StatefulRedisConnection<String, String> connection = connect();
+        RedisCommands<String, String> syncCommands = connection.sync();
+        syncCommands.select(DB_WORK_NUMBER);
+        long size = syncCommands.hlen(KEY_VISITS_BY_DOMAIN);
+        connection.close();
+        return size;
+    }
 
     @Override
-    public List<List<String>> getShortStat() {
+    public List<Domain> getShortStat() {
         StatefulRedisConnection<String, String> connection = connect();
         RedisCommands<String, String> syncCommands = connection.sync();
         syncCommands.select(DB_WORK_NUMBER);

@@ -1,6 +1,7 @@
 package ru.ivan.linkss.service;
 
 import com.google.zxing.WriterException;
+import ru.ivan.linkss.repository.Domain;
 import ru.ivan.linkss.repository.FullLink;
 import ru.ivan.linkss.repository.User;
 
@@ -20,7 +21,7 @@ public interface LinksService {
 
     long getLinkDays(String shortLink);
 
-    List<List<String>> getShortStat();
+    List<Domain> getShortStat();
 
     List<FullLink> getFullStat(String contextPath);
 
@@ -47,6 +48,8 @@ public interface LinksService {
     long getDBLinksSize();
 
     long getDBFreeLinksSize();
+
+    long getDomainsSize();
 
     void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
 

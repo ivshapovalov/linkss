@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Qualifier(value = "repositoryLocal")
-public class RedisLocalDBLinkRepositoryImpl implements LinkRepository {
+public class RedisLocalDBLinkRepositoryImpl  {
 
     private static final int DB_WORK_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
