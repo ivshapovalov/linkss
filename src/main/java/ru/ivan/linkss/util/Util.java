@@ -14,6 +14,7 @@ public class Util {
                 uri = new URI("http://" + url);
             }
             String domain = uri.getHost();
+            if (domain==null) domain="";
             return domain.startsWith("www") ? domain.substring(domain.indexOf(".")+1) : domain;
         } catch (URISyntaxException e) {
             System.out.println("Ошибка:" +url);

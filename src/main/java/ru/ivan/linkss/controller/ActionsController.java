@@ -24,66 +24,30 @@ import java.util.List;
 
 @Controller
 @EnableScheduling
-public class LinksController {
+@RequestMapping(value = "/actions")
+public class ActionsController {
 
-    private static final String DEFAULT_USER = "user";
     private static final String ACTION_EDIT = "edit";
     private static final String ACTION_DELETE = "delete";
 
     @Autowired
     private LinksService service;
 
-    @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
-    public String main(Model model,
-                       HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser != null && !autorizedUser.isEmpty()) {
-            model.addAttribute("autorizedUser", autorizedUser);
-        }
-        return "main";
-    }
-
-    @RequestMapping(value = "/*", method = RequestMethod.GET)
-    public String redirect(HttpServletRequest request) {
-        String shortLink = request.getServletPath();
-
-        String link = service.visitLink(shortLink.substring(1));
-        if (link.contains(":")) {
-            return "redirect:" + link;
-        } else {
-            return "redirect:" + "//" + link;
-        }
-    }
-
-    @RequestMapping(value = "/resources/*.png", method = RequestMethod.GET)
-    public void openImage(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        String shortLink = request.getServletPath();
-        OutputStream os = response.getOutputStream();
-        File file = new File(request.getServletContext().getRealPath(shortLink));
-        FileInputStream fis = new FileInputStream(file);
-        int bytes;
-        while ((bytes = fis.read()) != -1) {
-            os.write(bytes);
-        }
-        fis.close();
-    }
-
-    @RequestMapping(value = "/actions/signup", method = RequestMethod.GET)
+    @RequestMapping(value = "/signup", method = RequestMethod.GET)
     public String registration(Model model, HttpServletResponse response)
             throws IOException {
         model.addAttribute("user", new User());
         return "signup";
     }
 
-    @RequestMapping(value = "/actions/login", method = RequestMethod.GET)
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
         model.addAttribute("user", new User());
         return "login";
     }
 
-    @RequestMapping(value = "/actions/logout", method = RequestMethod.GET)
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
     public String logout(Model model, HttpSession session)
             throws IOException {
         model.addAttribute("autorizedUser", null);
@@ -91,7 +55,7 @@ public class LinksController {
         return "redirect:/";
     }
 
-    @RequestMapping(value = "/actions/manage", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/manage", method = {RequestMethod.GET, RequestMethod.POST})
     public String manage(Model model, HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
@@ -102,7 +66,7 @@ public class LinksController {
 
     }
 
-    @RequestMapping(value = "/actions/users", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/users", method = {RequestMethod.GET, RequestMethod.POST})
     public String users(Model model, HttpSession session, HttpServletRequest request)
             throws IOException {
 
@@ -135,8 +99,7 @@ public class LinksController {
 
     }
 
-
-    @RequestMapping(value = "/actions/register", method = RequestMethod.POST)
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
     public String register(Model model,
                            @ModelAttribute("user") User user,
                            HttpServletRequest request,
@@ -156,7 +119,7 @@ public class LinksController {
 
     }
 
-    @RequestMapping(value = "/actions/login", method = RequestMethod.POST)
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String login(Model model,
                         @ModelAttribute("user") User user,
                         HttpSession session) {
@@ -185,7 +148,7 @@ public class LinksController {
         return "signin";
     }
 
-    @RequestMapping(value = {"/actions/deletelink"}, method =
+    @RequestMapping(value = {"/deletelink"}, method =
             RequestMethod.GET)
     public String deletelink(Model model,
                              @ModelAttribute("key") String shortLink,
@@ -217,7 +180,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/user/{owner}/links/delete"}, method =
+    @RequestMapping(value = {"/user/{owner}/links/delete"}, method =
             RequestMethod.GET)
     public String deleteuserlink(Model model,
                                  @ModelAttribute("key") String shortLink,
@@ -249,7 +212,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/user/{owner}/links/edit"}, method =
+    @RequestMapping(value = {"/user/{owner}/links/edit"}, method =
             RequestMethod.GET)
     public String updateuserlink(Model model,
                                  @ModelAttribute("key") String shortLink,
@@ -286,7 +249,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/users/{owner}/"}, method =
+    @RequestMapping(value = {"/users/{owner}/"}, method =
             RequestMethod.GET)
     public String editUser(Model model,
                            @ModelAttribute("key") String key,
@@ -352,7 +315,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/user"}, method =
+    @RequestMapping(value = {"/user"}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
                              @ModelAttribute("user") User newUser,
@@ -382,7 +345,7 @@ public class LinksController {
         }
     }
 
-    @RequestMapping(value = {"/actions/link"}, method =
+    @RequestMapping(value = {"/link"}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
                              @ModelAttribute("fullLink") FullLink fullLink,
@@ -419,65 +382,6 @@ public class LinksController {
             return "error";
         }
     }
-
-    @RequestMapping(value = "/", method = RequestMethod.POST)
-    public String createShortLink(Model model, HttpSession session,
-                                  HttpServletRequest request) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-
-        String link = request.getParameter("link");
-        if (link == null || "".equals(link)) {
-            return "main";
-        }
-        String shortLink = "";
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(null, link);
-        } else {
-            shortLink = service.createShortLink(autorizedUser, link);
-        }
-        if (shortLink == null) {
-            model.addAttribute("message", "Sorry, free short links ended. Try later!");
-            return "error";
-        }
-        String path = request.getServletContext().getRealPath("/");
-        try {
-            service.createQRImage(path, shortLink, request.getRequestURL() + shortLink);
-
-        } catch (IOException | WriterException e) {
-            e.printStackTrace();
-        }
-        model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", "/resources/" + shortLink + ".png");
-        model.addAttribute("link", link);
-        model.addAttribute("shortLink", request.getRequestURL() + shortLink);
-
-        return "main";
-    }
-
-    //    @RequestMapping(value = "/actions/statistics", method = RequestMethod.GET)
-//    public String statistics(Model model,
-//                             HttpServletRequest request, HttpSession session) {
-//
-//        User autorizedUser = (User) session.getAttribute("autorizedUser");
-//        if (autorizedUser == null || autorizedUser.isEmpty()) {
-//            model.addAttribute("message", "Sorry, statistics available only for logged users!");
-//            return "error";
-//        }
-//        if (autorizedUser.isAdmin()) {
-//            List<List<String>> shortStat = service.getShortStat();
-//            String contextPath = getContextPath(request);
-//            List<FullLink> fullStat = service.getFullStat(contextPath);
-//            model.addAttribute("shortStat", shortStat);
-//            model.addAttribute("fullStat", fullStat);
-//        } else {
-//            String contextPath = getContextPath(request);
-//            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
-//                    contextPath,1,1);
-//            model.addAttribute("fullStat", fullStat);
-//        }
-//        return "statistics";
-//    }
-//
     private String getContextPath(HttpServletRequest request) {
         String p = request.getRequestURL().toString();
         String cp = request.getServletPath();
@@ -489,7 +393,7 @@ public class LinksController {
         return contextPath;
     }
 
-    @RequestMapping(value = "/actions/links", method = RequestMethod.GET)
+    @RequestMapping(value = "/links", method = RequestMethod.GET)
     public String links(Model model,
                         @ModelAttribute("owner") String owner,
                         HttpServletRequest request,
@@ -527,7 +431,7 @@ public class LinksController {
         return "links";
     }
 
-    @RequestMapping(value = "/actions/domains", method = RequestMethod.GET)
+    @RequestMapping(value = "/domains", method = RequestMethod.GET)
     public String domains(Model model,
                           HttpServletRequest request,
                           HttpSession session) {

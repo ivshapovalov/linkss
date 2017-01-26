@@ -274,7 +274,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
