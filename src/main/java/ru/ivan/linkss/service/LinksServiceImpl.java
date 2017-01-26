@@ -12,10 +12,11 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
-import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.util.Util;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -64,6 +65,21 @@ public class LinksServiceImpl implements LinksService {
         return repository.checkFreeLinksDB();
     }
 
+    @Override
+    public void downloadImageFromS3(String filePath, String key) {
+        Util.downloadImageFromS3(filePath, key);
+    }
+
+    @Override
+    public void uploadImage(String imagePath, String shortLink, String fullShortLink) {
+        try {
+            createQRImage(imagePath, shortLink, fullShortLink);
+            sendFileToS3(imagePath, shortLink);
+
+        } catch (IOException | WriterException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public boolean checkUser(User user) {
@@ -78,12 +94,12 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public String createShortLink(User autorizedUser, String link) {
 
-        return repository.createShortLink(autorizedUser,link);
+        return repository.createShortLink(autorizedUser, link);
     }
 
     @Override
     public void createUser(String userName, String password) {
-        repository.createUser(userName,password);
+        repository.createUser(userName, password);
     }
 
     @Override
@@ -93,16 +109,17 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public User getUser(User autorizedUser, String userName) {
-        return repository.getUser(autorizedUser,userName);
+        return repository.getUser(autorizedUser, userName);
     }
+
     @Override
     public void deleteUser(User autorizedUser, String userName) {
-        repository.deleteUser(autorizedUser,userName);
+        repository.deleteUser(autorizedUser, userName);
     }
 
     @Override
     public void updateUser(User autorizedUser, User newUser, User oldUser) {
-        repository.updateUser(autorizedUser,newUser,oldUser);
+        repository.updateUser(autorizedUser, newUser, oldUser);
     }
 
     @Override
@@ -116,7 +133,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath) {
+    public FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) {
         return repository.getFullLink(autorizedUser, shortLink, owner, contextPath);
     }
 
@@ -127,39 +144,40 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public void deleteUserLink(User user, String shortLink, String owner) {
-        repository.deleteUserLink(user,shortLink, owner);
+        repository.deleteUserLink(user, shortLink, owner);
     }
 
     @Override
     public List<Domain> getShortStat(int offset, int recordsOnPage) {
-        return repository.getShortStat(offset,recordsOnPage);
+        return repository.getShortStat(offset, recordsOnPage);
     }
 
     @Override
-    public List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage) {
-        return repository.getFullStat(contextPath,offset,recordsOnPage);
+    public List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage) {
+        return repository.getFullStat(contextPath, offset, recordsOnPage);
     }
+
     @Override
     public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
-        return repository.getFullStat(userName, contextPath, offset, recordsOnPage );
+        return repository.getFullStat(userName, contextPath, offset, recordsOnPage);
     }
 
     @Override
     public long getUserLinksSize(User autorizedUser, String owner) {
-        return repository.getUserLinksSize(autorizedUser,owner);
+        return repository.getUserLinksSize(autorizedUser, owner);
     }
 
     @Override
     public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
-        repository.updateLink(autorizedUser,oldFullLink,newFullLink);
+        repository.updateLink(autorizedUser, oldFullLink, newFullLink);
     }
 
     @Override
-    public void sendFileToS3(String imagePath,String key) {
+    public void sendFileToS3(String imagePath, String key) {
 
         final AmazonS3 s3 = new AmazonS3Client();
         try {
-            File file=new File(imagePath);
+            File file = new File(imagePath);
             s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
         } catch (AmazonServiceException e) {
             System.err.println(e);

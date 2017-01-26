@@ -62,4 +62,7 @@ public interface LinksService {
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 
+    void downloadImageFromS3(String filePath, String key);
+
+    void uploadImage(String imagePath, String shortLink, String s);
 }

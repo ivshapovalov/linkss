@@ -1,7 +1,8 @@
-package ru.ivan.linkss;
+package ru.ivan.linkss.controller;
 
 
-import com.lambdaworks.redis.RedisClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksServiceImpl;
@@ -14,12 +15,18 @@ import java.util.concurrent.Executors;
 
 import static java.lang.Thread.sleep;
 
-
-public class TestConnection {
+@Component
+public class Populator {
     private static final int sizeOfPool = 15;
     private static final int requests = 1000;
 
-    private static LinksServiceImpl service;
+    @Autowired
+    private LinksServiceImpl service;
+    @Autowired
+    private RedisTwoDBLinkRepositoryImpl repository;
+
+    private String path;
+    private String fullShortLink;
 
     final static List<String> domains = new ArrayList<>();
 
@@ -45,20 +52,27 @@ public class TestConnection {
 
     }
 
+
+    public Populator(String path, String fullShortLink) {
+        this.path = path;
+        this.fullShortLink = fullShortLink;
+    }
+
     public static void main(String[] args) {
+        new Populator("","").init();
+    }
+    public void init() {
 
 //        RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
 //       RedisClient redisClientLinks = RedisClient.create
 //            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
-        RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+//        //RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
 //        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
 //                redisClientLinks);
-        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
         repository.init();
-        service = new LinksServiceImpl();
-        service.setRepository(repository);
+        service= new LinksServiceImpl();
 
         long startTime = System.nanoTime();
         //executeCreateInOneThread();
@@ -73,21 +87,21 @@ public class TestConnection {
         startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        //executeReadMultiThread();
+        executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        //executeCreateReadMultiThread();
+        executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
 
     }
 
-    private static void executeCreateReadMultiThread() {
+    private void executeCreateReadMultiThread() {
         boolean isWrite=true;
         ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
         for (int i = 1; i <= requests; i++) {
@@ -105,7 +119,7 @@ public class TestConnection {
         }
     }
 
-    private static void executeReadMultiThread() {
+    private void executeReadMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
         for (int i = 1; i <= requests; i++) {
             Runnable reader = new Visitor(i);
@@ -116,7 +130,7 @@ public class TestConnection {
         }
     }
 
-    private static void executeCreateMultiThread() {
+    private void executeCreateMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
         for (int i = 1; i <= requests; i++) {
             Runnable creator = new Creator(i);
@@ -127,21 +141,21 @@ public class TestConnection {
         }
     }
 
-    private static void executeCreateInOneThread() {
+    private void executeCreateInOneThread() {
         for (int i = 1; i <= requests; i++) {
             new Creator(i).run();
         }
 
     }
 
-    private static void executeReadInOneThread() {
+    private void executeReadInOneThread() {
 
         for (int i = 1; i <= requests; i++) {
             new Visitor(i).run();
         }
     }
 
-    private static class Creator extends Client {
+    private class Creator extends Client {
 
         public Creator(int number) {
             super(number);
@@ -153,6 +167,11 @@ public class TestConnection {
 
             String link = getRandomDomain() + "/" + number;
             String shortLink = service.createShortLink(new User("user","user"), link);
+ //            service.uploadImage();
+            String imagePath=path+"resources//" +shortLink + ".png";
+            service.uploadImage(imagePath, shortLink, fullShortLink + shortLink);
+
+
             if (shortLink == null) {
                     System.out.println(Thread.currentThread().getName() +
                             ": free short links ended ");
@@ -163,7 +182,7 @@ public class TestConnection {
         }
     }
 
-    private static class Visitor extends Client {
+    private class Visitor extends Client {
 
         public Visitor(int number) {
             super(number);
@@ -191,7 +210,7 @@ public class TestConnection {
         }
     }
 
-    private static abstract class Client implements Runnable {
+    private abstract class Client implements Runnable {
         protected final int number;
         protected final Random random = new Random();
 

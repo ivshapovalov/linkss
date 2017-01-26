@@ -471,6 +471,29 @@ public class ActionsController {
         return "domains";
     }
 
+    @RequestMapping(value = "/populate", method = RequestMethod.GET)
+    public String populate(Model model,
+                          HttpServletRequest request,
+                          HttpSession session) {
+
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute("message", "Sorry, links available only for logged users!");
+            return "error";
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute("message", "Sorry, populate available only for admin users!");
+            return "error";
+        }
+
+        String path = request.getServletContext().getRealPath("/");
+        String fullShortLink=request.getRequestURL().toString();
+        new Populator(path,fullShortLink).init();
+
+        return "manage";
+    }
+
     private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
         String newKey = newFullLink.getKey();
         String oldKey = oldFullLink.getKey();

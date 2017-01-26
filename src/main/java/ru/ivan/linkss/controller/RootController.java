@@ -54,7 +54,8 @@ public class RootController {
         OutputStream os = response.getOutputStream();
         String filePath = request.getServletContext().getRealPath(shortLink);
         String key=shortLink.substring(shortLink.lastIndexOf("/")+1,shortLink.lastIndexOf("."));
-        Util.downloadImageFromS3(filePath,key);
+        service.downloadImageFromS3(filePath,key);
+
         File file = new File(filePath);
         FileInputStream fis = new FileInputStream(file);
         int bytes;
@@ -85,13 +86,11 @@ public class RootController {
         }
         String path = request.getServletContext().getRealPath("/");
         String imagePath=path+"resources//" +shortLink + ".png";
-        try {
-            service.createQRImage(imagePath, shortLink, request.getRequestURL() + shortLink);
-            service.sendFileToS3(imagePath,shortLink);
 
-        } catch (IOException | WriterException e) {
-            e.printStackTrace();
-        }
+        service.uploadImage(imagePath, shortLink, request.getRequestURL() + shortLink);
+//            service.createQRImage(imagePath, shortLink, request.getRequestURL() + shortLink);
+//            service.sendFileToS3(imagePath,shortLink);
+
         model.addAttribute("user", autorizedUser);
         model.addAttribute("image", "/"+shortLink + ".png");
         //model.addAttribute("image", link);
