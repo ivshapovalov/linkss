@@ -19,8 +19,6 @@ public class ScheduledTasks {
 
     @Scheduled(fixedRate = 1000)
     public void updateFreeLinks() {
-//        System.out.println(String.format("The time is now %s. Check free links count",
-//                dateFormat.format(new Date())));
         long startTime = System.nanoTime();
         BigInteger addedKeys = service.updateFreeLinks();
         if (!BigInteger.ZERO.equals(addedKeys)) {
@@ -29,8 +27,6 @@ public class ScheduledTasks {
             System.out.println(String.format("%s. Free link DB updated by %s keys in %s seconds",
                     dateFormat.format(new Date()), addedKeys,(endTime -
                             startTime) / 1000000000));
-        } else {
-            //System.out.println("There is no need to increase free links value");
         }
     }
 }

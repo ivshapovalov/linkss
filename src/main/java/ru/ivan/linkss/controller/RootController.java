@@ -26,7 +26,6 @@ import java.util.List;
 @EnableScheduling
 public class RootController {
 
-
     @Autowired
     private LinksService service;
 
@@ -99,31 +98,5 @@ public class RootController {
 
         return "main";
     }
-
-    //    @RequestMapping(value = "/actions/statistics", method = RequestMethod.GET)
-//    public String statistics(Model model,
-//                             HttpServletRequest request, HttpSession session) {
-//
-//        User autorizedUser = (User) session.getAttribute("autorizedUser");
-//        if (autorizedUser == null || autorizedUser.isEmpty()) {
-//            model.addAttribute("message", "Sorry, statistics available only for logged users!");
-//            return "error";
-//        }
-//        if (autorizedUser.isAdmin()) {
-//            List<List<String>> shortStat = service.getShortStat();
-//            String contextPath = getContextPath(request);
-//            List<FullLink> fullStat = service.getFullStat(contextPath);
-//            model.addAttribute("shortStat", shortStat);
-//            model.addAttribute("fullStat", fullStat);
-//        } else {
-//            String contextPath = getContextPath(request);
-//            List<FullLink> fullStat = service.getFullStat(autorizedUser.getUserName(),
-//                    contextPath,1,1);
-//            model.addAttribute("fullStat", fullStat);
-//        }
-//        return "statistics";
-//    }
-//
-
 
 }

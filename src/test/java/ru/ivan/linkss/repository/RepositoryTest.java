@@ -1,4 +1,4 @@
-package ru.ivan.linkss;
+package ru.ivan.linkss.repository;
 
 
 import com.lambdaworks.redis.RedisClient;

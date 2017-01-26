@@ -34,13 +34,9 @@ public class InitialPopulator {
     }
 
     private void init() {
-
         repository.init();
         BigInteger keyCount=repository.createKeys(1);
         System.out.println(String.format("'%s' ключей добавлено",keyCount.toString()));
-
-
     }
-
 
 }

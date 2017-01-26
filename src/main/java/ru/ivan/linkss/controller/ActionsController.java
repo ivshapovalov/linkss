@@ -1,6 +1,5 @@
 package ru.ivan.linkss.controller;
 
-import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
@@ -16,10 +15,7 @@ import ru.ivan.linkss.service.LinksService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 @Controller
@@ -40,11 +36,11 @@ public class ActionsController {
         return "signup";
     }
 
-    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    @RequestMapping(value = "/signin", method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
         model.addAttribute("user", new User());
-        return "login";
+        return "signin";
     }
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
@@ -131,7 +127,7 @@ public class ActionsController {
                 return "error";
             }
         }
-        return "login";
+        return "signin";
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {

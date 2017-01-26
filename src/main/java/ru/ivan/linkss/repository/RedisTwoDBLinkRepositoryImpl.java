@@ -547,9 +547,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
                             .getLink());
                 }
-
             }
-
         }
     }
 
@@ -642,6 +640,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                 "delete" +
                                 " users",
                         autorizedUser.getUserName()));
+
+            }
+            if (DEFAULT_USER.equals(userName) || ADMIN_USER.equals(userName)) {
+                throw new RuntimeException(String.format("User '%s' is default user. Try another.",
+                        userName));
 
             }
             if (syncCommands.exists(userName) == 1) {

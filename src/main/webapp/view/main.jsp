@@ -16,7 +16,7 @@
 <button onclick="location.href='/actions/signup'">Sign up</button>
 <c:choose>
     <c:when test="${autorizedUser==null || autorizedUser.isEmpty()}" >
-        <button onclick="location.href='/actions/login'">Login</button>
+        <button onclick="location.href='/actions/signin'">Sign in</button>
     </c:when>
     <c:otherwise>
         <button onclick="location.href='/actions/logout'">Logout</button>
