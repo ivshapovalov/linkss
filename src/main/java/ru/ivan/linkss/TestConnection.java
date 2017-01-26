@@ -16,7 +16,7 @@ import static java.lang.Thread.sleep;
 
 
 public class TestConnection {
-    private static final int sizeOfPool = 10;
+    private static final int sizeOfPool = 15;
     private static final int requests = 100000;
 
     private static LinksServiceImpl service;
@@ -144,7 +144,7 @@ public class TestConnection {
             Thread.currentThread().setName("t" + number);
 
             String link = getRandomDomain() + "/" + number;
-            String shortLink = service.createShortLink(new User(), link);
+            String shortLink = service.createShortLink(new User("user","user"), link);
             if (shortLink == null) {
                     System.out.println(Thread.currentThread().getName() +
                             ": free short links ended ");
