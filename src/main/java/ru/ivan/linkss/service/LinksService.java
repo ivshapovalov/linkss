@@ -32,8 +32,9 @@ public interface LinksService {
     void createQRImage(String path,String shortLink, String fullShortLink) throws
             WriterException,
             IOException;
+     void sendFileToS3(String imagePath,String key) ;
 
-    boolean checkUser(User user);
+        boolean checkUser(User user);
 
     void deleteUserLink(User user, String shortLink, String owner);
 

@@ -56,13 +56,13 @@ public class TestConnection {
 //        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
 //                redisClientLinks);
         RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
-        //repository.init();
+        repository.init();
         service = new LinksServiceImpl();
         service.setRepository(repository);
 
         long startTime = System.nanoTime();
         //executeCreateInOneThread();
-        //executeCreateMultiThread();
+        executeCreateMultiThread();
         long linksSize=service.getDBLinksSize();
         long freeLinksSize=service.getDBFreeLinksSize();
         long endTime = System.nanoTime();
@@ -71,7 +71,7 @@ public class TestConnection {
         System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
 
         startTime = System.nanoTime();
-        executeReadInOneThread();
+        //executeReadInOneThread();
 
         //executeReadMultiThread();
         endTime = System.nanoTime();

@@ -37,7 +37,7 @@
         </tr>
         <tr>
             <td><form:label path="imageLink">Image</form:label></td>
-            <td><img src="${imageLink}"/></td>
+            <td><img src="${fullLink.getImageLink()}"/></td>
         </tr>
     </table>
     <br>

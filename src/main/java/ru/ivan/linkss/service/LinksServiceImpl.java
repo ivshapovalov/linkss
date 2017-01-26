@@ -1,5 +1,8 @@
 package ru.ivan.linkss.service;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
@@ -151,7 +154,17 @@ public class LinksServiceImpl implements LinksService {
         repository.updateLink(autorizedUser,oldFullLink,newFullLink);
     }
 
-    private void sendFileToS3(String fileName) {
+    @Override
+    public void sendFileToS3(String imagePath,String key) {
+
+        final AmazonS3 s3 = new AmazonS3Client();
+        try {
+            File file=new File(imagePath);
+            s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
+        } catch (AmazonServiceException e) {
+            System.err.println(e);
+        }
+
 //        //String url = System.getenv("EASYSMS_URL")+"/messages";
 //        String url = "https://s3-bucket.s3.amazonaws.com/whydt";
 //        String text = "{\"to\":\"+79266948741\",\"body\":\"Hello from Easy SMS Add-on for Heroku.\"}";
@@ -184,10 +197,10 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void createQRImage(String path, String shortLink, String fullShortLink) throws WriterException,
+    public void createQRImage(String filePath, String shortLink, String fullShortLink) throws
+            WriterException,
             IOException {
 
-        String filePath = path +"resources//" +shortLink + ".png";
         int size = 125;
         String fileType = "png";
         File qrFile = new File(filePath);

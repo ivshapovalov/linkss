@@ -1,26 +1,21 @@
 package ru.ivan.linkss.controller;
 
+
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import ru.ivan.linkss.repository.entity.Domain;
-import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
+import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
+import java.io.*;
 
 @Controller
 @EnableScheduling
@@ -28,6 +23,7 @@ public class RootController {
 
     @Autowired
     private LinksService service;
+
 
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
@@ -43,7 +39,7 @@ public class RootController {
     public String redirect(HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
-        String link = service.visitLink(shortLink.substring(1));
+        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf("/") + 1));
         if (link.contains(":")) {
             return "redirect:" + link;
         } else {
@@ -51,12 +47,15 @@ public class RootController {
         }
     }
 
-    @RequestMapping(value = "/resources/*.png", method = RequestMethod.GET)
+    @RequestMapping(value = "/*.png", method = RequestMethod.GET)
     public void openImage(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        File file = new File(request.getServletContext().getRealPath(shortLink));
+        String filePath = request.getServletContext().getRealPath(shortLink);
+        String key=shortLink.substring(shortLink.lastIndexOf("/")+1,shortLink.lastIndexOf("."));
+        Util.downloadImageFromS3(filePath,key);
+        File file = new File(filePath);
         FileInputStream fis = new FileInputStream(file);
         int bytes;
         while ((bytes = fis.read()) != -1) {
@@ -85,18 +84,40 @@ public class RootController {
             return "error";
         }
         String path = request.getServletContext().getRealPath("/");
+        String imagePath=path+"resources//" +shortLink + ".png";
         try {
-            service.createQRImage(path, shortLink, request.getRequestURL() + shortLink);
+            service.createQRImage(imagePath, shortLink, request.getRequestURL() + shortLink);
+            service.sendFileToS3(imagePath,shortLink);
 
         } catch (IOException | WriterException e) {
             e.printStackTrace();
         }
         model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", "/resources/" + shortLink + ".png");
+        model.addAttribute("image", "/"+shortLink + ".png");
+        //model.addAttribute("image", link);
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
 
         return "main";
     }
 
+
 }
+
+
+//        AmazonS3 s3client  = new AmazonS3Client(new ClasspathPropertiesFileCredentialsProvider());
+//        java.util.Date expiration = new java.util.Date();
+//        long msec = expiration.getTime();
+//        msec += 1000 * 60 * 60; // 1 hour.
+//        expiration.setTime(msec);
+//
+//        GeneratePresignedUrlRequest generatePresignedUrlRequest =
+//                new GeneratePresignedUrlRequest(S3_BUCKET_NAME, AWS_ACCESS_KEY_ID);
+//        generatePresignedUrlRequest.setMethod(HttpMethod.GET); // Default.
+//        generatePresignedUrlRequest.setExpiration(expiration);
+//
+//        return s3client.generatePresignedUrl(generatePresignedUrlRequest).toString();
+
+//}
+
+

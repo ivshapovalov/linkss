@@ -11,6 +11,7 @@ import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
+import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -119,7 +120,8 @@ public class ActionsController {
     public String login(Model model,
                         @ModelAttribute("user") User user,
                         HttpSession session) {
-        if (user != null && user.getUserName() != null && !user.getUserName().equals("") && user.getPassword() != null && !user.getPassword().equals("")) {
+        if (user != null && user.getUserName() != null  && !user.getUserName().equals("")
+                && user.getPassword() != null && !user.getPassword().equals("")) {
             try {
                 return autoLogin(model, user, session);
             } catch (RuntimeException e) {
@@ -151,7 +153,8 @@ public class ActionsController {
                              @ModelAttribute("owner") String owner,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+        if (autorizedUser == null || autorizedUser.getUserName() == null
+                || autorizedUser.getUserName().equals("")) {
             model.addAttribute("message", "User is not defined!");
             return "error";
         }
@@ -230,10 +233,15 @@ public class ActionsController {
         }
 
         try {
+            String realImagePath = request.getServletContext().getRealPath("")
+                    +shortLink+".png";
+            Util.downloadImageFromS3(realImagePath,shortLink+".png");
+
             String link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
+            String urlImagePath=contextPath +shortLink+".png";
             FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
-                    "", contextPath + shortLink + ".png",
+                    "", urlImagePath,
                     owner, service.getLinkDays(shortLink));
             model.addAttribute("fullLink", fullLink);
             model.addAttribute("oldKey", shortLink);
