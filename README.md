@@ -7,7 +7,7 @@ Short link repo service
 ####Other:zxing QR code
 
 
-####REDIS DB 1
+####REDIS INSTANCE 1
 #####redis:0 WORK_DB
 - hset key:_visits
     - field:shortLink
@@ -28,7 +28,7 @@ Short link repo service
 #####redis:1 FREELINK_DB 
 - key:shortLink
 
-####REDIS DB 2
-#####redis:1 LINK_DB 
+####REDIS INSTANCE 2
+#####redis:0 LINK_DB 
 - key:shortLink
 - value:link

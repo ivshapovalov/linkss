@@ -300,7 +300,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_WORK_NUMBER);
 
         if (autorizedUser != null && !"".equals(autorizedUser.getUserName())) {
-            syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
+            try {
+                syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
+            } catch (Exception e) {
+                System.out.println("Приехали");
+            }
         } else {
             syncCommands.hset(DEFAULT_USER, shortLink, link);
 
