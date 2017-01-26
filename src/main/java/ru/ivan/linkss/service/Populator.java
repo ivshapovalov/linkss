@@ -65,13 +65,8 @@ public class Populator {
         this.context = context;
     }
 
-    public Populator(String path, String context) {
-        this.path = path;
-        this.context = context;
-    }
-
     public static void main(String[] args) {
-        new Populator("","").init();
+        new Populator().init();
     }
     public void init() {
 
