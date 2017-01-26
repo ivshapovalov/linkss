@@ -3,7 +3,7 @@ package ru.ivan.linkss;
 
 import com.lambdaworks.redis.RedisClient;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
-import ru.ivan.linkss.repository.User;
+import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksServiceImpl;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import static java.lang.Thread.sleep;
 
 public class TestConnection {
     private static final int sizeOfPool = 15;
-    private static final int requests = 100000;
+    private static final int requests = 1000;
 
     private static LinksServiceImpl service;
 
@@ -30,30 +30,38 @@ public class TestConnection {
         domains.add("google.ua");
         domains.add("mail.us");
         domains.add("google.au");
+        domains.add("google.mu");
+        domains.add("google.yu");
+        domains.add("google.qu");
+        domains.add("google.iu");
         domains.add("gmail.au");
         domains.add("news.com");
         domains.add("nyce.fr");
         domains.add("mail.sp");
+        domains.add("mail.gf");
+        domains.add("mail.de");
+        domains.add("mail.re");
+        domains.add("mail.po");
 
     }
 
     public static void main(String[] args) {
 
-        RedisClient redisClient = RedisClient.create
-            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-       RedisClient redisClientLinks = RedisClient.create
-            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
-//        RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+//        RedisClient redisClient = RedisClient.create
+//            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
+//       RedisClient redisClientLinks = RedisClient.create
+//            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
+        RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
 
-        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
-                redisClientLinks);
-//        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
-        repository.init();
+//        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
+//                redisClientLinks);
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl();
+        //repository.init();
         service = new LinksServiceImpl();
         service.setRepository(repository);
 
         long startTime = System.nanoTime();
-        executeCreateInOneThread();
+        //executeCreateInOneThread();
         //executeCreateMultiThread();
         long linksSize=service.getDBLinksSize();
         long freeLinksSize=service.getDBFreeLinksSize();
@@ -63,7 +71,7 @@ public class TestConnection {
         System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
 
         startTime = System.nanoTime();
-        //executeReadInOneThread();
+        executeReadInOneThread();
 
         //executeReadMultiThread();
         endTime = System.nanoTime();
@@ -76,6 +84,7 @@ public class TestConnection {
         endTime = System.nanoTime();
         System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
+
     }
 
     private static void executeCreateReadMultiThread() {
@@ -86,7 +95,7 @@ public class TestConnection {
             if (isWrite) {
                 client = new Creator(i);
             } else {
-                client = new Reader(i);
+                client = new Visitor(i);
             }
             executor.execute(client);
             isWrite = !isWrite;
@@ -99,7 +108,7 @@ public class TestConnection {
     private static void executeReadMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
         for (int i = 1; i <= requests; i++) {
-            Runnable reader = new Reader(i);
+            Runnable reader = new Visitor(i);
             executor.execute(reader);
         }
         executor.shutdown();
@@ -128,8 +137,7 @@ public class TestConnection {
     private static void executeReadInOneThread() {
 
         for (int i = 1; i <= requests; i++) {
-            new Reader(i).run();
-            System.out.println(i);
+            new Visitor(i).run();
         }
     }
 
@@ -155,9 +163,9 @@ public class TestConnection {
         }
     }
 
-    private static class Reader extends Client {
+    private static class Visitor extends Client {
 
-        public Reader(int number) {
+        public Visitor(int number) {
             super(number);
         }
 
@@ -170,7 +178,7 @@ public class TestConnection {
                 String shortLink = service.getRandomShortLink();
                 if (!"".equals(shortLink)) {
                     String link = null;
-                    link = service.getLink(shortLink);
+                    link = service.visitLink(shortLink);
 //                            System.out.println(Thread.currentThread().getName() +
 //                                    ": get '" + shortLink + "': '" + link + "'");
                     failed=false;
@@ -201,7 +209,7 @@ public class TestConnection {
         }
 
         protected String getRandomDomain() {
-            int index = Math.abs(random.nextInt() % 10);
+            int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
         }
 

@@ -1,9 +1,9 @@
 package ru.ivan.linkss.service;
 
 import com.google.zxing.WriterException;
-import ru.ivan.linkss.repository.Domain;
-import ru.ivan.linkss.repository.FullLink;
-import ru.ivan.linkss.repository.User;
+import ru.ivan.linkss.repository.entity.Domain;
+import ru.ivan.linkss.repository.entity.FullLink;
+import ru.ivan.linkss.repository.entity.User;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -55,11 +55,10 @@ public interface LinksService {
 
     long getUsersSize(User autorizedUser);
 
-    void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days);
-
     long getUserLinksSize(User autorizedUser, String owner);
 
     FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath);
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
+
 }

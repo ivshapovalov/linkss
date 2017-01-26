@@ -1,4 +1,4 @@
-package ru.ivan.linkss.repository;
+package ru.ivan.linkss.repository.entity;
 
 
 public class FullLink {

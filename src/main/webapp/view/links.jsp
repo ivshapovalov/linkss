@@ -129,6 +129,7 @@
 
     <table border="1" width="50%">
         <tr>
+            <td width="10%"><b>User</b></td>
             <td width="10%"><b>Key</b></td>
             <td width="40%"><b>Link</b></td>
             <td width="10%"><b>Days</b></td>
@@ -139,6 +140,7 @@
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
+                <td width="10%">${column.getUserName()}</td>
                 <td width="10%">${column.getKey()}</td>
                 <td width="40%"><a href="//${column.getLink()}">${column.getLink()}</a></td>
                 <td width="10%">${column.getDays()}</td>

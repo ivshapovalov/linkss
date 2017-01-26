@@ -9,10 +9,10 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import ru.ivan.linkss.repository.Domain;
-import ru.ivan.linkss.repository.FullLink;
+import ru.ivan.linkss.repository.entity.Domain;
+import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.User;
+import ru.ivan.linkss.repository.entity.User;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -31,11 +31,6 @@ public class LinksServiceImpl implements LinksService {
     private LinkRepository repository;
 
     public LinksServiceImpl() {
-    }
-
-    @Override
-    public void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long days) {
-        repository.updateUserLinkDays(autorizedUser, shortLink, owner,days);
     }
 
     @Override

@@ -8,7 +8,7 @@ import org.junit.*;
 
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
-import ru.ivan.linkss.repository.User;
+import ru.ivan.linkss.repository.entity.User;
 
 import static org.junit.Assert.assertEquals;
 

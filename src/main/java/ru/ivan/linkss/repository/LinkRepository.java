@@ -1,5 +1,9 @@
 package ru.ivan.linkss.repository;
 
+import ru.ivan.linkss.repository.entity.Domain;
+import ru.ivan.linkss.repository.entity.FullLink;
+import ru.ivan.linkss.repository.entity.User;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +32,7 @@ public interface LinkRepository {
 
     List<Domain> getShortStat(int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage);
+    List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage);
 
     default List<FullLink> getFullStat(String userName, String contextPath, int offset, int
             recordsOnPage){
@@ -51,11 +55,6 @@ public interface LinkRepository {
 
     BigInteger createKeys(final int length);
 
-    default void updateUserLinkDays(User autorizedUser, String shortLink, String owner, long
-            days) {
-
-    }
-
     default long getUserLinksSize(User autorizedUser, String owner) {return 0;}
 
     default long getLinkDays(String shortLink) {
@@ -69,4 +68,5 @@ public interface LinkRepository {
     default void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
 
     }
+
 }
