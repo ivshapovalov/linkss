@@ -1,6 +1,8 @@
 package ru.ivan.linkss.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +13,7 @@ import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
+import ru.ivan.linkss.service.Populator;
 import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +32,7 @@ public class ActionsController {
 
     @Autowired
     private LinksService service;
+
 
     @RequestMapping(value = "/signup", method = RequestMethod.GET)
     public String registration(Model model, HttpServletResponse response)
@@ -488,8 +492,22 @@ public class ActionsController {
         }
 
         String path = request.getServletContext().getRealPath("/");
-        String fullShortLink=request.getRequestURL().toString();
-        new Populator(path,fullShortLink).init();
+        String context=getContextPath(request);
+
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext
+                ("/spring/spring-app.xml");
+        Thread populatorThread= new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Populator populator= applicationContext.getBean(Populator.class);
+                populator.setPath(path);
+                populator.setContext(context);
+                populator.init();
+            }
+        });
+        populatorThread.setName("Populator");
+        populatorThread.start();
+
 
         return "manage";
     }

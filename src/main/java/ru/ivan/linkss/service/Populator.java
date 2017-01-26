@@ -1,11 +1,11 @@
-package ru.ivan.linkss.controller;
+package ru.ivan.linkss.service;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.User;
-import ru.ivan.linkss.service.LinksServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +21,14 @@ public class Populator {
     private static final int requests = 1000;
 
     @Autowired
-    private LinksServiceImpl service;
+    private LinksService service;
+
     @Autowired
-    private RedisTwoDBLinkRepositoryImpl repository;
+    @Qualifier(value = "repositoryTwo")
+    private LinkRepository repository;
 
     private String path;
-    private String fullShortLink;
+    private String context;
 
     final static List<String> domains = new ArrayList<>();
 
@@ -52,10 +54,20 @@ public class Populator {
 
     }
 
+    public Populator() {
+    }
 
-    public Populator(String path, String fullShortLink) {
+    public void setPath(String path) {
         this.path = path;
-        this.fullShortLink = fullShortLink;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public Populator(String path, String context) {
+        this.path = path;
+        this.context = context;
     }
 
     public static void main(String[] args) {
@@ -72,7 +84,6 @@ public class Populator {
 //        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
 //                redisClientLinks);
         repository.init();
-        service= new LinksServiceImpl();
 
         long startTime = System.nanoTime();
         //executeCreateInOneThread();
@@ -169,7 +180,7 @@ public class Populator {
             String shortLink = service.createShortLink(new User("user","user"), link);
  //            service.uploadImage();
             String imagePath=path+"resources//" +shortLink + ".png";
-            service.uploadImage(imagePath, shortLink, fullShortLink + shortLink);
+            service.uploadImage(imagePath, shortLink, context + shortLink);
 
 
             if (shortLink == null) {
