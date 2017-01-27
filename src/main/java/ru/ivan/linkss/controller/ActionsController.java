@@ -239,7 +239,7 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + "resources\\" + shortLink + ".png";
+                    + "resources//" + shortLink + ".png";
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 Util.downloadImageFromS3(realImagePath, shortLink);

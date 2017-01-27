@@ -52,7 +52,7 @@ public class RootController {
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        String filePath = request.getServletContext().getRealPath("")+"resources\\"+shortLink;
+        String filePath = request.getServletContext().getRealPath("")+"resources//"+shortLink;
         String key = shortLink.substring(shortLink.lastIndexOf("/") + 1, shortLink.lastIndexOf("."));
         File imageOnDisk = new File(filePath);
         if (!imageOnDisk.exists()) {
