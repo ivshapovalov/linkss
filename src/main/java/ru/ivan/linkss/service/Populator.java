@@ -20,7 +20,9 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
-    private static final int REQUESTS = 10000;
+    private static final int W_REQUESTS = 500;
+    private static final int R_REQUESTS = 10000;
+    private static final int RW_REQUESTS = 10000;
 
     @Autowired
     private LinksService service;
@@ -106,7 +108,7 @@ public class Populator {
         long linksSize=service.getDBLinksSize();
         long freeLinksSize=service.getDBFreeLinksSize();
         long endTime = System.nanoTime();
-        System.out.println(String.valueOf(REQUESTS) + " write: " + (endTime -
+        System.out.println(String.valueOf(W_REQUESTS) + " write: " + (endTime -
                 startTime) / 1000 + " millis");
         System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
 
@@ -115,14 +117,14 @@ public class Populator {
 
         //executeReadMultiThread();
         endTime = System.nanoTime();
-        System.out.println(String.valueOf(REQUESTS) + " read: " + (endTime -
+        System.out.println(String.valueOf(R_REQUESTS) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
         executeCreateReadMultiThread();
         endTime = System.nanoTime();
-        System.out.println(String.valueOf(REQUESTS) + " read/write: " + (endTime -
+        System.out.println(String.valueOf(RW_REQUESTS) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
 
     }
@@ -130,7 +132,7 @@ public class Populator {
     private void executeCreateReadMultiThread() {
         boolean isWrite=true;
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        for (int i = 1; i <= REQUESTS; i++) {
+        for (int i = 1; i <= RW_REQUESTS; i++) {
             Runnable client;
             if (isWrite) {
                 client = new Creator(i);
@@ -147,7 +149,7 @@ public class Populator {
 
     private void executeReadMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        for (int i = 1; i <= REQUESTS; i++) {
+        for (int i = 1; i <= R_REQUESTS; i++) {
             Runnable reader = new Visitor(i);
             executor.execute(reader);
         }
@@ -158,7 +160,7 @@ public class Populator {
 
     private void executeCreateMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        for (int i = 1; i <= REQUESTS; i++) {
+        for (int i = 1; i <= W_REQUESTS; i++) {
             Runnable creator = new Creator(i);
             executor.execute(creator);
         }
@@ -168,7 +170,7 @@ public class Populator {
     }
 
     private void executeCreateInOneThread() {
-        for (int i = 1; i <= REQUESTS; i++) {
+        for (int i = 1; i <= W_REQUESTS; i++) {
             new Creator(i).run();
         }
 
@@ -176,7 +178,7 @@ public class Populator {
 
     private void executeReadInOneThread() {
 
-        for (int i = 1; i <= REQUESTS; i++) {
+        for (int i = 1; i <= R_REQUESTS; i++) {
             new Visitor(i).run();
         }
     }
