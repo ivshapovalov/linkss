@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Util {
 
@@ -26,6 +28,7 @@ public class Util {
         } catch (URISyntaxException e) {
             System.out.println("Ошибка:" +url);
 
+            List<Integer> list1=new ArrayList<>();
             return "";
         }
     }
