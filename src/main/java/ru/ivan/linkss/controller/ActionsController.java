@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.Domain;
@@ -35,6 +36,8 @@ public class ActionsController {
     private LinksService service;
 
     private final String fileSepartor=File.separator;
+    private final String webSepartor="/";
+
 
     @RequestMapping(value = "/signup", method = RequestMethod.GET)
     public String registration(Model model, HttpServletResponse response)
@@ -99,7 +102,6 @@ public class ActionsController {
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("autorizedUser", autorizedUser);
         return "users";
-
     }
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
@@ -262,33 +264,41 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = {"/users/{owner}/"}, method =
+    @RequestMapping(value = {"/users/{owner}/clear"}, method =
             RequestMethod.GET)
-    public String editUser(Model model,
-                           @ModelAttribute("key") String key,
-                           @ModelAttribute("action") String action,
+    public String clearUser(Model model,
+                           @PathVariable("owner") String owner,
                            HttpSession session) {
-        if (action == null || action.equals("")) {
-            model.addAttribute("message", "Action is not defined!");
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+
+        if (autorizedUser == null || "".equals(autorizedUser.getUserName())) {
+            model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
-        if (ACTION_EDIT.equalsIgnoreCase(action)) {
-            return actionEditUser(model, key, session);
-        } else if (ACTION_DELETE.equalsIgnoreCase(action)) {
-            return actionDeleteUser(model, key, session);
 
+        if (owner == null || owner.equals("")) {
+            model.addAttribute("message", "User name is not defined!");
+            return "error";
         }
-        return "users";
+        try {
+            service.clearUser(autorizedUser, owner);
+            model.addAttribute("owner", null);
+            return "redirect:/actions/users";
+        } catch (RuntimeException e) {
+            model.addAttribute("message", e.getMessage());
+            return "error";
+        }
     }
-
-    private String actionEditUser(Model model, String key, HttpSession session) {
+    @RequestMapping(value = {"/users/{owner}/edit"}, method =
+            RequestMethod.GET)
+    private String editUser(Model model, @PathVariable("owner") String key
+            , HttpSession session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
 
         if (autorizedUser == null || autorizedUser.getUserName() == null || "".equals(autorizedUser.getUserName())) {
             model.addAttribute("message", "Autorized user is not defined!");
             return "error";
         }
-
         if (key == null || key.equals("")) {
             model.addAttribute("message", "User name is not defined!");
             return "error";
@@ -305,7 +315,10 @@ public class ActionsController {
         }
     }
 
-    private String actionDeleteUser(Model model, String key, HttpSession session) {
+    @RequestMapping(value = {"/users/{owner}/delete"}, method =
+            RequestMethod.GET)
+    private String deleteUser(Model model, @PathVariable("owner") String owner, HttpSession
+            session) {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
 
         if (autorizedUser == null || "".equals(autorizedUser.getUserName())) {
@@ -313,14 +326,14 @@ public class ActionsController {
             return "error";
         }
 
-        if (key == null || key.equals("")) {
+        if (owner == null || owner.equals("")) {
             model.addAttribute("message", "User name is not defined!");
             return "error";
         }
         try {
-            service.deleteUser(autorizedUser, key);
+            service.deleteUser(autorizedUser, owner);
             model.addAttribute("action", null);
-            model.addAttribute("key", null);
+            model.addAttribute("owner", null);
             return "redirect:/actions/users";
         } catch (RuntimeException e) {
             model.addAttribute("message", e.getMessage());
@@ -531,9 +544,7 @@ public class ActionsController {
                     "users!");
             return "error";
         }
-
         System.out.println(service.deleteExpiredUserLinks().intValue());
-
         return "manage";
     }
 
@@ -557,7 +568,5 @@ public class ActionsController {
             throw new RuntimeException(message.toString());
         }
         service.updateLink(autorizedUser, oldFullLink, newFullLink);
-
     }
-
 }

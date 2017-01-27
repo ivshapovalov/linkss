@@ -132,6 +132,12 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
+    public void clearUser(User autorizedUser, String userName)
+    {
+        repository.clearUser(autorizedUser, userName);
+    }
+
+    @Override
     public void updateUser(User autorizedUser, User newUser, User oldUser) {
         repository.updateUser(autorizedUser, newUser, oldUser);
     }

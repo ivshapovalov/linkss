@@ -649,11 +649,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
-            syncCommands.select(DB_LINK_NUMBER);
+            syncCommandsLinks.select(DB_LINK_NUMBER);
             if (!syncCommands.hexists(KEY_USERS, userName)) {
                 throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
                         userName));
@@ -671,36 +670,65 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             }
             if (syncCommands.exists(userName) == 1) {
-                syncCommands.hkeys(userName)
-                        .stream()
-                        .map(shortLink -> {
-                            synchronized (redisClient) {
-                                String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                                syncCommands.hdel(KEY_VISITS, shortLink);
-                                String link = syncCommandsLinks.get(shortLink);
-                                syncCommandsLinks.del(shortLink);
-                                String domainName = Util.getDomainName
-                                        (link);
-                                String visitsByDomainActual = syncCommands.hget
-                                        (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
-                                if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
-                                        && Integer.parseInt(visitsByDomainActual) != 0) {
-                                    int visitsCount = Integer.parseInt(visits);
-                                    int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
-                                    int decrement = visitsCount > visitsCountByDomainActual
-                                            ? visitsCountByDomainActual : visitsCount;
-                                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
-                                            -1 * decrement);
-                                }
-                                return shortLink;
-                            }
-                        })
-                        .collect(Collectors.toList());
-                syncCommands.del(userName);
-
+                deleteAllUserLinksWithHistory(userName, syncCommands, syncCommandsLinks);
             }
             syncCommands.hdel(KEY_USERS, userName);
         }
+    }
+    @Override
+    public void clearUser(User autorizedUser, String userName) {
+        try (StatefulRedisConnection<String, String> connection = connect();
+             StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            syncCommandsLinks.select(DB_LINK_NUMBER);
+            if (!syncCommands.hexists(KEY_USERS, userName)) {
+                throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
+                        userName));
+            }
+            if (!autorizedUser.isAdmin()) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                "delete" +
+                                " users",
+                        autorizedUser.getUserName()));
+
+            }
+            if (syncCommands.exists(userName) == 1) {
+                deleteAllUserLinksWithHistory(userName, syncCommands, syncCommandsLinks);
+            }
+        }
+    }
+
+    private void deleteAllUserLinksWithHistory(String userName, RedisCommands<String, String> syncCommands, RedisCommands<String, String> syncCommandsLinks) {
+        syncCommands.hkeys(userName)
+                .stream()
+                .map(shortLink -> {
+                    synchronized (redisClient) {
+                        String visits = syncCommands.hget(KEY_VISITS, shortLink);
+                        syncCommands.hdel(KEY_VISITS, shortLink);
+                        String link = syncCommands.hget(userName,shortLink);
+                        String domainName = Util.getDomainName
+                                (link);
+                        String visitsByDomainActual = syncCommands.hget
+                                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
+                        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
+                                && Integer.parseInt(visitsByDomainActual) != 0) {
+                            int visitsCount = Integer.parseInt(visits);
+                            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
+                            int decrement = visitsCount > visitsCountByDomainActual
+                                    ? visitsCountByDomainActual : visitsCount;
+                            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                                    -1 * decrement);
+                        }
+                        syncCommandsLinks.del(shortLink);
+                        return shortLink;
+                    }
+                })
+                .collect(Collectors.toList());
+        syncCommands.del(userName);
+
     }
 
     @Override

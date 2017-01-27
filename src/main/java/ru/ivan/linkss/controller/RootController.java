@@ -26,6 +26,7 @@ public class RootController {
     private LinksService service;
 
     private final String fileSepartor=File.separator;
+    private final String webSepartor="/";
 
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
@@ -41,7 +42,7 @@ public class RootController {
     public String redirect(HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
-        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(fileSepartor) + 1));
+        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(webSepartor) + 1));
         if (link.contains(":")) {
             return "redirect:" + link;
         } else {
@@ -54,7 +55,7 @@ public class RootController {
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        String key = shortLink.substring(shortLink.lastIndexOf("/") + 1, shortLink.lastIndexOf
+        String key = shortLink.substring(shortLink.lastIndexOf(webSepartor) + 1, shortLink.lastIndexOf
                 ("."));
         String filePath = request.getServletContext().getRealPath("")+"resources"+fileSepartor+shortLink;
         File imageOnDisk = new File(filePath);

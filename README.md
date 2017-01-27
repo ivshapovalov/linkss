@@ -1,10 +1,10 @@
-Short link repo service
+Short link repo service on Heroku
 ===============================
 
-####DB: Redis
+####DB: Heroku Redis
 ####DB client:lettuce
-####WEB:JSP + Spring MVC
-####Other:zxing QR code
+####WEB:Spring MVC
+####Other:zxing QR code + ASW S3 Storage
 
 
 ####REDIS INSTANCE 1

@@ -48,6 +48,8 @@ public interface LinkRepository {
 
     void deleteUser(User autorizedUser, String userName);
 
+    void clearUser(User autorizedUser, String userName);
+
     BigInteger checkFreeLinksDB();
 
     BigInteger deleteExpiredUserLinks();

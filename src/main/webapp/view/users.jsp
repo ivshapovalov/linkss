@@ -134,6 +134,7 @@
             <td width="10%"><b>Links</b></td>
             <td width="10%"><b></b></td>
             <td width="10%"><b></b></td>
+            <td width="10%"><b></b></td>
         </tr>
         <c:forEach items="${users}" var="column">
             <tr>
@@ -143,12 +144,14 @@
                     <a href="/actions/links?owner=${column.getUserName()}">${column.getLinkNumber()}
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/${column.getUserName()}/?action=edit&key=${column.getUserName()}">Edit</a>
+                    <a href="/actions/users/${column.getUserName()}/edit">Edit</a>
                 </td>
                 <td width="10%">
-                    <a href="/actions/users/${column.getUserName()}/?action=delete&key=${column.getUserName()}">Delete
+                    <a href="/actions/users/${column.getUserName()}/clear">Clear
                     </a></td>
-
+                <td width="10%">
+                    <a href="/actions/users/${column.getUserName()}/delete">Delete
+                    </a></td>
             </tr>
         </c:forEach>
     </table>

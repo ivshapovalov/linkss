@@ -42,7 +42,9 @@ public interface LinksService {
 
     User getUser(User autorizedUser, String userName);
 
-    void deleteUser(User autorizedUser, String userNme);
+    void deleteUser(User autorizedUser, String userName);
+
+    void clearUser(User autorizedUser, String userName);
 
     void updateUser(User autorizedUser, User newUser, User oldUser);
 
