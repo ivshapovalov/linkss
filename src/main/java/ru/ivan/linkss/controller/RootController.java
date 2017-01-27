@@ -1,7 +1,6 @@
 package ru.ivan.linkss.controller;
 
 
-import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
@@ -10,12 +9,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
-import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 @Controller
 @EnableScheduling
@@ -51,12 +52,13 @@ public class RootController {
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        String filePath = request.getServletContext().getRealPath(shortLink);
-        String key=shortLink.substring(shortLink.lastIndexOf("/")+1,shortLink.lastIndexOf("."));
-        service.downloadImageFromS3(filePath,key);
-
-        File file = new File(filePath);
-        FileInputStream fis = new FileInputStream(file);
+        String filePath = request.getServletContext().getRealPath("")+"resources\\"+shortLink;
+        String key = shortLink.substring(shortLink.lastIndexOf("/") + 1, shortLink.lastIndexOf("."));
+        File imageOnDisk = new File(filePath);
+        if (!imageOnDisk.exists()) {
+            service.downloadImageFromS3(filePath, key);
+        }
+        FileInputStream fis = new FileInputStream(imageOnDisk);
         int bytes;
         while ((bytes = fis.read()) != -1) {
             os.write(bytes);
@@ -74,12 +76,12 @@ public class RootController {
             return "main";
         }
         String path = request.getServletContext().getRealPath("/");
-        String context=request.getRequestURL().toString();
+        String context = request.getRequestURL().toString();
         String shortLink = "";
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(null, link,path,context);
+            shortLink = service.createShortLink(null, link, path, context);
         } else {
-            shortLink = service.createShortLink(autorizedUser, link,path,context);
+            shortLink = service.createShortLink(autorizedUser, link, path, context);
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");
@@ -87,7 +89,7 @@ public class RootController {
         }
 
         model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", "/"+shortLink + ".png");
+        model.addAttribute("image", "/" + shortLink + ".png");
         //model.addAttribute("image", link);
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);

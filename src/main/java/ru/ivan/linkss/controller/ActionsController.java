@@ -19,6 +19,7 @@ import ru.ivan.linkss.util.Util;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -124,7 +125,7 @@ public class ActionsController {
     public String login(Model model,
                         @ModelAttribute("user") User user,
                         HttpSession session) {
-        if (user != null && user.getUserName() != null  && !user.getUserName().equals("")
+        if (user != null && user.getUserName() != null && !user.getUserName().equals("")
                 && user.getPassword() != null && !user.getPassword().equals("")) {
             try {
                 return autoLogin(model, user, session);
@@ -238,12 +239,15 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    +shortLink+".png";
-            Util.downloadImageFromS3(realImagePath,shortLink+".png");
+                    + "resources\\"+shortLink + ".png";
+            File imageOnDisk = new File(realImagePath);
+            if (!imageOnDisk.exists()) {
+                Util.downloadImageFromS3(realImagePath, shortLink);
+            }
 
             String link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
-            String urlImagePath=contextPath +shortLink+".png";
+            String urlImagePath = contextPath + shortLink + ".png";
             FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
                     "", urlImagePath,
                     owner, service.getLinkDays(shortLink));
@@ -390,6 +394,7 @@ public class ActionsController {
             return "error";
         }
     }
+
     private String getContextPath(HttpServletRequest request) {
         String p = request.getRequestURL().toString();
         String cp = request.getServletPath();
@@ -477,8 +482,8 @@ public class ActionsController {
 
     @RequestMapping(value = "/populate", method = RequestMethod.GET)
     public String populate(Model model,
-                          HttpServletRequest request,
-                          HttpSession session) {
+                           HttpServletRequest request,
+                           HttpSession session) {
 
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
@@ -492,14 +497,14 @@ public class ActionsController {
         }
 
         String path = request.getServletContext().getRealPath("/");
-        String context=getContextPath(request);
+        String context = getContextPath(request);
 
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext
                 ("/spring/spring-app.xml");
-        Thread populatorThread= new Thread(new Runnable() {
+        Thread populatorThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Populator populator= applicationContext.getBean(Populator.class);
+                Populator populator = applicationContext.getBean(Populator.class);
                 populator.setPath(path);
                 populator.setContext(context);
                 populator.init();
