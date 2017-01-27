@@ -1,10 +1,12 @@
 package ru.ivan.linkss.service;
 
 
+import com.lambdaworks.redis.RedisClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.LinkRepository;
+import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.entity.User;
 
 import java.util.ArrayList;
@@ -17,8 +19,8 @@ import static java.lang.Thread.sleep;
 
 @Component
 public class Populator {
-    private static final int sizeOfPool = 15;
-    private static final int requests = 1000;
+    private static final int SIZE_OF_POOL = 15;
+    private static final int REQUESTS = 1000;
 
     @Autowired
     private LinksService service;
@@ -57,6 +59,14 @@ public class Populator {
     public Populator() {
     }
 
+    public void setService(LinksService service) {
+        this.service = service;
+    }
+
+    public void setRepository(LinkRepository repository) {
+        this.repository = repository;
+    }
+
     public void setPath(String path) {
         this.path = path;
     }
@@ -66,18 +76,28 @@ public class Populator {
     }
 
     public static void main(String[] args) {
-        new Populator().init();
-    }
-    public void init() {
-
-//        RedisClient redisClient = RedisClient.create
+        //        RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
 //       RedisClient redisClientLinks = RedisClient.create
 //            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
-//        //RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+        RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+        RedisClient redisClientLinks = RedisClient.create(System.getenv
+                ("HEROKU_REDIS_AMBER_URL"));;
 
-//        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
-//                redisClientLinks);
+        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
+                redisClientLinks);
+        Populator populator=new Populator();
+
+        LinksServiceImpl service=new LinksServiceImpl();
+        service.setRepository(repository);
+        populator.setRepository(repository);
+        populator.setService(service);
+        populator.setContext("localhost:8080\\");
+        populator.setPath("C:\\JavaStudy\\my\\linkss\\target\\linkss\\");
+        populator.init();
+    }
+    public void init() {
+
         repository.init();
 
         long startTime = System.nanoTime();
@@ -86,31 +106,31 @@ public class Populator {
         long linksSize=service.getDBLinksSize();
         long freeLinksSize=service.getDBFreeLinksSize();
         long endTime = System.nanoTime();
-        System.out.println(String.valueOf(requests) + " write: " + (endTime -
+        System.out.println(String.valueOf(REQUESTS) + " write: " + (endTime -
                 startTime) / 1000 + " millis");
         System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
 
         startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        executeReadMultiThread();
+        //executeReadMultiThread();
         endTime = System.nanoTime();
-        System.out.println(String.valueOf(requests) + " read: " + (endTime -
+        System.out.println(String.valueOf(REQUESTS) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
 
 
         startTime = System.nanoTime();
-        executeCreateReadMultiThread();
+        //executeCreateReadMultiThread();
         endTime = System.nanoTime();
-        System.out.println(String.valueOf(requests) + " read/write: " + (endTime -
+        System.out.println(String.valueOf(REQUESTS) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
 
     }
 
     private void executeCreateReadMultiThread() {
         boolean isWrite=true;
-        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
-        for (int i = 1; i <= requests; i++) {
+        ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        for (int i = 1; i <= REQUESTS; i++) {
             Runnable client;
             if (isWrite) {
                 client = new Creator(i);
@@ -126,8 +146,8 @@ public class Populator {
     }
 
     private void executeReadMultiThread() {
-        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
-        for (int i = 1; i <= requests; i++) {
+        ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        for (int i = 1; i <= REQUESTS; i++) {
             Runnable reader = new Visitor(i);
             executor.execute(reader);
         }
@@ -137,8 +157,8 @@ public class Populator {
     }
 
     private void executeCreateMultiThread() {
-        ExecutorService executor = Executors.newFixedThreadPool(sizeOfPool);
-        for (int i = 1; i <= requests; i++) {
+        ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        for (int i = 1; i <= REQUESTS; i++) {
             Runnable creator = new Creator(i);
             executor.execute(creator);
         }
@@ -148,7 +168,7 @@ public class Populator {
     }
 
     private void executeCreateInOneThread() {
-        for (int i = 1; i <= requests; i++) {
+        for (int i = 1; i <= REQUESTS; i++) {
             new Creator(i).run();
         }
 
@@ -156,7 +176,7 @@ public class Populator {
 
     private void executeReadInOneThread() {
 
-        for (int i = 1; i <= requests; i++) {
+        for (int i = 1; i <= REQUESTS; i++) {
             new Visitor(i).run();
         }
     }
@@ -172,10 +192,8 @@ public class Populator {
             Thread.currentThread().setName("t" + number);
 
             String link = getRandomDomain() + "/" + number;
-            String shortLink = service.createShortLink(new User("user","user"), link);
- //            service.uploadImage();
-            String imagePath=path+"resources//" +shortLink + ".png";
-            service.uploadImage(imagePath, shortLink, context + shortLink);
+            String shortLink = service.createShortLink(new User("user","user"),link,path,context);
+            //            service.uploadImage();
 
 
             if (shortLink == null) {

@@ -3,6 +3,7 @@ package ru.ivan.linkss.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
@@ -26,13 +27,19 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class LinksServiceImpl implements LinksService {
 
+    private static final int SIZE_OF_POOL = 15;
+
     @Autowired
     @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
+
+    ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
 
     public LinksServiceImpl() {
     }
@@ -71,17 +78,6 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void uploadImage(String imagePath, String shortLink, String fullShortLink) {
-        try {
-            createQRImage(imagePath, shortLink, fullShortLink);
-            sendFileToS3(imagePath, shortLink);
-
-        } catch (IOException | WriterException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     public boolean checkUser(User user) {
         return repository.checkUser(user);
     }
@@ -92,9 +88,30 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String createShortLink(User autorizedUser, String link) {
+    public String createShortLink(User autorizedUser, String link, String path, String context) {
 
-        return repository.createShortLink(autorizedUser, link);
+        String shortLink = repository.createShortLink(autorizedUser, link);
+        if (shortLink != null) {
+            String imagePath = path + "resources//" + shortLink + ".png";
+            String shortLinkPath = context + shortLink;
+            Thread uploader = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        createQRImage(imagePath, shortLink, shortLinkPath);
+                        sendFileToS3(imagePath, shortLink);
+                    } catch (IOException | WriterException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            executor.execute(uploader);
+//            executor.shutdown();
+//            while (!executor.isTerminated()) {
+//            }
+
+        }
+        return shortLink;
     }
 
     @Override
@@ -178,40 +195,10 @@ public class LinksServiceImpl implements LinksService {
         final AmazonS3 s3 = new AmazonS3Client();
         try {
             File file = new File(imagePath);
-            s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
-        } catch (AmazonServiceException e) {
+            PutObjectResult result=s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
+        } catch (Exception e) {
             System.err.println(e);
         }
-
-//        //String url = System.getenv("EASYSMS_URL")+"/messages";
-//        String url = "https://s3-bucket.s3.amazonaws.com/whydt";
-//        String text = "{\"to\":\"+79266948741\",\"body\":\"Hello from Easy SMS Add-on for Heroku.\"}";
-//        HttpClient client = new DefaultHttpClient();
-//        HttpPost post = new HttpPost(url);
-//        MultipartEntity entity = new MultipartEntity();
-//        entity.addPart("file", new FileBody(new File(fileName)));
-//
-//        post.setHeader("Content-Type", "text/html; charset=UTF-8");
-//        List<NameValuePair> urlParameters = new ArrayList<>();
-//        urlParameters.add(new BasicNameValuePair("key", "uploads/${" + fileName + "}"));
-//        urlParameters.add(new BasicNameValuePair("AWSAccessKeyId", "AKIAIAZ7FWJQR56IJ6XQ"));
-//        urlParameters.add(new BasicNameValuePair("acl", "public-read"));
-//        urlParameters.add(new BasicNameValuePair("policy", "YOUR_POLICY_DOCUMENT_BASE64_ENCODED"));
-//        urlParameters.add(new BasicNameValuePair("signature", "YOUR_POLICY_DOCUMENT_BASE64_ENCODED"));
-//        urlParameters.add(new BasicNameValuePair("Content-Type", "image/png"));
-//        urlParameters.add(new BasicNameValuePair("Content-Type", "image/png"));
-//
-//        try {
-//            post.setEntity(new UrlEncodedFormEntity(urlParameters));
-//        } catch (UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
-//
-//        try {
-//            HttpResponse response = client.execute(post);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 
     @Override

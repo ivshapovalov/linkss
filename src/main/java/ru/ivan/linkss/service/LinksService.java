@@ -13,7 +13,7 @@ public interface LinksService {
 
     String getRandomShortLink();
 
-    String createShortLink(User autorizedUser, String link);
+    String createShortLink(User autorizedUser, String link, String path, String context);
 
     void createUser(String userName, String password);
 
@@ -64,5 +64,4 @@ public interface LinksService {
 
     void downloadImageFromS3(String filePath, String key);
 
-    void uploadImage(String imagePath, String shortLink, String s);
 }

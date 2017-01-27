@@ -24,7 +24,6 @@ public class RootController {
     @Autowired
     private LinksService service;
 
-
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
                        HttpSession session) {
@@ -74,22 +73,18 @@ public class RootController {
         if (link == null || "".equals(link)) {
             return "main";
         }
+        String path = request.getServletContext().getRealPath("/");
+        String context=request.getRequestURL().toString();
         String shortLink = "";
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(null, link);
+            shortLink = service.createShortLink(null, link,path,context);
         } else {
-            shortLink = service.createShortLink(autorizedUser, link);
+            shortLink = service.createShortLink(autorizedUser, link,path,context);
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");
             return "error";
         }
-        String path = request.getServletContext().getRealPath("/");
-        String imagePath=path+"resources//" +shortLink + ".png";
-
-        service.uploadImage(imagePath, shortLink, request.getRequestURL() + shortLink);
-//            service.createQRImage(imagePath, shortLink, request.getRequestURL() + shortLink);
-//            service.sendFileToS3(imagePath,shortLink);
 
         model.addAttribute("user", autorizedUser);
         model.addAttribute("image", "/"+shortLink + ".png");
@@ -102,21 +97,5 @@ public class RootController {
 
 
 }
-
-
-//        AmazonS3 s3client  = new AmazonS3Client(new ClasspathPropertiesFileCredentialsProvider());
-//        java.util.Date expiration = new java.util.Date();
-//        long msec = expiration.getTime();
-//        msec += 1000 * 60 * 60; // 1 hour.
-//        expiration.setTime(msec);
-//
-//        GeneratePresignedUrlRequest generatePresignedUrlRequest =
-//                new GeneratePresignedUrlRequest(S3_BUCKET_NAME, AWS_ACCESS_KEY_ID);
-//        generatePresignedUrlRequest.setMethod(HttpMethod.GET); // Default.
-//        generatePresignedUrlRequest.setExpiration(expiration);
-//
-//        return s3client.generatePresignedUrl(generatePresignedUrlRequest).toString();
-
-//}
 
 
