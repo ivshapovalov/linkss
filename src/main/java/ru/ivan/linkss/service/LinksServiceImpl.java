@@ -71,6 +71,10 @@ public class LinksServiceImpl implements LinksService {
     public BigInteger updateFreeLinks() {
         return repository.checkFreeLinksDB();
     }
+    @Override
+    public BigInteger deleteExpiredUserLinks() {
+        return repository.deleteExpiredUserLinks();
+    }
 
     @Override
     public void downloadImageFromS3(String filePath, String key) {

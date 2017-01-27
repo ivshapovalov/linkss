@@ -48,6 +48,8 @@ public interface LinksService {
 
     BigInteger updateFreeLinks();
 
+    BigInteger deleteExpiredUserLinks();
+
     long getDBLinksSize();
 
     long getDBFreeLinksSize();

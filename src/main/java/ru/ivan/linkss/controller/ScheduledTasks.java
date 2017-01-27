@@ -29,4 +29,16 @@ public class ScheduledTasks {
                             startTime) / 1000000000));
         }
     }
+
+    @Scheduled(fixedRate = 5000)
+    public void checkExpiredUserLinks() {
+        long startTime = System.nanoTime();
+        BigInteger deletedKeys = service.deleteExpiredUserLinks();
+        if (!BigInteger.ZERO.equals(deletedKeys)) {
+            long endTime = System.nanoTime();
+            System.out.println(String.format("%s. DB clear %s deleted keys in %s seconds",
+                    dateFormat.format(new Date()), deletedKeys,(endTime -
+                            startTime) / 1000000000));
+        }
+    }
 }

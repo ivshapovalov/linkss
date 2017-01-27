@@ -15,6 +15,12 @@ public class FullLink {
 
     }
 
+    public FullLink(String key, String link, String userName) {
+        this.key = key;
+        this.link = link;
+        this.userName = userName;
+    }
+
     public FullLink(String key, String shortLink, String link, String visits, String imageLink,
                     String userName, long days) {
         this.key=key;

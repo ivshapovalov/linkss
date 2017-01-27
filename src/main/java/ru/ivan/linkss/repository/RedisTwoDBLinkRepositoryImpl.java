@@ -207,6 +207,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                         shortLinkWithContext + ".png", user);
                             }).collect(Collectors.toList()))
                     .flatMap(Collection::stream)
+                    .filter(fullLink -> fullLink.getLink() != null)
                     .sorted((fullLink1, fullLink2) ->
                     {
                         int result = fullLink1.getUserName().compareTo(fullLink2.getUserName());
@@ -252,8 +253,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                     link, visits,
                                     shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY + 1);
                         }
-
-                    }).collect(Collectors.toList());
+                    })
+                    .filter(fullLink -> fullLink.getLink() != null)
+                    .collect(Collectors.toList());
             return fullStat;
         }
     }
@@ -413,27 +415,31 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             if (link != null) {
                 synchronized (redisClient) {
                     synchronized (redisClientLinks) {
-                        String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                        syncCommands.hdel(KEY_VISITS, shortLink);
-                        if (visits == null) visits = "0";
-                        String domainName = Util.getDomainName(link);
-                        String visitsByDomainActual = syncCommands.hget
-                                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
-                        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
-                                && Integer.parseInt(visitsByDomainActual) != 0) {
-                            int visitsCount = Integer.parseInt(visits);
-                            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
-                            int decrement = visitsCount > visitsCountByDomainActual
-                                    ? visitsCountByDomainActual : visitsCount;
-                            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
-                                    -1 * decrement);
-                        }
+                        decreaseVisits(shortLink, owner, syncCommands, link);
                         syncCommandsLinks.del(shortLink);
-                        syncCommands.hdel(owner, shortLink);
                     }
                 }
             }
         }
+    }
+
+    private void decreaseVisits(String shortLink, String owner, RedisCommands<String, String> syncCommands, String link) {
+        String visits = syncCommands.hget(KEY_VISITS, shortLink);
+        if (visits == null) visits = "0";
+        String domainName = Util.getDomainName(link);
+        String visitsByDomainActual = syncCommands.hget
+                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
+        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
+                && Integer.parseInt(visitsByDomainActual) != 0) {
+            int visitsCount = Integer.parseInt(visits);
+            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
+            int decrement = visitsCount > visitsCountByDomainActual
+                    ? visitsCountByDomainActual : visitsCount;
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                    -1 * decrement);
+        }
+        syncCommands.hdel(KEY_VISITS, shortLink);
+        syncCommands.hdel(owner, shortLink);
     }
 
     @Override
@@ -472,11 +478,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
             if (!autorizedUser.getUserName().equals(owner)) {
-                if (!autorizedUser.isAdmin()) {
-                    throw new RuntimeException(String.format("User '%s' does not have permissions to edit link", shortLink));
+                if (!autorizedUser.getUserName().equals(owner)) {
+                    if (!autorizedUser.isAdmin()) {
+                        throw new RuntimeException(String.format("User '%s' does not have permissions to edit link", shortLink));
+                    }
                 }
             }
-
             String link = getLink(shortLink);
             String shortLinkWithContext = contextPath + shortLink;
             long pttl = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY;
@@ -490,6 +497,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         }
 
     }
+
 
     @Override
     public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
@@ -733,6 +741,40 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 }
             }
             return addedKeys;
+        }
+    }
+
+    @Override
+    public BigInteger deleteExpiredUserLinks() {
+        try (StatefulRedisConnection<String, String> connection = connect();
+             StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            syncCommandsLinks.select(DB_LINK_NUMBER);
+
+            List<String> deletedKeys=syncCommands.keys("*")
+                    .stream()
+                    .sorted()
+                    .filter(user -> !user.startsWith("_"))
+                    .map(user -> syncCommands.hkeys(user)
+                            .stream()
+                            .map(shortLink -> {
+                                String link = syncCommandsLinks.get(shortLink);
+                                return new FullLink(shortLink, link, user);
+                            })
+                            .filter(fullLink -> fullLink.getLink() == null)
+                            .collect(Collectors.toList()))
+                    .flatMap(Collection::stream)
+                    .map(fullLink -> {
+                        String shortLink = fullLink.getKey();
+                        String link=syncCommands.hget(fullLink.getUserName(),fullLink.getKey());
+                        decreaseVisits(shortLink, fullLink.getUserName(), syncCommands, link);
+                        return shortLink;
+                    }).collect(Collectors.toList());
+
+            return BigInteger.valueOf(deletedKeys.size());
         }
     }
 

@@ -50,6 +50,8 @@ public interface LinkRepository {
 
     BigInteger checkFreeLinksDB();
 
+    BigInteger deleteExpiredUserLinks();
+
     BigInteger createKeys(final int length);
 
     long getUserLinksSize(User autorizedUser, String owner);

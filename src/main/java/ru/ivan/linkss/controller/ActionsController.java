@@ -239,7 +239,7 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + "resources\\"+shortLink + ".png";
+                    + "resources\\" + shortLink + ".png";
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 Util.downloadImageFromS3(realImagePath, shortLink);
@@ -512,7 +512,26 @@ public class ActionsController {
         });
         populatorThread.setName("Populator");
         populatorThread.start();
+        return "manage";
+    }
+    @RequestMapping(value = "/update", method = RequestMethod.GET)
+    public String chackExpired(Model model,
+                           HttpServletRequest request,
+                           HttpSession session) {
 
+        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute("message", "Sorry, links available only for logged users!");
+            return "error";
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute("message", "Sorry, check expired links available only for admin " +
+                    "users!");
+            return "error";
+        }
+
+        System.out.println(service.deleteExpiredUserLinks().intValue());
 
         return "manage";
     }
