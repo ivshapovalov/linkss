@@ -34,6 +34,7 @@ public class ActionsController {
     @Autowired
     private LinksService service;
 
+    private final String fileSepartor=File.separator;
 
     @RequestMapping(value = "/signup", method = RequestMethod.GET)
     public String registration(Model model, HttpServletResponse response)
@@ -239,7 +240,7 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + "resources//" + shortLink + ".png";
+                    + "resources"+fileSepartor + shortLink + ".png";
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 Util.downloadImageFromS3(realImagePath, shortLink);
@@ -496,7 +497,7 @@ public class ActionsController {
             return "error";
         }
 
-        String path = request.getServletContext().getRealPath("/");
+        String path = request.getServletContext().getRealPath(fileSepartor);
         String context = getContextPath(request);
 
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext

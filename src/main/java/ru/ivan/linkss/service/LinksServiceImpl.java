@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;
+    private final String fileSepartor=File.separator;
 
     @Autowired
     @Qualifier(value = "repositoryTwo")
@@ -96,7 +97,7 @@ public class LinksServiceImpl implements LinksService {
 
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
-            String imagePath = path + "resources//" + shortLink + ".png";
+            String imagePath = path + "resources"+fileSepartor + shortLink + ".png";
             String shortLinkPath = context + shortLink;
             Thread uploader = new Thread(new Runnable() {
                 @Override

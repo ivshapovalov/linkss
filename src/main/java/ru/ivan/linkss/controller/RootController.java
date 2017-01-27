@@ -25,6 +25,8 @@ public class RootController {
     @Autowired
     private LinksService service;
 
+    private final String fileSepartor=File.separator;
+
     @RequestMapping(value = {"/", "/main"}, method = RequestMethod.GET)
     public String main(Model model,
                        HttpSession session) {
@@ -39,7 +41,7 @@ public class RootController {
     public String redirect(HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
-        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf("/") + 1));
+        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(fileSepartor) + 1));
         if (link.contains(":")) {
             return "redirect:" + link;
         } else {
@@ -52,8 +54,9 @@ public class RootController {
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        String filePath = request.getServletContext().getRealPath("")+"resources//"+shortLink;
-        String key = shortLink.substring(shortLink.lastIndexOf("/") + 1, shortLink.lastIndexOf("."));
+        String key = shortLink.substring(shortLink.lastIndexOf("/") + 1, shortLink.lastIndexOf
+                ("."));
+        String filePath = request.getServletContext().getRealPath("")+"resources"+fileSepartor+shortLink;
         File imageOnDisk = new File(filePath);
         if (!imageOnDisk.exists()) {
             service.downloadImageFromS3(filePath, key);
@@ -89,7 +92,7 @@ public class RootController {
         }
 
         model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", "/" + shortLink + ".png");
+        model.addAttribute("image", fileSepartor + shortLink + ".png");
         //model.addAttribute("image", link);
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
