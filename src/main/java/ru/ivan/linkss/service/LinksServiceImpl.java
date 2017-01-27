@@ -1,6 +1,5 @@
 package ru.ivan.linkss.service;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectResult;
@@ -34,7 +33,7 @@ import java.util.concurrent.Executors;
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;
-    private final String fileSepartor=File.separator;
+    private final String fileSepartor = File.separator;
 
     @Autowired
     @Qualifier(value = "repositoryTwo")
@@ -72,6 +71,7 @@ public class LinksServiceImpl implements LinksService {
     public BigInteger updateFreeLinks() {
         return repository.checkFreeLinksDB();
     }
+
     @Override
     public BigInteger deleteExpiredUserLinks() {
         return repository.deleteExpiredUserLinks();
@@ -97,23 +97,15 @@ public class LinksServiceImpl implements LinksService {
 
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
-            String imagePath = path + "resources"+fileSepartor + shortLink + ".png";
+            String imagePath = path + "resources" + fileSepartor + shortLink + ".png";
             String shortLinkPath = context + shortLink;
-            Thread uploader = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        createQRImage(imagePath, shortLink, shortLinkPath);
-                        sendFileToS3(imagePath, shortLink);
-                    } catch (IOException | WriterException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            executor.execute(uploader);
-//            executor.shutdown();
-//            while (!executor.isTerminated()) {
-//            }
+
+            try {
+                createQRImage(imagePath, shortLink, shortLinkPath);
+                sendFileToS3(imagePath, shortLink);
+            } catch (IOException | WriterException e) {
+                e.printStackTrace();
+            }
 
         }
         return shortLink;
@@ -200,7 +192,7 @@ public class LinksServiceImpl implements LinksService {
         final AmazonS3 s3 = new AmazonS3Client();
         try {
             File file = new File(imagePath);
-            PutObjectResult result=s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
+            PutObjectResult result = s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
         } catch (Exception e) {
             System.err.println(e);
         }
