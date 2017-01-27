@@ -35,7 +35,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     private static final String KEY_USERS = "_users";
     private static final String KEY_VISITS = "_visits";
-    private static final String KEY_VISITS_BY_DOMAIN = "_visits_by_domain";
+    private static final String KEY_VISITS_BY_DOMAIN_ACTUAL = "_visits_by_domain_actual";
+    private static final String KEY_VISITS_BY_DOMAIN_HISTORY = "_visits_by_domain_history";
     private static final String KEY_PREFERENCES = "_preferences";
     private static final String KEY_LENGTH = "key.length";
     private static final String KEY_EXPIRATION_PERIOD = "expiration.period";
@@ -83,7 +84,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
             syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
         }
-
     }
 
     private StatefulRedisConnection<String, String> connect() {
@@ -145,7 +145,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);
-            long size = syncCommands.hlen(KEY_VISITS_BY_DOMAIN);
+            long size = syncCommands.hlen(KEY_VISITS_BY_DOMAIN_ACTUAL);
             return size;
         }
     }
@@ -171,11 +171,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);
-            List<Domain> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN)
+            List<Domain> shortStat = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN_HISTORY)
                     .stream()
-                    .map(domain -> new Domain(domain, syncCommands.hget(KEY_VISITS_BY_DOMAIN, domain)))
-                    .sorted((d1, d2) -> Integer.parseInt(d2.getVisits())
-                            - Integer.parseInt(d1.getVisits()))
+                    .map(domain -> new Domain(domain, syncCommands.hget(KEY_VISITS_BY_DOMAIN_ACTUAL,
+                            domain), syncCommands.hget(KEY_VISITS_BY_DOMAIN_HISTORY, domain)))
+                    .sorted((d1, d2) -> Integer.parseInt(d2.getVisitsActual())
+                            - Integer.parseInt(d1.getVisitsActual()))
                     .skip(offset)
                     .limit(recordsOnPage)
                     .collect(Collectors.toList());
@@ -316,9 +317,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             domainName = Util.getDomainName(link);
             synchronized (redisClient) {
                 if (!domainName.equals("")
-                        && (syncCommands.hget(KEY_VISITS_BY_DOMAIN, domainName) == null
+                        && (syncCommands.hget(KEY_VISITS_BY_DOMAIN_HISTORY, domainName) == null
                 )) {
-                    syncCommands.hset(KEY_VISITS_BY_DOMAIN, domainName, "0");
+                    syncCommands.hset(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, "0");
+                    syncCommands.hset(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, "0");
                 }
             }
             return shortLink;
@@ -411,10 +413,21 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             if (link != null) {
                 synchronized (redisClient) {
                     synchronized (redisClientLinks) {
-                        syncCommands.hdel(KEY_VISITS, shortLink);
                         String visits = syncCommands.hget(KEY_VISITS, shortLink);
+                        syncCommands.hdel(KEY_VISITS, shortLink);
                         if (visits == null) visits = "0";
-                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), -1 * Integer.parseInt(visits));
+                        String domainName = Util.getDomainName(link);
+                        String visitsByDomainActual = syncCommands.hget
+                                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
+                        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
+                                && Integer.parseInt(visitsByDomainActual) != 0) {
+                            int visitsCount = Integer.parseInt(visits);
+                            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
+                            int decrement = visitsCount > visitsCountByDomainActual
+                                    ? visitsCountByDomainActual : visitsCount;
+                            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                                    -1 * decrement);
+                        }
                         syncCommandsLinks.del(shortLink);
                         syncCommands.hdel(owner, shortLink);
                     }
@@ -445,8 +458,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommandsLinks.select(DB_LINK_NUMBER);
             String link = syncCommandsLinks.get(shortLink);
             syncCommands.hincrby(KEY_VISITS, shortLink, 1);
+            String domainName = Util.getDomainName(link);
             if (!"".equals(link)) {
-                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link), 1);
+                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, 1);
+                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, 1);
             }
             return link;
         }
@@ -652,12 +667,23 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         .stream()
                         .map(shortLink -> {
                             synchronized (redisClient) {
-                                int visitsCount = Integer.valueOf(syncCommands.hget(KEY_VISITS, shortLink));
+                                String visits = syncCommands.hget(KEY_VISITS, shortLink);
                                 syncCommands.hdel(KEY_VISITS, shortLink);
                                 String link = syncCommandsLinks.get(shortLink);
                                 syncCommandsLinks.del(shortLink);
-                                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN, Util.getDomainName(link),
-                                        -1 * visitsCount);
+                                String domainName = Util.getDomainName
+                                        (link);
+                                String visitsByDomainActual = syncCommands.hget
+                                        (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
+                                if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
+                                        && Integer.parseInt(visitsByDomainActual) != 0) {
+                                    int visitsCount = Integer.parseInt(visits);
+                                    int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
+                                    int decrement = visitsCount > visitsCountByDomainActual
+                                            ? visitsCountByDomainActual : visitsCount;
+                                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                                            -1 * decrement);
+                                }
                                 return shortLink;
                             }
                         })
@@ -691,7 +717,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         }
     }
 
-   @Override
+    @Override
     public BigInteger checkFreeLinksDB() {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();

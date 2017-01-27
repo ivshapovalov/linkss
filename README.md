@@ -11,10 +11,13 @@ Short link repo service
 #####redis:0 WORK_DB
 - hset key:_visits
     - field:shortLink
-    - value:visits
-- hset key:_visits_by_domain 
+    - value:visitsActual
+- hset key:_visits_by_domain_actual 
     - field:domain
-    - value:visits
+    - value:visitsActual
+- hset key:_visits_by_domain_history 
+    - field:domain
+    - value:visitsActual
 - hset key:_preferences
     - field:pref_name       
     - value:value

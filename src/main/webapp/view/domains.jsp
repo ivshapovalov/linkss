@@ -128,14 +128,15 @@
 
     <table border="1" width="50%">
         <tr>
-            <td width="20%"><b>Visits</b></td>
-            <td width="80%"><b>Domain</b></td>
+            <td width="60%"><b>Domain</b></td>
+            <td width="20%"><b>Visits on existing links</b></td>
+            <td width="20%"><b>Visits on all links</b></td>
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
-                <td width="20%">${column.getVisits()}</td>
-                <td width="80%">${column.getName()}</td>
-
+                <td width="60%">${column.getName()}</td>
+                <td width="10%">${column.getVisitsActual()}</td>
+                <td width="10%">${column.getVisitsHistory()}</td>
             </tr>
         </c:forEach>
     </table>

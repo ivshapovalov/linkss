@@ -20,7 +20,7 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 15;
-    private static final int REQUESTS = 1000;
+    private static final int REQUESTS = 100;
 
     @Autowired
     private LinksService service;
