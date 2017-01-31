@@ -20,7 +20,7 @@
     </c:when>
     <c:otherwise>
         <button onclick="location.href='/actions/logout'">Logout</button>
-        <b>Login as ${autorizedUser.getUserName()};</b>
+        <b>Login as ${autorizedUser.getUserName()}</b>
     </c:otherwise>
 </c:choose>
 
