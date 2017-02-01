@@ -18,7 +18,6 @@ import ru.ivan.linkss.service.Populator;
 import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
@@ -32,68 +31,77 @@ public class ActionsController {
     private static final String ACTION_EDIT = "edit";
     private static final String ACTION_DELETE = "delete";
 
+    private static final String FILE_SEPARTOR = File.separator;
+    private static final String WEB_SEPARTOR = "/";
+    private static final String PAGE_ERROR = "error";
+    private static final String PAGE_MAIN = "main";
+    private static final String PAGE_SIGNUP = "signup";
+    private static final String PAGE_SIGNIN = "signin";
+    private static final String PAGE_MANAGE = "manage";
+    private static final String PAGE_USERS = "users";
+    private static final String ACTION_LOGOUT = "logout";
+
+    private static final String ATTRIBUTE_USER = "user";
+    private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
+    private static final String ATTRIBUTE_MESSAGE = "message";
+    private static final String ATTRIBUTE_PAGE = "page";
+
     @Autowired
     private LinksService service;
 
-    private final String fileSepartor=File.separator;
-    private final String webSepartor="/";
-
-
-    @RequestMapping(value = "/signup", method = RequestMethod.GET)
-    public String registration(Model model, HttpServletResponse response)
+    @RequestMapping(value = WEB_SEPARTOR+PAGE_SIGNUP, method = RequestMethod.GET)
+    public String registration(Model model)
             throws IOException {
-        model.addAttribute("user", new User());
-        return "signup";
+        model.addAttribute(ATTRIBUTE_USER, new User());
+        return PAGE_SIGNUP;
     }
 
-    @RequestMapping(value = "/signin", method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR+PAGE_SIGNIN, method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
-        model.addAttribute("user", new User());
-        return "signin";
+        model.addAttribute(ATTRIBUTE_USER, new User());
+        return PAGE_SIGNIN;
     }
 
-    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR+ACTION_LOGOUT, method = RequestMethod.GET)
     public String logout(Model model, HttpSession session)
             throws IOException {
-        model.addAttribute("autorizedUser", null);
-        session.setAttribute("autorizedUser", null);
+        model.addAttribute(ATTRIBUTE_AUTORIZED_USER, null);
+        session.setAttribute(ATTRIBUTE_AUTORIZED_USER, null);
         return "redirect:/";
     }
 
-    @RequestMapping(value = "/manage", method = {RequestMethod.GET, RequestMethod.POST})
-    public String manage(Model model, HttpSession session)
+    @RequestMapping(value = WEB_SEPARTOR+PAGE_MANAGE, method = {RequestMethod.GET, RequestMethod.POST})
+    public String manage(HttpSession session)
             throws IOException {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
-            return "manage";
+            return PAGE_MANAGE;
         }
-        return "main";
-
+        return PAGE_MAIN;
     }
 
-    @RequestMapping(value = "/users", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = WEB_SEPARTOR+PAGE_USERS, method = {RequestMethod.GET, RequestMethod.POST})
     public String users(Model model, HttpSession session, HttpServletRequest request)
             throws IOException {
-
         int currentPage = 1;
         int recordsOnPage = 10;
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && !autorizedUser.isAdmin()) {
-            model.addAttribute("message", "Sorry, users available only for logged admin users!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, users available only for logged admin users!");
+            return PAGE_ERROR;
         }
 
-        if (request.getParameter("page") != null) {
-            currentPage = Integer.parseInt(request.getParameter("page"));
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter(ATTRIBUTE_PAGE));
         }
 
         int offset = (currentPage - 1) * recordsOnPage;
         List<User> users = service.getUsers(offset, recordsOnPage);
         long usersCount = (int) service.getUsersSize(autorizedUser);
         if (usersCount == 0) {
-            model.addAttribute("message", "Sorry, DB don't have users. Try later!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have users. Try later!");
+            return PAGE_ERROR;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) usersCount / recordsOnPage));
 
@@ -101,19 +109,19 @@ public class ActionsController {
         model.addAttribute("numberOfPages", numberOfPages);
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("autorizedUser", autorizedUser);
-        return "users";
+        return PAGE_USERS;
     }
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public String register(Model model,
-                           @ModelAttribute("user") User user,
+                           @ModelAttribute(ATTRIBUTE_USER) User user,
                            HttpServletRequest request,
                            HttpSession session) {
         try {
             service.createUser(user.getUserName(), user.getPassword());
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
         if (request.getParameter("register") != null) {
             return "redirect:/";
@@ -126,15 +134,15 @@ public class ActionsController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String login(Model model,
-                        @ModelAttribute("user") User user,
+                        @ModelAttribute(ATTRIBUTE_USER) User user,
                         HttpSession session) {
         if (user != null && user.getUserName() != null && !user.getUserName().equals("")
                 && user.getPassword() != null && !user.getPassword().equals("")) {
             try {
                 return autoLogin(model, user, session);
             } catch (RuntimeException e) {
-                model.addAttribute("message", e.getMessage());
-                return "error";
+                model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+                return PAGE_ERROR;
             }
         }
         return "signin";
@@ -147,8 +155,8 @@ public class ActionsController {
             if ("admin".equals(user.getUserName())) {
                 user.setAdmin(true);
             }
-            session.setAttribute("autorizedUser", user);
-            model.addAttribute("autorizedUser", user);
+            session.setAttribute(ATTRIBUTE_AUTORIZED_USER, user);
+            model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
             return "redirect:/";
         }
         return "signin";
@@ -242,7 +250,7 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + "resources"+fileSepartor + shortLink + ".png";
+                    + "resources"+FILE_SEPARTOR + shortLink + ".png";
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 Util.downloadImageFromS3(realImagePath, shortLink);
@@ -467,7 +475,7 @@ public class ActionsController {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, links available only for logged users!");
-            return "error";
+            return PAGE_ERROR;
         }
 
         if (request.getParameter("page") != null) {
@@ -476,14 +484,14 @@ public class ActionsController {
 
         if (!autorizedUser.isAdmin()) {
             model.addAttribute("message", "Sorry, domains available only for admin users!");
-            return "error";
+            return PAGE_ERROR;
         }
         int offset = (currentPage - 1) * recordsOnPage;
         List<Domain> list = service.getShortStat(offset, recordsOnPage);
         long domainsSize = (int) service.getDomainsSize(autorizedUser);
         if (domainsSize == 0) {
             model.addAttribute("message", "Sorry, DB don't have domains visits. Try later!");
-            return "error";
+            return PAGE_ERROR;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) domainsSize / recordsOnPage));
 
@@ -502,15 +510,15 @@ public class ActionsController {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, links available only for logged users!");
-            return "error";
+            return PAGE_ERROR;
         }
 
         if (!autorizedUser.isAdmin()) {
             model.addAttribute("message", "Sorry, populate available only for admin users!");
-            return "error";
+            return PAGE_ERROR;
         }
 
-        String path = request.getServletContext().getRealPath(fileSepartor);
+        String path = request.getServletContext().getRealPath(FILE_SEPARTOR);
         String context = getContextPath(request);
 
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext
@@ -526,7 +534,7 @@ public class ActionsController {
         });
         populatorThread.setName("Populator");
         populatorThread.start();
-        return "manage";
+        return PAGE_MANAGE;
     }
     @RequestMapping(value = "/update", method = RequestMethod.GET)
     public String chackExpired(Model model,
@@ -536,16 +544,16 @@ public class ActionsController {
         User autorizedUser = (User) session.getAttribute("autorizedUser");
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute("message", "Sorry, links available only for logged users!");
-            return "error";
+            return PAGE_ERROR;
         }
 
         if (!autorizedUser.isAdmin()) {
             model.addAttribute("message", "Sorry, check expired links available only for admin " +
                     "users!");
-            return "error";
+            return PAGE_ERROR;
         }
         System.out.println(service.deleteExpiredUserLinks().intValue());
-        return "manage";
+        return PAGE_MANAGE;
     }
 
     private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {

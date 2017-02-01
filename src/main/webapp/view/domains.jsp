@@ -134,9 +134,9 @@
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
-                <td width="60%">${column.getName()}</td>
-                <td width="10%">${column.getVisitsActual()}</td>
-                <td width="10%">${column.getVisitsHistory()}</td>
+                <td width="60%">${column.name}</td>
+                <td width="10%">${column.visitsActual}</td>
+                <td width="10%">${column.visitsHistory}</td>
             </tr>
         </c:forEach>
     </table>

@@ -17,12 +17,12 @@
         <tr>
             <td><label path="userName">User</label></td>
             <td>
-                <input type="text" name="userName" value=${user.getUserName()}></td>
+                <input type="text" name="userName" value=${user.userName}></td>
         </tr>
         <tr>
             <td><label path="password">Password</label></td>
             <td>
-                <input type="password" name="password" value=${user.getPassword()}></td>
+                <input type="password" name="password" value=${user.password}></td>
         </tr>
     </table>
     <br>

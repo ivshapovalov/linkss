@@ -457,17 +457,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
             String link = syncCommandsLinks.get(shortLink);
-            syncCommands.hincrby(KEY_VISITS, shortLink, 1);
-            String domainName = Util.getDomainName(link);
-            if (!"".equals(link)) {
-                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, 1);
-                syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, 1);
+            if (link!=null) {
+                syncCommands.hincrby(KEY_VISITS, shortLink, 1);
+                String domainName = Util.getDomainName(link);
+                if (!"".equals(link)) {
+                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, 1);
+                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, 1);
+                }
             }
             return link;
         }
@@ -796,6 +797,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                             .collect(Collectors.toList()))
                     .flatMap(Collection::stream)
                     .map(fullLink -> {
+                        System.out.println(fullLink.getKey());
                         String shortLink = fullLink.getKey();
                         String link=syncCommands.hget(fullLink.getUserName(),fullLink.getKey());
                         decreaseVisits(shortLink, fullLink.getUserName(), syncCommands, link);

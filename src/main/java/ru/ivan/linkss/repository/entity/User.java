@@ -1,11 +1,6 @@
 package ru.ivan.linkss.repository.entity;
 
-import java.io.Serializable;
-
-/**
- * Created by Ivan on 14.01.2017.
- */
-public class User implements Serializable{
+public class User {
     private String userName;
     private String password="";
     private boolean isAdmin;

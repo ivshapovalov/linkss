@@ -140,18 +140,18 @@
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
-                <td width="10%">${column.getUserName()}</td>
-                <td width="10%">${column.getKey()}</td>
-                <td width="40%"><a href="//${column.getLink()}">${column.getLink()}</a></td>
-                <td width="10%">${column.getDays()}</td>
-                <td width="10%">${column.getVisits()}</td>
-                <td width="20%"><a href="${column.getShortLink()}">${column.getShortLink()}</a>
+                <td width="10%">${column.userName}</td>
+                <td width="10%">${column.key}</td>
+                <td width="40%"><a href="//${column.link}">${column.link}</a></td>
+                <td width="10%">${column.days}</td>
+                <td width="10%">${column.visits}</td>
+                <td width="20%"><a href="${column.shortLink}">${column.shortLink}</a>
                 </td>
                 <td width="10%"><a
-                        href="/actions/user/${column.getUserName()}/links/delete/?key=${column.getKey()}">Delete
+                        href="/actions/user/${column.userName}/links/delete/?key=${column.key}">Delete
                 </a></td>
                 <td width="10%"><a
-                        href="/actions/user/${column.getUserName()}/links/edit/?key=${column.getKey()}">Edit
+                        href="/actions/user/${column.userName}/links/edit/?key=${column.key}">Edit
                 </a></td>
             </tr>
         </c:forEach>

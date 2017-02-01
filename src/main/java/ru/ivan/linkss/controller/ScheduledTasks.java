@@ -36,7 +36,7 @@ public class ScheduledTasks {
         BigInteger deletedKeys = service.deleteExpiredUserLinks();
         if (!BigInteger.ZERO.equals(deletedKeys)) {
             long endTime = System.nanoTime();
-            System.out.println(String.format("%s. DB clear %s deleted keys in %s seconds",
+            System.out.println(String.format("%s. Delete %s expired keys in %s seconds",
                     dateFormat.format(new Date()), deletedKeys,(endTime -
                             startTime) / 1000000000));
         }

@@ -138,19 +138,19 @@
         </tr>
         <c:forEach items="${users}" var="column">
             <tr>
-                <td width="40%">${column.getUserName()}</td>
+                <td width="40%">${column.userName}</td>
                 <td width="40%" >*</td>
                 <td width="10%">
-                    <a href="/actions/links?owner=${column.getUserName()}">${column.getLinkNumber()}
+                    <a href="/actions/links?owner=${column.userName}">${column.linkNumber}
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/${column.getUserName()}/edit">Edit</a>
+                    <a href="/actions/users/${column.userName}/edit">Edit</a>
                 </td>
                 <td width="10%">
-                    <a href="/actions/users/${column.getUserName()}/clear">Clear
+                    <a href="/actions/users/${column.userName}/clear">Clear
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/${column.getUserName()}/delete">Delete
+                    <a href="/actions/users/${column.userName}/delete">Delete
                     </a></td>
             </tr>
         </c:forEach>

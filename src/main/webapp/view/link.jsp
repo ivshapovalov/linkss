@@ -27,7 +27,7 @@
         </tr>
         <tr>
             <td><label path="days">Days</label></td>
-            <td><input type="number" name="days" id="days" value="${fullLink.getDays()}"></td>
+            <td><input type="number" name="days" id="days" value="${fullLink.days}"></td>
 
         <%--<td><form:input path="days" id="days" value="${days}"/></td>--%>
         </tr>
@@ -37,7 +37,7 @@
         </tr>
         <tr>
             <td><form:label path="imageLink">Image</form:label></td>
-            <td><img src="${fullLink.getImageLink()}"/></td>
+            <td><img src="${fullLink.imageLink}"/></td>
         </tr>
     </table>
     <br>
