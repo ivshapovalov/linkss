@@ -48,9 +48,9 @@ public interface LinksService {
 
     void updateUser(User autorizedUser, User newUser, User oldUser);
 
-    BigInteger updateFreeLinks();
+    BigInteger updateFreeLinks() throws Exception;
 
-    BigInteger deleteExpiredUserLinks();
+    BigInteger deleteExpiredUserLinks() throws Exception;
 
     long getDBLinksSize();
 

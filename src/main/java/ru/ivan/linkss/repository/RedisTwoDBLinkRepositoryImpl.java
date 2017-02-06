@@ -462,7 +462,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
             String link = syncCommandsLinks.get(shortLink);
-            if (link!=null) {
+            if (link != null) {
                 syncCommands.hincrby(KEY_VISITS, shortLink, 1);
                 String domainName = Util.getDomainName(link);
                 if (!"".equals(link)) {
@@ -676,6 +676,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.hdel(KEY_USERS, userName);
         }
     }
+
     @Override
     public void clearUser(User autorizedUser, String userName) {
         try (StatefulRedisConnection<String, String> connection = connect();
@@ -709,7 +710,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     synchronized (redisClient) {
                         String visits = syncCommands.hget(KEY_VISITS, shortLink);
                         syncCommands.hdel(KEY_VISITS, shortLink);
-                        String link = syncCommands.hget(userName,shortLink);
+                        String link = syncCommands.hget(userName, shortLink);
                         String domainName = Util.getDomainName
                                 (link);
                         String visitsByDomainActual = syncCommands.hget
@@ -755,26 +756,31 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public BigInteger checkFreeLinksDB() {
+    public BigInteger checkFreeLinksDB() throws Exception {
+        BigInteger addedKeys = BigInteger.ZERO;
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
             String key = syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
-            syncCommands.select(DB_FREELINK_NUMBER);
-            long size = syncCommands.dbsize();
-            BigInteger addedKeys = BigInteger.ZERO;
-            if (!"".equals(key)) {
-                if (size <= MIN_FREE_LINK_SIZE) {
-                    addedKeys = updateFreeLinksDB(syncCommands, key);
+            if (key!=null) {
+                syncCommands.select(DB_FREELINK_NUMBER);
+                long size = syncCommands.dbsize();
+                if (!"".equals(key)) {
+                    if (size <= MIN_FREE_LINK_SIZE) {
+                        addedKeys = updateFreeLinksDB(syncCommands, key);
+                    }
                 }
+                return addedKeys;
             }
-            return addedKeys;
+            throw new Exception(String.format("No '%s' in '%s'!",KEY_LENGTH,KEY_PREFERENCES));
+        } catch (Exception e) {
+            throw new Exception("Cannot connect to databases!");
         }
     }
 
     @Override
-    public BigInteger deleteExpiredUserLinks() {
+    public BigInteger deleteExpiredUserLinks() throws Exception {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -783,7 +789,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
 
-            List<String> deletedKeys=syncCommands.keys("*")
+            List<String> deletedKeys = syncCommands.keys("*")
                     .stream()
                     .sorted()
                     .filter(user -> !user.startsWith("_"))
@@ -799,17 +805,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     .map(fullLink -> {
                         System.out.println(fullLink.getKey());
                         String shortLink = fullLink.getKey();
-                        String link=syncCommands.hget(fullLink.getUserName(),fullLink.getKey());
+                        String link = syncCommands.hget(fullLink.getUserName(), fullLink.getKey());
                         decreaseVisits(shortLink, fullLink.getUserName(), syncCommands, link);
                         return shortLink;
                     }).collect(Collectors.toList());
 
             return BigInteger.valueOf(deletedKeys.size());
+        } catch (Exception e) {
+            throw new Exception("Cannot connect to databases!");
         }
     }
 
     private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, String key) {
-        BigInteger addedKeys = BigInteger.ZERO;
         String[] keys = key.split("\\|");
         int maxKey = Arrays.stream(keys)
                 .map(Integer::valueOf)
@@ -819,7 +826,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         syncCommands.select(DB_WORK_NUMBER);
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
                 (newKeyLength));
-        addedKeys = createKeys(newKeyLength);
+        BigInteger addedKeys = createKeys(newKeyLength);
         return addedKeys;
     }
 

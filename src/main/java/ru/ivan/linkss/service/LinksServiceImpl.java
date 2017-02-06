@@ -68,12 +68,12 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public BigInteger updateFreeLinks() {
+    public BigInteger updateFreeLinks()  throws Exception{
         return repository.checkFreeLinksDB();
     }
 
     @Override
-    public BigInteger deleteExpiredUserLinks() {
+    public BigInteger deleteExpiredUserLinks() throws Exception {
         return repository.deleteExpiredUserLinks();
     }
 

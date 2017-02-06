@@ -3,17 +3,48 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xsi:schemaLocation="
 			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
-			http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
+			http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+			       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
+
+    <context:component-scan base-package="ru.ivan.linkss.aspect"/>
     <context:component-scan base-package="ru.ivan.linkss.controller" />
+    <bean id="aspect-logger" class="ru.ivan.linkss.aspect.SimpleLogger"/>
+    <bean id="aspect-profiler" class="ru.ivan.linkss.aspect.SimpleProfiler"/>
+    <bean id="aspect-exception-logger" class="ru.ivan.linkss.aspect.SimpleExceptionLogger"/>
+
     <mvc:annotation-driven/>
+
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
 
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/view/" />
         <property name="suffix" value=".jsp" />
     </bean>
+
+    <aop:config>
+        <aop:aspect ref="aspect-profiler">
+            <aop:pointcut id="any_repo_methods"
+                          expression="execution(* ru.ivan.linkss.repository.*(..))"/>
+            <aop:around method="profile" pointcut-ref="any_repo_methods"/>
+        </aop:aspect>
+        <aop:aspect ref="aspect-logger">
+            <aop:pointcut id="any_methods"
+                          expression="execution(* ru.ivan.linkss.*(..))" />
+            <aop:around method="log" pointcut-ref="any_methods"/>
+
+        </aop:aspect>
+        <aop:aspect ref="aspect-exception-logger">
+            <aop:pointcut id="any_public_methods"
+                          expression="execution(public * *(..))" />
+            <aop:after-throwing method="logException" pointcut-ref="any_public_methods"
+                                throwing="t"/>
+
+        </aop:aspect>
+    </aop:config>
 
 </beans>

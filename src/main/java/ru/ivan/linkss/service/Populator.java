@@ -97,6 +97,7 @@ public class Populator {
         populator.setContext("localhost:8080\\");
         populator.setPath("C:\\JavaStudy\\my\\linkss\\target\\linkss\\");
         populator.init();
+
     }
     public void init() {
 

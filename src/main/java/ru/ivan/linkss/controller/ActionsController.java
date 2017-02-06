@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 
 @Controller
@@ -552,7 +553,12 @@ public class ActionsController {
                     "users!");
             return PAGE_ERROR;
         }
-        System.out.println(service.deleteExpiredUserLinks().intValue());
+        try {
+            BigInteger expiredKeys=service.deleteExpiredUserLinks();
+            System.out.println(expiredKeys.intValue());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return PAGE_MANAGE;
     }
 

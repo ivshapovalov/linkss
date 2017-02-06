@@ -50,9 +50,9 @@ public interface LinkRepository {
 
     void clearUser(User autorizedUser, String userName);
 
-    BigInteger checkFreeLinksDB();
+    BigInteger checkFreeLinksDB()  throws Exception;
 
-    BigInteger deleteExpiredUserLinks();
+    BigInteger deleteExpiredUserLinks() throws Exception;
 
     BigInteger createKeys(final int length);
 
