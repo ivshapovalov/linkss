@@ -1,5 +1,8 @@
 package ru.ivan.linkss.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;

@@ -12,6 +12,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Component
+@Service
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;

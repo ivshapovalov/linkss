@@ -1,6 +1,7 @@
 package ru.ivan.linkss.service;
 
 import com.google.zxing.WriterException;
+import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;

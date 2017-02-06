@@ -5,6 +5,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
@@ -20,8 +21,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
-@Component
-@Qualifier(value = "repositoryTwo")
+@Repository
+@Qualifier("repositoryTwo")
 public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     //REDIS 1
