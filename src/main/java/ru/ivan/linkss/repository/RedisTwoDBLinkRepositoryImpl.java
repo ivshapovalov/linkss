@@ -308,7 +308,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 try {
                     syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
                 } catch (Exception e) {
-                    System.out.println("Приехали");
+                    throw new RuntimeException(String.format("Cannot add shortlink '%s' to users " +
+                                    "'%s' links",shortLink,autorizedUser.getUserName()));
                 }
             } else {
                 syncCommands.hset(DEFAULT_USER, shortLink, link);

@@ -10,16 +10,22 @@ import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.entity.User;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 @Ignore
 public class RepositoryTest {
 
-    private static final LinkRepository repository=new RedisTwoDBLinkRepositoryImpl();
     private static final RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
+    private static final RedisClient redisClientLinks = RedisClient.create(System.getenv("HEROKU_REDIS_AMBER_URL"));
+    private static final LinkRepository repository=new RedisTwoDBLinkRepositoryImpl(redisClient,redisClientLinks);
 
+    //REDIS 1
     private static final int DB_WORK_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
+    //REDIS 2
+    private static final int DB_LINK_NUMBER = 0;
     private static final long MIN_FREE_LINK_SIZE = 10;
 
     private static final String KEY_USERS = "_users";
@@ -35,7 +41,9 @@ public class RepositoryTest {
     private static final String ADMIN_PASSWORD = "admin";
 
     private StatefulRedisConnection<String, String> connection;
-    RedisCommands<String, String> syncCommands;
+    private RedisCommands<String, String> syncCommands;
+    private StatefulRedisConnection<String, String> connectionLinks;
+    private RedisCommands<String, String> syncCommandsLinks;
 
     @BeforeClass
     public static void init() {
@@ -47,15 +55,21 @@ public class RepositoryTest {
         repository.init();
         connection = connect();
         syncCommands = connection.sync();
+        connectionLinks = connectLinks();
+        syncCommandsLinks = connectionLinks.sync();
+        syncCommands.select(DB_FREELINK_NUMBER);
+        syncCommands.flushdb();
 
     }
     @After
     public void after(){
         syncCommands.flushall();
         connection.close();
+        syncCommandsLinks.flushall();
+        connectionLinks.close();
     }
 
-    private static StatefulRedisConnection<String, String> connect() {
+    private StatefulRedisConnection<String, String> connect() {
         boolean connectionFailed = true;
         StatefulRedisConnection<String, String> connection = null;
         do {
@@ -68,6 +82,21 @@ public class RepositoryTest {
         } while (connectionFailed);
         return connection;
     }
+
+    private StatefulRedisConnection<String, String> connectLinks() {
+        boolean connectionFailed = true;
+        StatefulRedisConnection<String, String> connection = null;
+        do {
+            try {
+                connection = redisClientLinks.connect();
+                connectionFailed = false;
+            } catch (Exception e) {
+                connectionFailed = true;
+            }
+        } while (connectionFailed);
+        return connection;
+    }
+
 
     @Test
     public void initTest()
@@ -82,14 +111,14 @@ public class RepositoryTest {
     @Test
     public void getDBLinkSizeTest()
     {
-        syncCommands.select(DB_WORK_NUMBER);
         Long expected=0L;
-        Long actual=syncCommands.hlen(KEY_LINKS);
+        Long actual=repository.getDBLinksSize();
         assertEquals(expected,actual);
 
         //
-        syncCommands.hset(KEY_LINKS,"aaa","value1");
-        syncCommands.hset(KEY_LINKS,"bbb","value2");
+        repository.createKeys(1);
+        repository.createShortLink(new User("user","password"),"ya.ru");
+        repository.createShortLink(new User("user","password"),"mail.ru");
         expected=2L;
         actual=repository.getDBLinksSize();
         assertEquals(expected,actual);
@@ -98,7 +127,6 @@ public class RepositoryTest {
     @Test
     public void getDBFreeLinkSizeTest()
     {
-        syncCommands.select(DB_FREELINK_NUMBER);
         repository.createKeys(1);
         Long expected=62L;
         Long actual=repository.getDBFreeLinksSize();
@@ -109,8 +137,8 @@ public class RepositoryTest {
     @Test
     public void getRandomShortLinkTest()
     {
-        syncCommands.select(DB_WORK_NUMBER);
-        syncCommands.hset(KEY_LINKS,"shortLink","link");
+        syncCommandsLinks.select(DB_LINK_NUMBER);
+        syncCommandsLinks.set("shortLink","link");
         String expected="shortLink";
         String actual=repository.getRandomShortLink();
         assertEquals(expected,actual);
@@ -124,7 +152,7 @@ public class RepositoryTest {
         syncCommands.append("shortLink","");
         String expected="shortLink";
         String expectedLink="link";
-        String actual=repository.createShortLink(new User(),expectedLink);
+        String actual=repository.createShortLink(new User("user","password"),expectedLink);
         String actualLink=repository.getLink(actual);
         assertEquals(expected,actual);
         assertEquals(expectedLink,actualLink);
@@ -138,7 +166,8 @@ public class RepositoryTest {
         String expectedPassword="password";
         repository.createUser(user,expectedPassword);
         String actualPassword=syncCommands.hget(KEY_USERS,user);
-        assertEquals(expectedPassword,actualPassword);
+//        assertEquals(expectedPassword,actualPassword);
+        assertThat(expectedPassword,is(actualPassword));
 
     }
 
