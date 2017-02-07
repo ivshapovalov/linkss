@@ -522,7 +522,7 @@ public class ActionsController {
         String context = getContextPath(request);
 
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext
-                ("/spring/spring-app.xml");
+                ("/spring/spring-mvc.xml");
         Thread populatorThread = new Thread(new Runnable() {
             @Override
             public void run() {
