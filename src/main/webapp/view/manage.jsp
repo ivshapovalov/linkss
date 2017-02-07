@@ -26,7 +26,9 @@
             <td width="10%"><b><a href="/actions/populate">Populate</a></b></td>
         </tr>
         <tr>
-            <td width="10%"><b><a href="/actions/update">Check and delete expired links</a></b></td>
+            <td
+                    width="10%"><b><a href="/actions/checkExpired">Check and delete expired
+                links</a></b></td>
         </tr>
     </table>
 </section>

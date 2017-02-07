@@ -142,7 +142,7 @@
             <tr>
                 <td width="10%">${column.userName}</td>
                 <td width="10%">${column.key}</td>
-                <td width="40%"><a href="//${column.link}">${column.link}</a></td>
+                <td width="40%">${column.link}</td>
                 <td width="10%">${column.days}</td>
                 <td width="10%">${column.visits}</td>
                 <td width="20%"><a href="${column.shortLink}">${column.shortLink}</a>

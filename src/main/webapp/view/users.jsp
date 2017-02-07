@@ -136,7 +136,7 @@
             <td width="10%"><b></b></td>
             <td width="10%"><b></b></td>
         </tr>
-        <c:forEach items="${users}" var="column">
+        <c:forEach items="${list}" var="column">
             <tr>
                 <td width="40%">${column.userName}</td>
                 <td width="40%" >*</td>

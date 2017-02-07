@@ -29,15 +29,14 @@ public class RootController {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String WEB_SEPARTOR = "/";
+    private static final String IMAGE_EXTENSION = ".png";
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
 
     private static final String ATTRIBUTE_MESSAGE = "message";
-
-    public static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$";
-
-
+    private static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\" +
+            ".[a-z0-9-]+)+([/?].*)?$";
 
     @RequestMapping(value = {WEB_SEPARTOR, WEB_SEPARTOR+ PAGE_MAIN}, method = RequestMethod.GET)
     public String main(Model model,
@@ -73,7 +72,7 @@ public class RootController {
         return PAGE_ERROR;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*.png", method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR+"*"+IMAGE_EXTENSION, method = RequestMethod.GET)
     public void openImage(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
@@ -115,7 +114,7 @@ public class RootController {
             return PAGE_ERROR;
         }
         model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", FILE_SEPARTOR + shortLink + ".png");
+        model.addAttribute("image", FILE_SEPARTOR + shortLink + IMAGE_EXTENSION);
         model.addAttribute("link", link);
         model.addAttribute("shortLink", request.getRequestURL() + shortLink);
         return PAGE_MAIN;

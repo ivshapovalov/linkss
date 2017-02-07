@@ -20,50 +20,74 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.math.BigInteger;
 import java.util.List;
 
 @Controller
 @EnableScheduling
-@RequestMapping(value = "/actions")
+@RequestMapping(value = "/actions/")
 public class ActionsController {
 
     private static final String ACTION_EDIT = "edit";
-    private static final String ACTION_DELETE = "delete";
-
     private static final String FILE_SEPARTOR = File.separator;
+    private static final String RESOURCE_FOLDER = "resources";
+    private static final String IMAGE_EXTENSION = ".png";
+
     private static final String WEB_SEPARTOR = "/";
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_SIGNUP = "signup";
     private static final String PAGE_SIGNIN = "signin";
     private static final String PAGE_MANAGE = "manage";
+    private static final String PAGE_REGISTER = "register";
+    private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
+    private static final String PAGE_DOMAINS = "domains";
+    private static final String PAGE_LINK = "link";
+    private static final String PAGE_LINKS = "links";
     private static final String ACTION_LOGOUT = "logout";
 
+    private static final String ACTION_LOGIN = "login";
+    private static final String ACTION_DELETE = "delete";
+    private static final String ACTION_CLEAR = "clear";
+    private static final String ACTION_POPULATE = "populate";
+    private static final String ACTION_CHECK_EXPIRED = "checkExpired";
+
     private static final String ATTRIBUTE_USER = "user";
+    private static final String ATTRIBUTE_LINKS = "links";
+    private static final String ATTRIBUTE_LIST = "list";
+    private static final String ATTRIBUTE_KEY = "key";
+    private static final String ATTRIBUTE_OLD_KEY = "oldKey";
+    private static final String ATTRIBUTE_OLD_USERNAME = "oldUserName";
+    private static final String ATTRIBUTE_OLD_PASSWORD = "oldPassword";
+    private static final String ATTRIBUTE_FULL_LINK = "fullLink";
+    private static final String ATTRIBUTE_OWNER = "owner";
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
     private static final String ATTRIBUTE_MESSAGE = "message";
+    private static final String ATTRIBUTE_ACTION = "action";
     private static final String ATTRIBUTE_PAGE = "page";
+    private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
+    private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
 
     @Autowired
     private LinksService service;
 
-    @RequestMapping(value = WEB_SEPARTOR+PAGE_SIGNUP, method = RequestMethod.GET)
+    @RequestMapping(value = PAGE_SIGNUP, method = RequestMethod.GET)
     public String registration(Model model)
             throws IOException {
         model.addAttribute(ATTRIBUTE_USER, new User());
         return PAGE_SIGNUP;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+PAGE_SIGNIN, method = RequestMethod.GET)
+    @RequestMapping(value = PAGE_SIGNIN, method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
         model.addAttribute(ATTRIBUTE_USER, new User());
         return PAGE_SIGNIN;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+ACTION_LOGOUT, method = RequestMethod.GET)
+    @RequestMapping(value = ACTION_LOGOUT, method = RequestMethod.GET)
     public String logout(Model model, HttpSession session)
             throws IOException {
         model.addAttribute(ATTRIBUTE_AUTORIZED_USER, null);
@@ -71,7 +95,7 @@ public class ActionsController {
         return "redirect:/";
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+PAGE_MANAGE, method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = PAGE_MANAGE, method = {RequestMethod.GET, RequestMethod.POST})
     public String manage(HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -81,7 +105,7 @@ public class ActionsController {
         return PAGE_MAIN;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+PAGE_USERS, method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = PAGE_USERS, method = {RequestMethod.GET, RequestMethod.POST})
     public String users(Model model, HttpSession session, HttpServletRequest request)
             throws IOException {
         int currentPage = 1;
@@ -105,14 +129,14 @@ public class ActionsController {
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) usersCount / recordsOnPage));
 
-        model.addAttribute("users", users);
-        model.addAttribute("numberOfPages", numberOfPages);
-        model.addAttribute("currentPage", currentPage);
-        model.addAttribute("autorizedUser", autorizedUser);
+        model.addAttribute(ATTRIBUTE_LIST, users);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_AUTORIZED_USER, autorizedUser);
         return PAGE_USERS;
     }
 
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    @RequestMapping(value = PAGE_REGISTER, method = RequestMethod.POST)
     public String register(Model model,
                            @ModelAttribute(ATTRIBUTE_USER) User user,
                            HttpServletRequest request,
@@ -132,7 +156,7 @@ public class ActionsController {
 
     }
 
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @RequestMapping(value = ACTION_LOGIN, method = RequestMethod.POST)
     public String login(Model model,
                         @ModelAttribute(ATTRIBUTE_USER) User user,
                         HttpSession session) {
@@ -145,13 +169,14 @@ public class ActionsController {
                 return PAGE_ERROR;
             }
         }
-        return "signin";
+        return PAGE_SIGNIN;
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {
         boolean existedUser = service.checkUser(user);
         if (existedUser) {
             user.setEmpty(false);
+            //TODO get user in json
             if ("admin".equals(user.getUserName())) {
                 user.setAdmin(true);
             }
@@ -159,98 +184,82 @@ public class ActionsController {
             model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
             return "redirect:/";
         }
-        return "signin";
+        return ACTION_LOGIN;
     }
 
-    @RequestMapping(value = {"/deletelink"}, method =
-            RequestMethod.GET)
-    public String deletelink(Model model,
-                             @ModelAttribute("key") String shortLink,
-                             @ModelAttribute("owner") String owner,
-                             HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName() == null
-                || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "User is not defined!");
-            return "error";
-        }
-        if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "Link owner is not defined!");
-            return "error";
-        }
-        if (shortLink == null || shortLink.equals("")) {
-            model.addAttribute("message", "Link is not defined!");
-            return "error";
-        }
-
-        try {
-            service.deleteUserLink(autorizedUser, shortLink, owner);
-            model.addAttribute("key", null);
-            model.addAttribute("owner", null);
-
-            return "redirect:/actions/statistics";
-        } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
-        }
-    }
-
-    @RequestMapping(value = {"/user/{owner}/links/delete"}, method =
-            RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
+            + WEB_SEPARTOR+ ACTION_DELETE,
+            method = RequestMethod.GET)
     public String deleteuserlink(Model model,
-                                 @ModelAttribute("key") String shortLink,
-                                 @ModelAttribute("owner") String owner,
-                                 HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
-        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "User is not defined!");
-            return "error";
-        }
-        if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "Link owner is not defined!");
-            return "error";
-        }
-        if (shortLink == null || shortLink.equals("")) {
-            model.addAttribute("message", "Link is not defined!");
-            return "error";
-        }
-
-        try {
-            service.deleteUserLink(autorizedUser, shortLink, owner);
-            model.addAttribute("key", null);
-            model.addAttribute("owner", null);
-
-            return "redirect:/actions/links?owner=" + owner;
-        } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
-        }
-    }
-
-    @RequestMapping(value = {"/user/{owner}/links/edit"}, method =
-            RequestMethod.GET)
-    public String updateuserlink(Model model,
-                                 @ModelAttribute("key") String shortLink,
-                                 @ModelAttribute("owner") String owner,
+                                 @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                 @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                                  HttpSession session,
                                  HttpServletRequest request) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "User is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
         }
         if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "Link owner is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link owner is not defined!");
+            return PAGE_ERROR;
         }
         if (shortLink == null || shortLink.equals("")) {
-            model.addAttribute("message", "Link is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
+            return PAGE_ERROR;
+        }
+
+        try {
+            service.deleteUserLink(autorizedUser, shortLink, owner);
+            model.addAttribute(ATTRIBUTE_KEY, null);
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+
+            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), ATTRIBUTE_LINKS,
+                    ATTRIBUTE_OWNER, owner);
+        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+    }
+
+    private String getControllerMapping() {
+        try {
+            String[] path=this.getClass().getAnnotation(RequestMapping.class).value();
+            if (path!=null && path.length==1) {
+                return path[0];
+            }
+        } catch (Exception e) {
+
+        }
+        return "";
+    }
+
+    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
+            + WEB_SEPARTOR+ ACTION_EDIT, method = RequestMethod.GET)
+    public String updateuserlink(Model model,
+                                 @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                 @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                                 HttpSession session,
+                                 HttpServletRequest request) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link owner is not defined!");
+            return PAGE_ERROR;
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
+            return PAGE_ERROR;
         }
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + "resources"+FILE_SEPARTOR + shortLink + ".png";
+                    + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION;
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 Util.downloadImageFromS3(realImagePath, shortLink);
@@ -258,113 +267,114 @@ public class ActionsController {
 
             String link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
-            String urlImagePath = contextPath + shortLink + ".png";
+            String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION;
             FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
                     "", urlImagePath,
                     owner, service.getLinkDays(shortLink));
-            model.addAttribute("fullLink", fullLink);
-            model.addAttribute("oldKey", shortLink);
-            model.addAttribute("owner", owner);
-            return "link";
+            model.addAttribute(ATTRIBUTE_FULL_LINK, fullLink);
+            model.addAttribute(ATTRIBUTE_OLD_KEY, shortLink);
+            model.addAttribute(ATTRIBUTE_OWNER, owner);
+            return PAGE_LINK;
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = {"/users/{owner}/clear"}, method =
-            RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_CLEAR, method = RequestMethod.GET)
     public String clearUser(Model model,
-                           @PathVariable("owner") String owner,
-                           HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+                            @PathVariable(ATTRIBUTE_OWNER) String owner,
+                            HttpSession session) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
         if (autorizedUser == null || "".equals(autorizedUser.getUserName())) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
+            return PAGE_ERROR;
         }
 
         if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "User name is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User name is not defined!");
+            return PAGE_ERROR;
         }
         try {
             service.clearUser(autorizedUser, owner);
-            model.addAttribute("owner", null);
-            return "redirect:/actions/users";
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
-    @RequestMapping(value = {"/users/{owner}/edit"}, method =
-            RequestMethod.GET)
-    private String editUser(Model model, @PathVariable("owner") String key
+
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_EDIT, method = RequestMethod.GET)
+    private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String key
             , HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
         if (autorizedUser == null || autorizedUser.getUserName() == null || "".equals(autorizedUser.getUserName())) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
+            return PAGE_ERROR;
         }
         if (key == null || key.equals("")) {
-            model.addAttribute("message", "User name is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User name is not defined!");
+            return PAGE_ERROR;
         }
         try {
             User user = service.getUser(autorizedUser, key);
-            model.addAttribute("user", user);
-            model.addAttribute("oldUserName", user.getUserName());
-            model.addAttribute("oldPassword", user.getPassword());
-            return "user";
+            model.addAttribute(ATTRIBUTE_USER, user);
+            model.addAttribute(ATTRIBUTE_OLD_USERNAME, user.getUserName());
+            model.addAttribute(ATTRIBUTE_OLD_PASSWORD, user.getPassword());
+            return PAGE_USER;
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = {"/users/{owner}/delete"}, method =
-            RequestMethod.GET)
-    private String deleteUser(Model model, @PathVariable("owner") String owner, HttpSession
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_DELETE, method = RequestMethod.GET)
+    private String deleteUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String owner, HttpSession
             session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
         if (autorizedUser == null || "".equals(autorizedUser.getUserName())) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
+            return PAGE_ERROR;
         }
 
         if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "User name is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User name is not defined!");
+            return PAGE_ERROR;
         }
         try {
             service.deleteUser(autorizedUser, owner);
-            model.addAttribute("action", null);
-            model.addAttribute("owner", null);
-            return "redirect:/actions/users";
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+            model.addAttribute(ATTRIBUTE_ACTION, null);
+            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = {"/user"}, method =
+    @RequestMapping(value = {WEB_SEPARTOR+PAGE_USER}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
-                             @ModelAttribute("user") User newUser,
-                             @ModelAttribute("oldUserName") String oldUserName,
-                             @ModelAttribute("oldPassword") String oldPassword,
+                             @ModelAttribute(ATTRIBUTE_USER) User newUser,
+                             @ModelAttribute(ATTRIBUTE_OLD_USERNAME) String oldUserName,
+                             @ModelAttribute(ATTRIBUTE_OLD_PASSWORD) String oldPassword,
                              HttpServletRequest request,
                              HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
+            return PAGE_ERROR;
         }
         if (newUser == null) {
-            model.addAttribute("message", "User for update is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User for update is not defined!");
+            return PAGE_ERROR;
         }
         try {
             User oldUser = new User(oldUserName, oldPassword);
@@ -372,48 +382,48 @@ public class ActionsController {
             model.addAttribute("oldUserName", null);
             model.addAttribute("oldPassword", null);
 
-            return "redirect:/actions/manage";
+            return String.format("redirect:%s%s",getControllerMapping(),PAGE_MANAGE);
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = {"/link"}, method =
+    @RequestMapping(value = PAGE_LINK, method =
             RequestMethod.POST)
-    public String updateUser(Model model,
-                             @ModelAttribute("fullLink") FullLink fullLink,
-                             @ModelAttribute("oldKey") String shortLink,
-                             @ModelAttribute("owner") String owner,
+    public String updateLink(Model model,
+                             @ModelAttribute(ATTRIBUTE_FULL_LINK) FullLink fullLink,
+                             @ModelAttribute(ATTRIBUTE_OLD_KEY) String shortLink,
+                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                              HttpServletRequest request,
                              HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
-            model.addAttribute("message", "Autorized user is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
+            return PAGE_ERROR;
         }
         if (owner == null || owner.equals("")) {
-            model.addAttribute("message", "Link owner is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link owner is not defined!");
+            return PAGE_ERROR;
         }
         if (shortLink == null || owner.equals("")) {
-            model.addAttribute("message", "Old link is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Old link is not defined!");
+            return PAGE_ERROR;
         }
         if (fullLink == null) {
-            model.addAttribute("message", "Link is not defined!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
+            return PAGE_ERROR;
         }
         try {
             String contextPath = getContextPath(request);
             FullLink oldFullLink = service.getFullLink(
                     autorizedUser, shortLink, owner, contextPath);
             updateLink(autorizedUser, oldFullLink, fullLink);
-            model.addAttribute("oldKey", null);
-            return "redirect:links";
+            model.addAttribute(ATTRIBUTE_OLD_KEY, null);
+            return "redirect:" + PAGE_LINKS;
         } catch (RuntimeException e) {
-            model.addAttribute("message", e.getMessage());
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
     }
 
@@ -428,21 +438,21 @@ public class ActionsController {
         return contextPath;
     }
 
-    @RequestMapping(value = "/links", method = RequestMethod.GET)
+    @RequestMapping(value = PAGE_LINKS, method = RequestMethod.GET)
     public String links(Model model,
-                        @ModelAttribute("owner") String owner,
+                        @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                         HttpServletRequest request,
                         HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, links available only for logged users!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
+            return PAGE_ERROR;
         }
 
-        if (request.getParameter("page") != null) {
-            currentPage = Integer.parseInt(request.getParameter("page"));
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter(ATTRIBUTE_PAGE));
         }
 
         if (owner == null || owner.equals("")) {
@@ -453,72 +463,72 @@ public class ActionsController {
         List<FullLink> list = service.getFullStat(owner, contextPath, offset, recordsOnPage);
         long linksCount = (int) service.getUserLinksSize(autorizedUser, owner);
         if (linksCount == 0) {
-            model.addAttribute("message", "Sorry, User don't have links. Try another!");
-            return "error";
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have links. Try another!");
+            return PAGE_ERROR;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) linksCount / recordsOnPage));
 
-        model.addAttribute("list", list);
-        model.addAttribute("numberOfPages", numberOfPages);
-        model.addAttribute("currentPage", currentPage);
-        model.addAttribute("owner", owner);
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_OWNER, owner);
 
-        return "links";
+        return PAGE_LINKS;
     }
 
-    @RequestMapping(value = "/domains", method = RequestMethod.GET)
+    @RequestMapping(value = PAGE_DOMAINS, method = RequestMethod.GET)
     public String domains(Model model,
                           HttpServletRequest request,
                           HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, links available only for logged users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
 
-        if (request.getParameter("page") != null) {
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
             currentPage = Integer.parseInt(request.getParameter("page"));
         }
 
         if (!autorizedUser.isAdmin()) {
-            model.addAttribute("message", "Sorry, domains available only for admin users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, domains available only for admin users!");
             return PAGE_ERROR;
         }
         int offset = (currentPage - 1) * recordsOnPage;
         List<Domain> list = service.getShortStat(offset, recordsOnPage);
         long domainsSize = (int) service.getDomainsSize(autorizedUser);
         if (domainsSize == 0) {
-            model.addAttribute("message", "Sorry, DB don't have domains visits. Try later!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have domains visits. Try later!");
             return PAGE_ERROR;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) domainsSize / recordsOnPage));
 
-        model.addAttribute("list", list);
-        model.addAttribute("numberOfPages", numberOfPages);
-        model.addAttribute("currentPage", currentPage);
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
 
-        return "domains";
+        return PAGE_DOMAINS;
     }
 
-    @RequestMapping(value = "/populate", method = RequestMethod.GET)
+    @RequestMapping(value = ACTION_POPULATE, method = RequestMethod.GET)
     public String populate(Model model,
                            HttpServletRequest request,
                            HttpSession session) {
 
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, links available only for logged users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
 
         if (!autorizedUser.isAdmin()) {
-            model.addAttribute("message", "Sorry, populate available only for admin users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, populate available only for admin users!");
             return PAGE_ERROR;
         }
 
-        String path = request.getServletContext().getRealPath(FILE_SEPARTOR);
+        String path = request.getServletContext().getRealPath(WEB_SEPARTOR);
         String context = getContextPath(request);
 
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext
@@ -536,24 +546,25 @@ public class ActionsController {
         populatorThread.start();
         return PAGE_MANAGE;
     }
-    @RequestMapping(value = "/update", method = RequestMethod.GET)
-    public String chackExpired(Model model,
-                           HttpServletRequest request,
-                           HttpSession session) {
 
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+    @RequestMapping(value = ACTION_CHECK_EXPIRED, method = RequestMethod.GET)
+    public String checkExpired(Model model,
+                               HttpServletRequest request,
+                               HttpSession session) {
+
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute("message", "Sorry, links available only for logged users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
 
         if (!autorizedUser.isAdmin()) {
-            model.addAttribute("message", "Sorry, check expired links available only for admin " +
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, check expired links available only for admin " +
                     "users!");
             return PAGE_ERROR;
         }
         try {
-            BigInteger expiredKeys=service.deleteExpiredUserLinks();
+            BigInteger expiredKeys = service.deleteExpiredUserLinks();
             System.out.println(expiredKeys.intValue());
         } catch (Exception e) {
             e.printStackTrace();
