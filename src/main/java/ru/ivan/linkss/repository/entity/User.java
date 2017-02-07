@@ -61,4 +61,12 @@ public class User {
     public void setEmpty(boolean empty) {
         isEmpty = empty;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userName='" + userName + '\'' +
+                ", isAdmin=" + isAdmin +
+                '}';
+    }
 }

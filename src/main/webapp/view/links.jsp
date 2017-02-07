@@ -131,7 +131,7 @@
         <tr>
             <td width="10%"><b>User</b></td>
             <td width="10%"><b>Key</b></td>
-            <td width="40%"><b>Link</b></td>
+            <td width="40%"><b>Text</b></td>
             <td width="10%"><b>Days</b></td>
             <td width="10%"><b>Visits</b></td>
             <td width="20%"><b>Short Link</b></td>

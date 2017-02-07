@@ -22,7 +22,7 @@ import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
 @Repository
-@Qualifier("repositoryTwo")
+@Qualifier(value = "repositoryTwo")
 public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     //REDIS 1

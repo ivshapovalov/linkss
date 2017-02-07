@@ -5,15 +5,13 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-
 @Aspect
+@Component
 public class SimpleExceptionLogger {
     @AfterThrowing(
-            pointcut = "execution(* ru.ivan.linkss.repository.*(..))",
+            pointcut = "execution(* ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl.*(..))",
             throwing = "t")
     public void logException(JoinPoint call, Throwable t) {
-
-        System.out.println("ASPECT.EXCEPTION-LOGGER: " + t.getMessage());
-
+        System.out.println("ASPECT.EXCEPTION-REPO-LOGGER: " + t.getMessage());
     }
 }

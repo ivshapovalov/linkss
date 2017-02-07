@@ -14,7 +14,6 @@ import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
-import ru.ivan.linkss.service.Populator;
 import ru.ivan.linkss.util.Util;
 
 import javax.servlet.http.HttpServletRequest;

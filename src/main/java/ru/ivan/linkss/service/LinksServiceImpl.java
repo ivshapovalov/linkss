@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Service
+@Qualifier(value = "service")
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;

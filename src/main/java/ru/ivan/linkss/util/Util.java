@@ -26,9 +26,7 @@ public class Util {
             if (domain==null) domain="";
             return domain.startsWith("www") ? domain.substring(domain.indexOf(".")+1) : domain;
         } catch (URISyntaxException e) {
-            System.out.println("Ошибка:" +url);
-
-            List<Integer> list1=new ArrayList<>();
+            //System.out.println("Ошибка:" +url);
             return "";
         }
     }

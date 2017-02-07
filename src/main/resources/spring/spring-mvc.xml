@@ -12,9 +12,11 @@
 
     <mvc:annotation-driven/>
     <aop:aspectj-autoproxy/>
+    <context:component-scan base-package="ru.ivan.linkss.aspect" />
     <context:component-scan base-package="ru.ivan.linkss.controller" />
-    <context:component-scan base-package="ru.ivan.linkss.service"/>
-    <context:component-scan base-package="ru.ivan.linkss.repository"/>
+    <context:component-scan base-package="ru.ivan.linkss.service" />
+    <context:component-scan base-package="ru.ivan.linkss.repository" />
+    <!--<context:component-scan base-package="ru.ivan.linkss.repository"/>-->
     <!--<bean id="aspect-logger" class="ru.ivan.linkss.aspect.SimpleLogger"/>-->
     <!--<bean id="aspect-profiler" class="ru.ivan.linkss.aspect.SimpleProfiler"/>-->
     <!--<bean id="aspect-exception-logger" class="ru.ivan.linkss.aspect.SimpleExceptionLogger"/>-->

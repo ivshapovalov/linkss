@@ -35,4 +35,11 @@ public class Domain {
     public void setVisitsHistory(String visitsHistory) {
         this.visitsHistory = visitsHistory;
     }
+
+    @Override
+    public String toString() {
+        return "Domain{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

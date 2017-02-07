@@ -1,4 +1,4 @@
-package ru.ivan.linkss.service;
+package ru.ivan.linkss.controller;
 
 
 import com.lambdaworks.redis.RedisClient;
@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.service.LinksService;
+import ru.ivan.linkss.service.LinksServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;

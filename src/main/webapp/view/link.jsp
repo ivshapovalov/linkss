@@ -22,7 +22,7 @@
             <td><form:input path="shortLink" disabled="true"/></td>
         </tr>
         <tr>
-            <td><form:label path="link">Link</form:label></td>
+            <td><form:label path="link">Text</form:label></td>
             <td><form:input path="link" id="link" value="${link}"/></td>
         </tr>
         <tr>

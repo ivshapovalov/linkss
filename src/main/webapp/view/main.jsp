@@ -39,7 +39,7 @@
                 </td>
             </tr>
             <tr>
-                <td width="10%"><label path="link">Link</label></td>
+                <td width="10%"><label path="link">Text</label></td>
                 <td width="90%"><input size="90%" type="text" id="${link}"
                                        name="link"
                                        value="${link}"></td>

@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 @EnableScheduling
@@ -28,7 +30,14 @@ public class RootController {
     private static final String FILE_SEPARTOR = File.separator;
     private static final String WEB_SEPARTOR = "/";
     private static final String PAGE_ERROR = "error";
+    private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
+
+    private static final String ATTRIBUTE_MESSAGE = "message";
+
+    public static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$";
+
+
 
     @RequestMapping(value = {WEB_SEPARTOR, WEB_SEPARTOR+ PAGE_MAIN}, method = RequestMethod.GET)
     public String main(Model model,
@@ -41,15 +50,24 @@ public class RootController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR+"*", method = RequestMethod.GET)
-    public String redirect(HttpServletRequest request) {
+    public String redirect(Model model,HttpServletRequest request) {
         String shortLink = request.getServletPath();
 
         String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1));
         if (link != null) {
-            if (link.contains(":")) {
-                return "redirect:" + link;
-            } else {
-                return "redirect:" + "//" + link;
+
+            Pattern p = Pattern.compile(URL_REGEX);
+            Matcher m = p.matcher(link);
+            if(!m.find()) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, link);
+                return PAGE_MESSAGE;
+
+            }else {
+                if (link.contains(":")) {
+                    return "redirect:" + link;
+                } else {
+                    return "redirect:" + "//" + link;
+                }
             }
         }
         return PAGE_ERROR;

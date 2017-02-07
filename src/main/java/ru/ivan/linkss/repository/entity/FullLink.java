@@ -95,4 +95,13 @@ public class FullLink {
         this.days = days;
     }
 
+    @Override
+    public String toString() {
+        return "FullLink{" +
+                "key='" + key + '\'' +
+                ", shortLink='" + shortLink + '\'' +
+                ", link='" + link + '\'' +
+                ", userName='" + userName + '\'' +
+                '}';
+    }
 }
