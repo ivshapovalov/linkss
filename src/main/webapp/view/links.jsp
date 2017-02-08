@@ -3,7 +3,6 @@
 
 <html>
 <%@include file="header.jsp" %>
-
 <body>
 <section>
 

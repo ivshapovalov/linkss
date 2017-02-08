@@ -3,7 +3,7 @@
 
 <head>
     <title>Linkss</title>
-    <link href="resources/images/favicon.ico" rel="shortcut icon" type="image/x-icon" >
+    <link href="/resources/images/favicon.ico" rel="shortcut icon" type="image/x-icon" >
 
     <button onclick="location.href='/'">Home</button>
     <button onclick="location.href='/actions/links'">Links</button>
