@@ -129,7 +129,7 @@
             <td width="10%"><b>User</b></td>
             <td width="10%"><b>Key</b></td>
             <td width="40%"><b>Text</b></td>
-            <td width="10%"><b>Seconds</b></td>
+            <td width="10%"><b>Expire at</b></td>
             <td width="10%"><b>Visits</b></td>
             <td width="20%"><b>Short Link</b></td>
             <td width="10%"><b>Delete</b></td>

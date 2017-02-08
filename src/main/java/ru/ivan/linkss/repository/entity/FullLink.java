@@ -49,21 +49,12 @@ public class FullLink {
         return seconds;
     }
 
-    public long getFullDays() {
-        return this.seconds / 3600 / 24;
-    }
-    public long getFullHours() {
-        return (this.seconds % (3600 * 24)) / 3600;
-    }
-    public long getFullMinutes() {
-        return (this.seconds % 3600) / 60;
-    }
-    public long getFullSeconds() {
-        return this.seconds % 60;
-    }
-
     public String getSecondsAsPeriod() {
-        return Util.convertSecondsToPeriod(seconds);
+        if (seconds == 0) {
+            return "";
+        } else {
+            return Util.convertSecondsToPeriod(seconds);
+        }
     }
 
     public String getKey() {

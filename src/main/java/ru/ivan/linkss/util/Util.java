@@ -65,14 +65,39 @@ public class Util {
         return timeString;
     }
 
-    public static long convertPeriodToSeconds(String time) {
-        PeriodFormatter pf = new PeriodFormatterBuilder().
-                appendDays().appendSeparator(":").
-                appendHours().appendSeparator(":").
-                appendMinutes().appendSeparator(":").
-                appendSeconds().toFormatter();
+    public static long convertPeriodToSeconds(String period) {
 
-        Period period = pf.parsePeriod(time);
-        return period.toStandardSeconds().getSeconds();
+        if ("".equals(period)) {
+            return 0;
+        }
+        String[] parts= period.split(":");
+        int length=parts.length;
+        if (length==0) {
+            throw new RuntimeException(String.format("Period must be in dd:hh:mm:ss format, " +
+                    "but now " +
+                    "'%s'!" +
+                    " Try again!",period));
+        }
+
+        long allSeconds=0;
+        try {
+            int seconds = Integer.parseInt(parts[parts.length - 1]);
+            int minutes=0,hours=0,days=0;
+            if (length > 1) {
+                minutes = Integer.parseInt(parts[parts.length - 2]);
+            }
+            if (length > 2) {
+                hours = Integer.parseInt(parts[parts.length - 3]);
+            }
+            if (length > 3) {
+                days = Integer.parseInt(parts[parts.length - 4]);
+            }
+            allSeconds= days*3600*24+hours*3600+minutes*60+seconds;
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(String.format("Period must be in dd:hh:mm:ss format, but " +
+                    "now " +
+                    "'%s'!" +
+                    " Try again!",period));        }
+        return allSeconds;
     }
 }

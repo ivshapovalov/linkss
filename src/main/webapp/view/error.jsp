@@ -3,7 +3,11 @@
 <html>
 
 <%@include file="header.jsp" %>
+<br>
+
+<H3>ERROR</H3>
 <body>
+<br>
 
 Something wrong: ${message}<br>
 </body>

@@ -28,9 +28,9 @@
             <td><form:input path="link" id="link" value="${link}"/></td>
         </tr>
         <tr>
-            <td><label path="seconds">Seconds</label></td>
+            <td><label path="seconds">Expire at</label></td>
             <td><input type="text" name="secondsText" id="secondsText"
-                       pattern="[0-9]{3}:[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                       <%--pattern="[0-9]{3}:[0-9]{2}:[0-9]{2}:[0-9]{2}"--%>
                        value="${fullLink.getSecondsAsPeriod()}"></td>
         </tr>
         <tr>
