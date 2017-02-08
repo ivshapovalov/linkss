@@ -4,8 +4,13 @@
 
 <html>
 <%@include file="header.jsp" %>
-<body>
 
+
+<body>
+<br>
+<H3>
+    Short link '${key}'
+</H3>
 <form:form action="/actions/link" method="post" modelAttribute="fullLink">
     <input type="hidden" name="oldKey" value=${oldKey}>
     <input type="hidden" name="owner" value=${owner}>

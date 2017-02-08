@@ -4,10 +4,12 @@
 <%@include file="header.jsp" %>
 
 <body>
-<B>
+<br>
+<H3>
+
     User '${user.getUserName()}'
-</B>
-<br><br>
+</H3>
+
 <form action="/actions/user" method="post">
     <input type="hidden" name="oldUserName" value="${oldUserName}">
     <input type="hidden" name="oldPassword" value="${oldPassword}">
