@@ -2,27 +2,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
-<head>
-    <title>Linkss</title>
-</head>
-<body>
+
 <%@include file="header.jsp" %>
-<button onclick="location.href='/actions/links'">Links</button>
-<c:choose>
-    <c:when test="${autorizedUser!=null && autorizedUser.isAdmin()}" >
-        <button onclick="location.href='/actions/manage'">Manage</button>
-    </c:when>
-</c:choose>
-<button onclick="location.href='/actions/signup'">Sign up</button>
-<c:choose>
-    <c:when test="${autorizedUser==null || autorizedUser.isEmpty()}" >
-        <button onclick="location.href='/actions/signin'">Sign in</button>
-    </c:when>
-    <c:otherwise>
-        <button onclick="location.href='/actions/logout'">Logout</button>
-        <b>Login as ${autorizedUser.getUserName()}</b>
-    </c:otherwise>
-</c:choose>
+<body>
+
 
 <section>
     <form method="post">

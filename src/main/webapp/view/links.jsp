@@ -2,11 +2,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
-<head>
-    <title>Links</title>
-</head>
-<body>
 <%@include file="header.jsp" %>
+
+<body>
 <section>
 
     <h3>Links</h3>

@@ -3,11 +3,8 @@
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 
 <html>
-<head>
-    <title>Linkss</title>
-</head>
-<body>
 <%@include file="header.jsp" %>
+<body>
 
 <form:form action="/actions/link" method="post" modelAttribute="fullLink">
     <input type="hidden" name="oldKey" value=${oldKey}>
