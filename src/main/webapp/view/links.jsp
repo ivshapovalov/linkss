@@ -129,7 +129,7 @@
             <td width="10%"><b>User</b></td>
             <td width="10%"><b>Key</b></td>
             <td width="40%"><b>Text</b></td>
-            <td width="10%"><b>Days</b></td>
+            <td width="10%"><b>Seconds</b></td>
             <td width="10%"><b>Visits</b></td>
             <td width="20%"><b>Short Link</b></td>
             <td width="10%"><b>Delete</b></td>
@@ -140,7 +140,7 @@
                 <td width="10%">${column.userName}</td>
                 <td width="10%">${column.key}</td>
                 <td width="40%">${column.link}</td>
-                <td width="10%">${column.days}</td>
+                <td width="10%">${column.getSecondsAsPeriod()}</td>
                 <td width="10%">${column.visits}</td>
                 <td width="20%"><a href="${column.shortLink}">${column.shortLink}</a>
                 </td>

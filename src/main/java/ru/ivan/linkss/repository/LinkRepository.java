@@ -61,7 +61,7 @@ public interface LinkRepository {
 
     long getUserLinksSize(User autorizedUser, String owner);
 
-    long getLinkDays(String shortLink);
+    long getLinkExpirePeriod(String shortLink);
 
     FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
 

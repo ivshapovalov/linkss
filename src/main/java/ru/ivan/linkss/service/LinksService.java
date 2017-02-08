@@ -24,11 +24,9 @@ public interface LinksService {
 
     String getLink(String shortLink);
 
-    long getLinkDays(String shortLink);
+    long getLinkExpirePeriod(String shortLink);
 
     List<Domain> getShortStat(int offset, int recordsOnPage);
-
-    List<FullLink> getFullStat(String contextPath,int offset, int recordsOnPage);
 
     List<FullLink> getFullStat(String userName,String contextPath, int offset, int recordsOnPage);
 

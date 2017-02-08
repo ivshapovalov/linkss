@@ -1,6 +1,8 @@
 package ru.ivan.linkss.repository.entity;
 
 
+import ru.ivan.linkss.util.Util;
+
 public class FullLink {
 
     private String key;
@@ -9,7 +11,7 @@ public class FullLink {
     private String visits;
     private String imageLink;
     private String userName;
-    private long days;
+    private long seconds;
 
     public FullLink() {
 
@@ -22,19 +24,19 @@ public class FullLink {
     }
 
     public FullLink(String key, String shortLink, String link, String visits, String imageLink,
-                    String userName, long days) {
-        this.key=key;
+                    String userName, long seconds) {
+        this.key = key;
         this.shortLink = shortLink;
         this.link = link;
         this.visits = visits;
         this.imageLink = imageLink;
         this.userName = userName;
-        this.days = days;
+        this.seconds = seconds;
     }
 
     public FullLink(String key, String shortLink, String link, String visits, String imageLink,
                     String userName) {
-        this.key=key;
+        this.key = key;
         this.shortLink = shortLink;
         this.link = link;
         this.visits = visits;
@@ -43,8 +45,25 @@ public class FullLink {
     }
 
 
-    public long getDays() {
-        return days;
+    public long getSeconds() {
+        return seconds;
+    }
+
+    public long getFullDays() {
+        return this.seconds / 3600 / 24;
+    }
+    public long getFullHours() {
+        return (this.seconds % (3600 * 24)) / 3600;
+    }
+    public long getFullMinutes() {
+        return (this.seconds % 3600) / 60;
+    }
+    public long getFullSeconds() {
+        return this.seconds % 60;
+    }
+
+    public String getSecondsAsPeriod() {
+        return Util.convertSecondsToPeriod(seconds);
     }
 
     public String getKey() {
@@ -91,8 +110,8 @@ public class FullLink {
         this.userName = userName;
     }
 
-    public void setDays(long days) {
-        this.days = days;
+    public void setSeconds(long seconds) {
+        this.seconds = seconds;
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
@@ -252,7 +251,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         } else {
                             return new FullLink(shortLink, shortLinkWithContext,
                                     link, visits,
-                                    shortLinkWithContext + ".png", userName, pttl / 1000 / SECONDS_IN_DAY + 1);
+                                    shortLinkWithContext + ".png", userName, pttl / 1000);
                         }
                     })
                     .filter(fullLink -> fullLink.getLink() != null)
@@ -489,7 +488,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             String link = getLink(shortLink);
             String shortLinkWithContext = contextPath + shortLink;
-            long pttl = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY;
+            long pttl = syncCommandsLinks.pttl(shortLink) / 1000 ;
             if (pttl < 0) {
                 pttl = 0;
             }
@@ -525,11 +524,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             if (oldFullLink.getKey().equals(newFullLink.getKey())) {
                 //days
-                if (newFullLink.getDays() != oldFullLink.getDays()) {
-                    if (newFullLink.getDays() == 0) {
+                if (newFullLink.getSeconds() != oldFullLink.getSeconds()) {
+                    if (newFullLink.getSeconds() == 0) {
                         syncCommandsLinks.persist(newFullLink.getKey());
                     } else {
-                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY + 1);
+                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds() );
                     }
                 }
 
@@ -562,10 +561,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 synchronized (redisClientLinks) {
                     syncCommandsLinks.del(oldFullLink.getKey());
                     syncCommandsLinks.set(newFullLink.getKey(), newFullLink.getLink());
-                    if (newFullLink.getDays() == 0) {
+                    if (newFullLink.getSeconds() == 0) {
                         syncCommandsLinks.persist(newFullLink.getKey());
                     } else {
-                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getDays() * SECONDS_IN_DAY);
+                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds() );
                     }
                 }
                 synchronized (redisClient) {
@@ -578,15 +577,15 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public long getLinkDays(String shortLink) {
+    public long getLinkExpirePeriod(String shortLink) {
 
         try (StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_LINK_NUMBER);
-            long days = syncCommandsLinks.pttl(shortLink) / 1000 / SECONDS_IN_DAY + 1;
+            long seconds = syncCommandsLinks.pttl(shortLink) / 1000 ;
 
-            return days;
+            return seconds;
         }
     }
 

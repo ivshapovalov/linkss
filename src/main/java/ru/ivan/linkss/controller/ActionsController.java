@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -270,7 +269,7 @@ public class ActionsController {
             String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION;
             FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
                     "", urlImagePath,
-                    owner, service.getLinkDays(shortLink));
+                    owner, service.getLinkExpirePeriod(shortLink));
             model.addAttribute(ATTRIBUTE_FULL_LINK, fullLink);
             model.addAttribute(ATTRIBUTE_OLD_KEY, shortLink);
             model.addAttribute(ATTRIBUTE_OWNER, owner);
@@ -395,6 +394,7 @@ public class ActionsController {
                              @ModelAttribute(ATTRIBUTE_FULL_LINK) FullLink fullLink,
                              @ModelAttribute(ATTRIBUTE_OLD_KEY) String shortLink,
                              @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                             @ModelAttribute("secondsText") String secondsText,
                              HttpServletRequest request,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -415,6 +415,8 @@ public class ActionsController {
             return PAGE_ERROR;
         }
         try {
+            long seconds=Util.convertPeriodToSeconds(secondsText);
+            fullLink.setSeconds(seconds);
             String contextPath = getContextPath(request);
             FullLink oldFullLink = service.getFullLink(
                     autorizedUser, shortLink, owner, contextPath);

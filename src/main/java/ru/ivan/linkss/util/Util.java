@@ -4,6 +4,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,5 +53,26 @@ public class Util {
         } catch (Exception e) {
             System.out.println(e);
         }
+    }
+
+    public static String convertSecondsToPeriod(long allSeconds) {
+        long days = allSeconds / 3600 / 24;
+        long hours = (allSeconds % (3600 * 24)) / 3600;
+        long minutes = (allSeconds % 3600) / 60;
+        long seconds = allSeconds % 60;
+
+        String timeString = String.format("%03d:%02d:%02d:%02d", days, hours, minutes, seconds);
+        return timeString;
+    }
+
+    public static long convertPeriodToSeconds(String time) {
+        PeriodFormatter pf = new PeriodFormatterBuilder().
+                appendDays().appendSeparator(":").
+                appendHours().appendSeparator(":").
+                appendMinutes().appendSeparator(":").
+                appendSeconds().toFormatter();
+
+        Period period = pf.parsePeriod(time);
+        return period.toStandardSeconds().getSeconds();
     }
 }

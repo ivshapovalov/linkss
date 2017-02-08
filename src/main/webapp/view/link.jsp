@@ -28,10 +28,10 @@
             <td><form:input path="link" id="link" value="${link}"/></td>
         </tr>
         <tr>
-            <td><label path="days">Days</label></td>
-            <td><input type="number" name="days" id="days" value="${fullLink.days}"></td>
-
-        <%--<td><form:input path="days" id="days" value="${days}"/></td>--%>
+            <td><label path="seconds">Seconds</label></td>
+            <td><input type="text" name="secondsText" id="secondsText"
+                       pattern="[0-9]{3}:[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                       value="${fullLink.getSecondsAsPeriod()}"></td>
         </tr>
         <tr>
             <td><form:label path="userName">User</form:label></td>

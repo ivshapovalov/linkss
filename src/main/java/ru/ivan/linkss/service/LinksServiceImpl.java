@@ -159,8 +159,8 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public long getLinkDays(String shortLink) {
-        return repository.getLinkDays(shortLink);
+    public long getLinkExpirePeriod(String shortLink) {
+        return repository.getLinkExpirePeriod(shortLink);
     }
 
     @Override
@@ -171,11 +171,6 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public List<Domain> getShortStat(int offset, int recordsOnPage) {
         return repository.getShortStat(offset, recordsOnPage);
-    }
-
-    @Override
-    public List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage) {
-        return repository.getFullStat(contextPath, offset, recordsOnPage);
     }
 
     @Override
