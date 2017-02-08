@@ -30,6 +30,7 @@ public class RootController {
     private static final String FILE_SEPARTOR = File.separator;
     private static final String WEB_SEPARTOR = "/";
     private static final String IMAGE_EXTENSION = ".png";
+    private static final String ICON_EXTENSION = ".ico";
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
@@ -84,6 +85,22 @@ public class RootController {
         if (!imageOnDisk.exists()) {
             service.downloadImageFromS3(filePath, key);
         }
+        FileInputStream fis = new FileInputStream(imageOnDisk);
+        int bytes;
+        while ((bytes = fis.read()) != -1) {
+            os.write(bytes);
+        }
+        fis.close();
+    }
+
+    @RequestMapping(value = WEB_SEPARTOR+"*"+ICON_EXTENSION, method = RequestMethod.GET)
+    public void openIcon(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String shortLink = request.getServletPath();
+        OutputStream os = response.getOutputStream();
+        String filePath = request.getServletContext().getRealPath("") + "resources"+FILE_SEPARTOR+"images" +
+                FILE_SEPARTOR + "favicon.ico";
+        File imageOnDisk = new File(filePath);
         FileInputStream fis = new FileInputStream(imageOnDisk);
         int bytes;
         while ((bytes = fis.read()) != -1) {
