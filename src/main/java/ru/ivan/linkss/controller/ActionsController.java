@@ -95,10 +95,14 @@ public class ActionsController {
     }
 
     @RequestMapping(value = PAGE_MANAGE, method = {RequestMethod.GET, RequestMethod.POST})
-    public String manage(HttpSession session)
+    public String manage(Model model,HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
+            model.addAttribute("linksSize", service.getDBLinksSize());
+            model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
+            model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
+            model.addAttribute("domainsSize", service.getDomainsSize(autorizedUser));
             return PAGE_MANAGE;
         }
         return PAGE_MAIN;

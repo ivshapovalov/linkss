@@ -6,7 +6,25 @@
 
 <body>
 <section>
+
     <h3>Statistics</h3>
+    <table border="1" width="50%">
+        <tr>
+            <td width="20%"><b>Free links</b></td> <td>${freeLinksSize}</td>
+        </tr>
+        <tr>
+            <td width="20%"><b>Links</b></td> <td>${linksSize}</td>
+        </tr>
+        <tr>
+            <td width="20%"><b>Users</b></td> <td>${usersSize}</td>
+        </tr>
+        <tr>
+            <td width="20%"><b>Domains</b></td> <td>${domainsSize}</td>
+        </tr>
+
+    </table>
+
+    <h3>Manage</h3>
     <table border="1" width="50%">
         <tr>
             <td width="10%"><b><a href="/actions/users">Users</a></b></td>
