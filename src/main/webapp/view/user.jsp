@@ -5,7 +5,22 @@
 
 <body>
 <script type="text/javascript" src="/resources/js/makeAdmin.js" defer></script>
-
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+      crossorigin="anonymous">
+<link rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+      integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+      crossorigin="anonymous">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+<style type="text/css">
+    .bs-example {
+        margin: 20px;
+    }
+</style>
 <br>
 <H3>
     User '${user.getUserName()}'
@@ -13,7 +28,7 @@
 
 <form action="/actions/user" method="post">
     <input type="hidden" name="oldUserName" value="${oldUserName}">
-    <table border="1">
+    <table border="1" class="table">
         <tr>
             <td><label path="userName">User</label></td>
             <td>
@@ -36,17 +51,6 @@
                 <input type="checkbox" onClick="makeAdmin(this)" id="admin" name="admin"
                        value="${user.admin}" <c:if
                         test="${user.admin}"> checked=" checked"</c:if>>
-                <%--<script type="text/javascript">--%>
-                <%--$(function (){--%>
-                <%--$("input:checkbox").prop('checked',true);--%>
-
-                <%--if($('#admin').val()== "true"){--%>
-                <%--$("input:checkbox").prop('checked',true);--%>
-                <%--}else{--%>
-                <%--$("input:checkbox").prop('checked', true);--%>
-                <%--}--%>
-                <%--});--%>
-                <%--</script>--%>
             </td>
 
         </tr>
