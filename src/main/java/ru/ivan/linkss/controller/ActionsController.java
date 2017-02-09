@@ -43,6 +43,7 @@ public class ActionsController {
     private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
     private static final String PAGE_DOMAINS = "domains";
+    private static final String PAGE_FREE_LINKS = "freelinks";
     private static final String PAGE_LINK = "link";
     private static final String PAGE_LINKS = "links";
     private static final String ACTION_LOGOUT = "logout";
@@ -99,6 +100,7 @@ public class ActionsController {
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
+            model.addAttribute("linksSize", service.getDBLinksSize());
             model.addAttribute("linksSize", service.getDBLinksSize());
             model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
             model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
@@ -194,7 +196,7 @@ public class ActionsController {
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
             + WEB_SEPARTOR+ ACTION_DELETE,
             method = RequestMethod.GET)
-    public String deleteuserlink(Model model,
+    public String deleteUserlink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
                                  @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                                  HttpSession session,
@@ -220,6 +222,40 @@ public class ActionsController {
 
             return String.format("redirect:%s%s?%s=%s", getControllerMapping(), ATTRIBUTE_LINKS,
                     ATTRIBUTE_OWNER, owner);
+        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+    }
+
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_FREE_LINKS+ WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR + ACTION_DELETE,
+            method = RequestMethod.GET)
+    public String deleteFreeLink(Model model,
+                                 @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                 HttpSession session,
+                                 HttpServletRequest request) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
+        }
+
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
+            return PAGE_ERROR;
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, free links deleting available only for " +
+                    "admin users!");
+            return PAGE_ERROR;
+        }
+
+        try {
+            service.deleteFreeLink(shortLink);
+            model.addAttribute(ATTRIBUTE_KEY, null);
+            return String.format("redirect:%s%s", getControllerMapping(), PAGE_FREE_LINKS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -516,6 +552,45 @@ public class ActionsController {
         model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
 
         return PAGE_DOMAINS;
+    }
+
+    @RequestMapping(value = PAGE_FREE_LINKS, method = RequestMethod.GET)
+    public String freeLinks(Model model,
+                          HttpServletRequest request,
+                          HttpSession session) {
+        int currentPage = 1;
+        int recordsOnPage = 10;
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, free links available only for logged " +
+                    "users!");
+            return PAGE_ERROR;
+        }
+
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter("page"));
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, free links available only for admin " +
+                    "users!");
+            return PAGE_ERROR;
+        }
+        int offset = (currentPage - 1) * recordsOnPage;
+        List<String> list = service.getFreeLinks(offset, recordsOnPage);
+        long freeLinksSize = (int) service.getDBFreeLinksSize();
+        if (freeLinksSize == 0) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have free links. Try " +
+                    "later!");
+            return PAGE_ERROR;
+        }
+        int numberOfPages = Math.max(1, (int) Math.ceil((double) freeLinksSize / recordsOnPage));
+
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+
+        return PAGE_FREE_LINKS;
     }
 
     @RequestMapping(value = ACTION_POPULATE, method = RequestMethod.GET)

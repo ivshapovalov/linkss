@@ -32,8 +32,10 @@
         <tr>
             <td width="10%"><b><a href="/actions/domains">Domains</a></b></td>
         </tr>
-
-    </table>
+        <tr>
+            <td width="10%"><b><a href="/actions/freelinks">Free links</a></b></td>
+        </tr>
+     </table>
 
     <h3>Administrative Tools</h3>
 

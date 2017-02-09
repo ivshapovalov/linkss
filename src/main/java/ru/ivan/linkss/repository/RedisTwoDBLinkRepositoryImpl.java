@@ -1,5 +1,6 @@
 package ru.ivan.linkss.repository;
 
+import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -11,6 +12,7 @@ import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.util.Util;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -192,7 +194,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
-            List<FullLink> fullStat = syncCommands.keys("*")
+            List<String> links = new ArrayList<>();
+            KeyScanCursor cursor=syncCommandsLinks.scan();
+            while (!cursor.isFinished())  {
+                List<String> keys=cursor.getKeys();
+                keys.stream().forEach(key->links.add(key));
+                cursor=syncCommands.scan(cursor);
+            }
+            List<FullLink> fullStat = links
                     .stream()
                     .sorted()
                     .filter(user -> !user.startsWith("_"))
@@ -308,7 +317,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("Cannot add shortlink '%s' to users " +
-                                    "'%s' links",shortLink,autorizedUser.getUserName()));
+                            "'%s' links", shortLink, autorizedUser.getUserName()));
                 }
             } else {
                 syncCommands.hset(DEFAULT_USER, shortLink, link);
@@ -373,6 +382,27 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public List<String> getFreeLinks(int offset, int recordsOnPage) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+
+            syncCommands.select(DB_FREELINK_NUMBER);
+            List<String> freeLinks = new ArrayList<>();
+            KeyScanCursor cursor=syncCommands.scan();
+            while (!cursor.isFinished())  {
+                List<String> keys=cursor.getKeys();
+                keys.stream().forEach(key->freeLinks.add(key));
+                cursor=syncCommands.scan(cursor);
+            }
+
+            return freeLinks.stream()
+                    .sorted()
+                    .skip(offset)
+                    .limit(recordsOnPage).collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public boolean checkUser(User user) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -421,6 +451,20 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public void deleteFreeLink(String shortLink) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+             syncCommands.select(DB_FREELINK_NUMBER);
+            synchronized (redisClient) {
+                if (syncCommands.exists(new String[]{shortLink})==1) {
+                    syncCommands.del(shortLink);
+                }
+            }
+
         }
     }
 
@@ -488,7 +532,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             String link = getLink(shortLink);
             String shortLinkWithContext = contextPath + shortLink;
-            long pttl = syncCommandsLinks.pttl(shortLink) / 1000 ;
+            long pttl = syncCommandsLinks.pttl(shortLink) / 1000;
             if (pttl < 0) {
                 pttl = 0;
             }
@@ -528,7 +572,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     if (newFullLink.getSeconds() == 0) {
                         syncCommandsLinks.persist(newFullLink.getKey());
                     } else {
-                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds() );
+                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds());
                     }
                 }
 
@@ -564,7 +608,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     if (newFullLink.getSeconds() == 0) {
                         syncCommandsLinks.persist(newFullLink.getKey());
                     } else {
-                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds() );
+                        syncCommandsLinks.expire(newFullLink.getKey(), newFullLink.getSeconds());
                     }
                 }
                 synchronized (redisClient) {
@@ -583,7 +627,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_LINK_NUMBER);
-            long seconds = syncCommandsLinks.pttl(shortLink) / 1000 ;
+            long seconds = syncCommandsLinks.pttl(shortLink) / 1000;
 
             return seconds;
         }
@@ -764,7 +808,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommands.select(DB_WORK_NUMBER);
             String key = syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
-            if (key!=null) {
+            if (key != null) {
                 syncCommands.select(DB_FREELINK_NUMBER);
                 long size = syncCommands.dbsize();
                 if (!"".equals(key)) {
@@ -774,7 +818,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 }
                 return addedKeys;
             }
-            throw new Exception(String.format("No '%s' in '%s'!",KEY_LENGTH,KEY_PREFERENCES));
+            throw new Exception(String.format("No '%s' in '%s'!", KEY_LENGTH, KEY_PREFERENCES));
         } catch (Exception e) {
             throw new Exception("Cannot connect to databases!");
         }
@@ -789,8 +833,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
-
-            List<String> deletedKeys = syncCommands.keys("*")
+            List<String> links = new ArrayList<>();
+            KeyScanCursor cursor=syncCommandsLinks.scan();
+            while (!cursor.isFinished())  {
+                List<String> keys=cursor.getKeys();
+                keys.stream().forEach(key->links.add(key));
+                cursor=syncCommands.scan(cursor);
+            }
+            List<String> deletedKeys = links
                     .stream()
                     .sorted()
                     .filter(user -> !user.startsWith("_"))

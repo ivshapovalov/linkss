@@ -1,6 +1,7 @@
 package ru.ivan.linkss.repository;
 
 
+import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -9,6 +10,9 @@ import org.junit.*;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
 import ru.ivan.linkss.repository.entity.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -180,7 +184,19 @@ public class RepositoryTest {
         repository.createUser(user,expectedPassword);
 
     }
+    @Test
+    @Ignore
+    public void testScan()
 
-
+    {
+        List<String> freeLinks = new ArrayList<>();
+        syncCommands.select(DB_FREELINK_NUMBER);
+        KeyScanCursor cursor=syncCommands.scan();
+        while (!cursor.isFinished())  {
+            List<String> keys=cursor.getKeys();
+            keys.stream().forEach(key->freeLinks.add(key));
+            cursor=syncCommands.scan(cursor);
+        }
+    }
 
 }

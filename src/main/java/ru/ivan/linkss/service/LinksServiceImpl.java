@@ -121,6 +121,10 @@ public class LinksServiceImpl implements LinksService {
     public List<User> getUsers(int offset, int recordsOnPage) {
         return repository.getUsers(offset, recordsOnPage);
     }
+    @Override
+    public List<String> getFreeLinks(int offset, int recordsOnPage) {
+        return repository.getFreeLinks(offset, recordsOnPage);
+    }
 
     @Override
     public User getUser(User autorizedUser, String userName) {
@@ -166,6 +170,10 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteUserLink(User user, String shortLink, String owner) {
         repository.deleteUserLink(user, shortLink, owner);
+    }
+    @Override
+    public void deleteFreeLink(String shortLink) {
+        repository.deleteFreeLink(shortLink);
     }
 
     @Override

@@ -41,6 +41,8 @@ public interface LinksService {
 
     List<User> getUsers(int offset, int recordsOnPage);
 
+    List<String> getFreeLinks(int offset, int recordsOnPage);
+
     User getUser(User autorizedUser, String userName);
 
     void deleteUser(User autorizedUser, String userName);
@@ -69,4 +71,5 @@ public interface LinksService {
 
     void downloadImageFromS3(String filePath, String key);
 
+    void deleteFreeLink(String shortLink);
 }

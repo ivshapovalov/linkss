@@ -125,7 +125,7 @@ public class Populator {
 
 
         startTime = System.nanoTime();
-        executeCreateReadMultiThread();
+        //executeCreateReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(RW_REQUESTS) + " read/write: " + (endTime -
                 startTime) / 1000 + " millis");
