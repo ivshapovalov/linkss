@@ -3,6 +3,12 @@ package ru.ivan.linkss.repository.entity;
 
 import ru.ivan.linkss.util.Util;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.TimeZone;
+
 public class FullLink {
 
     private String key;
@@ -12,11 +18,16 @@ public class FullLink {
     private String imageLink;
     private String userName;
     private long seconds;
+    private long idle;
 
     public FullLink() {
 
     }
-
+    public FullLink(String key, String link, long idle) {
+        this.key = key;
+        this.link = link;
+        this.idle = idle;
+    }
     public FullLink(String key, String link, String userName) {
         this.key = key;
         this.link = link;
@@ -55,6 +66,21 @@ public class FullLink {
         } else {
             return Util.convertSecondsToPeriod(seconds);
         }
+    }
+
+    public long getIdle() {
+        return idle;
+    }
+
+    public String getLastTime() {
+        LocalDateTime ldt=LocalDateTime.ofInstant(Instant.ofEpochSecond(System.currentTimeMillis()
+                        /1000-idle), ZoneId.systemDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return ldt.format(formatter);
+    }
+
+    public void setIdle(long idle) {
+        this.idle = idle;
     }
 
     public String getKey() {

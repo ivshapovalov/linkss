@@ -147,7 +147,7 @@ public class ActionsController {
                            HttpServletRequest request,
                            HttpSession session) {
         try {
-            service.createUser(user.getUserName(), user.getPassword());
+            service.createUser(user);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -178,15 +178,10 @@ public class ActionsController {
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {
-        boolean existedUser = service.checkUser(user);
-        if (existedUser) {
-            user.setEmpty(false);
-            //TODO get user in json
-            if ("admin".equals(user.getUserName())) {
-                user.setAdmin(true);
-            }
-            session.setAttribute(ATTRIBUTE_AUTORIZED_USER, user);
-            model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
+        User dbUser= service.checkUser(user);
+        if (dbUser!=null) {
+            session.setAttribute(ATTRIBUTE_AUTORIZED_USER, dbUser);
+           // model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
             return "redirect:/";
         }
         return ACTION_LOGIN;
@@ -403,7 +398,6 @@ public class ActionsController {
     public String updateUser(Model model,
                              @ModelAttribute(ATTRIBUTE_USER) User newUser,
                              @ModelAttribute(ATTRIBUTE_OLD_USERNAME) String oldUserName,
-                             @ModelAttribute(ATTRIBUTE_OLD_PASSWORD) String oldPassword,
                              HttpServletRequest request,
                              HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -416,12 +410,12 @@ public class ActionsController {
             return PAGE_ERROR;
         }
         try {
-            User oldUser = new User(oldUserName, oldPassword);
+            User oldUser = new User(oldUserName);
+            newUser.setEmpty(false);
             service.updateUser(autorizedUser, newUser, oldUser);
             model.addAttribute("oldUserName", null);
-            model.addAttribute("oldPassword", null);
 
-            return String.format("redirect:%s%s",getControllerMapping(),PAGE_MANAGE);
+            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;

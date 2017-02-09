@@ -13,6 +13,10 @@
             <td>User name mustn't contain underscore '_' symbol</td>
         </tr>
         <tr>
+            <td>E-mail</td>
+            <td><form:input path="email" id="email" value="${email}" pattern="*@*.*"/></td>
+        </tr>
+        <tr>
             <td>Password</td>
             <td><form:input type="password" path="password" id="password" value="${password}"/></td>
         </tr>

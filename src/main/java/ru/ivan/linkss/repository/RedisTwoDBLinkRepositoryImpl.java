@@ -1,5 +1,7 @@
 package ru.ivan.linkss.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -11,11 +13,9 @@ import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.util.Util;
 
+import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +31,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     private static final int DB_FREELINK_NUMBER = 1;
     //REDIS 2
     private static final int DB_LINK_NUMBER = 0;
+    private static final int DB_ARCHIVE_NUMBER = 1;
 
     private static final long MIN_FREE_LINK_SIZE = 10;
     private static final long SECONDS_IN_DAY = 3600 * 24;
@@ -83,8 +84,19 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
             createKeys(1);
             syncCommands.hset(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD, String.valueOf("30"));
-            syncCommands.hset(KEY_USERS, ADMIN_USER, ADMIN_PASSWORD);
-            syncCommands.hset(KEY_USERS, DEFAULT_USER, DEFAULT_PASSWORD);
+            String jAdmin="";
+            String jUser="";
+            try {
+                 jAdmin = new ObjectMapper().writeValueAsString(new User(ADMIN_USER,
+                        ADMIN_PASSWORD,true,false));
+                 jUser = new ObjectMapper().writeValueAsString(new User(DEFAULT_USER,
+                        DEFAULT_PASSWORD,false,false));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+            syncCommands.hset(KEY_USERS,ADMIN_USER,jAdmin);
+            syncCommands.hset(KEY_USERS, DEFAULT_USER, jUser);
         }
     }
 
@@ -195,11 +207,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
             List<String> links = new ArrayList<>();
-            KeyScanCursor cursor=syncCommandsLinks.scan();
-            while (!cursor.isFinished())  {
-                List<String> keys=cursor.getKeys();
-                keys.stream().forEach(key->links.add(key));
-                cursor=syncCommands.scan(cursor);
+            KeyScanCursor cursor = syncCommandsLinks.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> links.add(key));
+                cursor = syncCommands.scan(cursor);
             }
             List<FullLink> fullStat = links
                     .stream()
@@ -252,15 +264,15 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         String link = syncCommandsLinks.get(shortLink);
                         String shortLinkWithContext = contextPath + shortLink;
                         String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                        long pttl = syncCommandsLinks.pttl(shortLink);
-                        if (pttl < 0) {
+                        long ttl = syncCommandsLinks.ttl(shortLink);
+                        if (ttl < 0) {
                             return new FullLink(shortLink, shortLinkWithContext,
                                     link, visits,
                                     shortLinkWithContext + ".png", userName);
                         } else {
                             return new FullLink(shortLink, shortLinkWithContext,
                                     link, visits,
-                                    shortLinkWithContext + ".png", userName, pttl / 1000);
+                                    shortLinkWithContext + ".png", userName, ttl);
                         }
                     })
                     .filter(fullLink -> fullLink.getLink() != null)
@@ -299,7 +311,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 boolean failed = false;
                 do {
                     shortLink = syncCommands.randomkey();
-                    //shortLink = link;
                     failed = shortLink == null;
                     syncCommands.del(shortLink);
                 } while (failed);
@@ -340,24 +351,31 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public void createUser(String userName, String password) {
+    public void createUser(User user) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
-            if (userName.contains("_")) {
+            if (user.getUserName().contains("_")) {
                 throw new RuntimeException(String.format("User name '%s' contains symbol '_'. Try " +
                                 "another name",
-                        userName));
+                        user.getUserName()));
             }
 
             synchronized (redisClient) {
-                if (syncCommands.hexists(KEY_USERS, userName)) {
+                if (syncCommands.hexists(KEY_USERS, user.getUserName())) {
                     throw new RuntimeException(String.format("User with name '%s' already exists. Try " +
                                     "another name",
-                            userName));
+                            user.getUserName()));
                 }
-                syncCommands.hset(KEY_USERS, userName, password);
+                String json="";
+                try {
+                    user.setEmpty(false);
+                    json = new ObjectMapper().writeValueAsString(user);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                syncCommands.hset(KEY_USERS, user.getUserName(), json);
             }
         }
     }
@@ -373,8 +391,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     .skip(offset)
                     .limit(recordsOnPage)
                     .map(userName -> {
-                        String password = syncCommands.hget(KEY_USERS, userName);
-                        return new User(userName, password, syncCommands.hlen(userName));
+                        User user= null;
+                        try {
+                            user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName),User.class);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        user.setLinkNumber(syncCommands.hlen(userName));
+                        return user;
                     })
                     .collect(Collectors.toList());
             return users;
@@ -388,11 +412,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommands.select(DB_FREELINK_NUMBER);
             List<String> freeLinks = new ArrayList<>();
-            KeyScanCursor cursor=syncCommands.scan();
-            while (!cursor.isFinished())  {
-                List<String> keys=cursor.getKeys();
-                keys.stream().forEach(key->freeLinks.add(key));
-                cursor=syncCommands.scan(cursor);
+            KeyScanCursor cursor = syncCommands.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> freeLinks.add(key));
+                cursor = syncCommands.scan(cursor);
             }
 
             return freeLinks.stream()
@@ -403,7 +427,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public boolean checkUser(User user) {
+    public User checkUser(User user) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -412,13 +436,21 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 throw new RuntimeException(String.format("User with name '%s' is not exists",
                         user.getUserName()));
             }
-            String password = syncCommands.hget(KEY_USERS, user.getUserName());
-            if (!user.getPassword().equals(password)) {
+            User dbUser = null;
+            try {
+                dbUser = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, user
+                        .getUserName()),User
+                        .class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (!user.getPassword().equals(dbUser.getPassword())) {
                 throw new RuntimeException(String.format("Password for user '%s' is " +
                                 "wrong",
                         user.getUserName()));
             }
-            return true;
+            return dbUser;
         }
     }
 
@@ -427,7 +459,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
@@ -446,6 +477,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             if (link != null) {
                 synchronized (redisClient) {
                     synchronized (redisClientLinks) {
+                        //TODO
                         decreaseVisits(shortLink, owner, syncCommands, link);
                         syncCommandsLinks.del(shortLink);
                     }
@@ -458,17 +490,17 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     public void deleteFreeLink(String shortLink) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-             syncCommands.select(DB_FREELINK_NUMBER);
+            syncCommands.select(DB_FREELINK_NUMBER);
             synchronized (redisClient) {
-                if (syncCommands.exists(new String[]{shortLink})==1) {
+                if (syncCommands.exists(new String[]{shortLink}) == 1) {
                     syncCommands.del(shortLink);
                 }
             }
-
         }
     }
 
     private void decreaseVisits(String shortLink, String owner, RedisCommands<String, String> syncCommands, String link) {
+        //TODO
         String visits = syncCommands.hget(KEY_VISITS, shortLink);
         if (visits == null) visits = "0";
         String domainName = Util.getDomainName(link);
@@ -532,18 +564,17 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             String link = getLink(shortLink);
             String shortLinkWithContext = contextPath + shortLink;
-            long pttl = syncCommandsLinks.pttl(shortLink) / 1000;
-            if (pttl < 0) {
-                pttl = 0;
+            long ttl = syncCommandsLinks.ttl(shortLink);
+            if (ttl < 0) {
+                ttl = 0;
             }
 
             return new FullLink(shortLink, shortLinkWithContext,
                     link, "",
-                    shortLinkWithContext + ".png", owner, pttl);
+                    shortLinkWithContext + ".png", owner, ttl);
         }
 
     }
-
 
     @Override
     public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
@@ -603,7 +634,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 }
 
                 synchronized (redisClientLinks) {
-                    syncCommandsLinks.del(oldFullLink.getKey());
+                    syncCommandsLinks.rename(oldFullLink.getKey(), newFullLink.getKey());
                     syncCommandsLinks.set(newFullLink.getKey(), newFullLink.getLink());
                     if (newFullLink.getSeconds() == 0) {
                         syncCommandsLinks.persist(newFullLink.getKey());
@@ -627,7 +658,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_LINK_NUMBER);
-            long seconds = syncCommandsLinks.pttl(shortLink) / 1000;
+            long seconds = syncCommandsLinks.ttl(shortLink);
 
             return seconds;
         }
@@ -649,8 +680,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         autorizedUser.getUserName()));
 
             }
-            String password = syncCommands.hget(KEY_USERS, userName);
-            User user = new User(userName, password);
+            User user = null;
+            try {
+                user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName),User
+                        .class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return user;
         }
     }
@@ -685,7 +722,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     }
                     syncCommands.hdel(KEY_USERS, oldUser.getUserName());
                 }
-                syncCommands.hset(KEY_USERS, newUser.getUserName(), newUser.getPassword());
+                String json="";
+                try {
+                    json = new ObjectMapper().writeValueAsString(newUser);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+
+                syncCommands.hset(KEY_USERS, newUser.getUserName(),json);
             }
         }
     }
@@ -749,6 +793,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     private void deleteAllUserLinksWithHistory(String userName, RedisCommands<String, String> syncCommands, RedisCommands<String, String> syncCommandsLinks) {
+        //TODO
         syncCommands.hkeys(userName)
                 .stream()
                 .map(shortLink -> {
@@ -801,6 +846,28 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public long getUserArchiveSize(User autorizedUser, String owner) {
+        try (StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+            if (!syncCommandsLinks.hexists(KEY_USERS, owner)) {
+                throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
+                        owner));
+            }
+            if (!autorizedUser.isAdmin()) {
+                if (!autorizedUser.getUserName().equals(owner)) {
+                    throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                    "watch user archive links",
+                            autorizedUser.getUserName()));
+                }
+            }
+            long size = syncCommandsLinks.hlen(owner);
+            return size;
+        }
+    }
+
+    @Override
     public BigInteger checkFreeLinksDB() throws Exception {
         BigInteger addedKeys = BigInteger.ZERO;
         try (StatefulRedisConnection<String, String> connection = connect()) {
@@ -834,11 +901,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_LINK_NUMBER);
             List<String> links = new ArrayList<>();
-            KeyScanCursor cursor=syncCommandsLinks.scan();
-            while (!cursor.isFinished())  {
-                List<String> keys=cursor.getKeys();
-                keys.stream().forEach(key->links.add(key));
-                cursor=syncCommands.scan(cursor);
+            KeyScanCursor cursor = syncCommandsLinks.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> links.add(key));
+                cursor = syncCommands.scan(cursor);
             }
             List<String> deletedKeys = links
                     .stream()

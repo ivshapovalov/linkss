@@ -84,7 +84,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public boolean checkUser(User user) {
+    public User checkUser(User user) {
         return repository.checkUser(user);
     }
 
@@ -113,8 +113,8 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void createUser(String userName, String password) {
-        repository.createUser(userName, password);
+    public void createUser(User user) {
+        repository.createUser(user);
     }
 
     @Override
@@ -189,6 +189,11 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public long getUserLinksSize(User autorizedUser, String owner) {
         return repository.getUserLinksSize(autorizedUser, owner);
+    }
+
+    @Override
+    public long getUserArchiveSize(User autorizedUser, String owner) {
+        return repository.getUserArchiveSize(autorizedUser, owner);
     }
 
     @Override

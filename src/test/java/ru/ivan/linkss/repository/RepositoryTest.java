@@ -1,6 +1,10 @@
 package ru.ivan.linkss.repository;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -9,8 +13,15 @@ import org.junit.*;
 
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +73,7 @@ public class RepositoryTest {
         connectionLinks = connectLinks();
         syncCommandsLinks = connectionLinks.sync();
         syncCommands.select(DB_FREELINK_NUMBER);
-        syncCommands.flushdb();
+        //syncCommands.flushdb();
 
     }
     @After
@@ -166,10 +177,10 @@ public class RepositoryTest {
     public void createUserTest()
     {
         syncCommands.select(DB_WORK_NUMBER);
-        String user="user1";
+        String userName="user1";
         String expectedPassword="password";
-        repository.createUser(user,expectedPassword);
-        String actualPassword=syncCommands.hget(KEY_USERS,user);
+        repository.createUser(new User(userName,expectedPassword));
+        String actualPassword=syncCommands.hget(KEY_USERS,userName);
 //        assertEquals(expectedPassword,actualPassword);
         assertThat(expectedPassword,is(actualPassword));
 
@@ -179,9 +190,10 @@ public class RepositoryTest {
     public void createExistedUserTest()
     {
         syncCommands.select(DB_WORK_NUMBER);
-        String user="user";
+        String userName="user";
         String expectedPassword="password";
-        repository.createUser(user,expectedPassword);
+
+        repository.createUser(new User(userName,expectedPassword));
 
     }
     @Test
@@ -196,6 +208,21 @@ public class RepositoryTest {
             List<String> keys=cursor.getKeys();
             keys.stream().forEach(key->freeLinks.add(key));
             cursor=syncCommands.scan(cursor);
+        }
+    }
+
+    @Test
+    @Ignore
+    public void testJson()
+
+    {
+        User user=new User("name1","password1","email1");
+        try {
+            String json = new ObjectMapper().writeValueAsString(user);
+            User user1=  new ObjectMapper().readValue(json,User.class);
+            System.out.println(user1);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

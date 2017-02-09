@@ -1,8 +1,5 @@
 package ru.ivan.linkss.repository;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
@@ -24,7 +21,7 @@ public interface LinkRepository {
 
     String createShortLink(User autorizedUser, String link);
 
-    void createUser(String userName, String password);
+    void createUser(User user);
 
     String getLink(String key);
 
@@ -39,7 +36,7 @@ public interface LinkRepository {
     List<FullLink> getFullStat(String userName, String contextPath, int offset, int
             recordsOnPage);
 
-    boolean checkUser(User user);
+    User checkUser(User user);
 
     void deleteUserLink(User user, String shortLink, String owner);
 
@@ -57,13 +54,14 @@ public interface LinkRepository {
 
     void clearUser(User autorizedUser, String userName);
 
-    BigInteger checkFreeLinksDB()  throws Exception;
+    BigInteger checkFreeLinksDB() throws Exception;
 
     BigInteger deleteExpiredUserLinks() throws Exception;
 
     BigInteger createKeys(final int length);
 
     long getUserLinksSize(User autorizedUser, String owner);
+    long getUserArchiveSize(User autorizedUser, String owner);
 
     long getLinkExpirePeriod(String shortLink);
 

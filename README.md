@@ -35,3 +35,8 @@ Short link repo service on Heroku
 #####redis:0 LINK_DB 
 - key:shortLink
 - value:link
+
+#####redis:1 ARCHIVE_LINK_DB 
+- hset key:userName
+    - field:shortLink
+    - value:{"key":shortLink,"link":link,"visits":visits,"del_date":deleted_date}

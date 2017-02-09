@@ -35,7 +35,7 @@
         <tr>
             <td width="10%"><b><a href="/actions/freelinks">Free links</a></b></td>
         </tr>
-     </table>
+      </table>
 
     <h3>Administrative Tools</h3>
 

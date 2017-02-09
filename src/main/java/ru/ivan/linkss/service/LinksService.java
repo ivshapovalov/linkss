@@ -1,8 +1,6 @@
 package ru.ivan.linkss.service;
 
 import com.google.zxing.WriterException;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
@@ -18,7 +16,7 @@ public interface LinksService {
 
     String createShortLink(User autorizedUser, String link, String path, String context);
 
-    void createUser(String userName, String password);
+    void createUser(User user);
 
     String visitLink(String shortLink);
 
@@ -35,7 +33,7 @@ public interface LinksService {
             IOException;
      void sendFileToS3(String imagePath,String key) ;
 
-        boolean checkUser(User user);
+    User checkUser(User user);
 
     void deleteUserLink(User user, String shortLink, String owner);
 
@@ -64,6 +62,8 @@ public interface LinksService {
     long getUsersSize(User autorizedUser);
 
     long getUserLinksSize(User autorizedUser, String owner);
+
+    long getUserArchiveSize(User autorizedUser, String owner);
 
     FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath);
 
