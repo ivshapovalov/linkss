@@ -182,8 +182,13 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
-        return repository.getFullStat(userName, contextPath, offset, recordsOnPage);
+    public List<FullLink> getUserLinks(String userName, String contextPath, int offset, int recordsOnPage) {
+        return repository.getUserLinks(userName, contextPath, offset, recordsOnPage);
+    }
+    @Override
+    public List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
+            recordsOnPage) {
+        return repository.getUserArchive(userName, contextPath, offset, recordsOnPage);
     }
 
     @Override

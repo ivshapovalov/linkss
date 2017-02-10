@@ -5,8 +5,10 @@ public class User {
     private String password="";
     private String email="";
     private boolean isAdmin;
+    private boolean isArchive;
     private boolean isEmpty=true;
-    private long linkNumber;
+    private long linkCount;
+    private long archiveCount;
 
     public User() {
 
@@ -34,11 +36,27 @@ public class User {
         this.email = email;
     }
 
-
-    public User(String userName, String password, long linkNumber) {
+    public User(String userName, String password, long linkCount, long archiveCount) {
         this.userName = userName;
         this.password = password;
-        this.linkNumber = linkNumber;
+        this.linkCount = linkCount;
+        this.archiveCount = archiveCount;
+    }
+
+    public long getArchiveCount() {
+        return archiveCount;
+    }
+
+    public void setArchiveCount(long archiveCount) {
+        this.archiveCount = archiveCount;
+    }
+
+    public boolean isArchive() {
+        return isArchive;
+    }
+
+    public void setArchive(boolean archive) {
+        isArchive = archive;
     }
 
     public String getEmail() {
@@ -49,12 +67,12 @@ public class User {
         this.email = email;
     }
 
-    public long getLinkNumber() {
-        return linkNumber;
+    public long getLinkCount() {
+        return linkCount;
     }
 
-    public void setLinkNumber(long linkNumber) {
-        this.linkNumber = linkNumber;
+    public void setLinkCount(long linkCount) {
+        this.linkCount = linkCount;
     }
 
     public String getUserName() {

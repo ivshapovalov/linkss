@@ -5,6 +5,11 @@
 
 <%@include file="header.jsp" %>
 <body>
+<script>
+    $(document).ready(function () {
+        $('.dropdown-toggle').dropdown();
+    });
+</script>
 <section>
 
     <h3>Links</h3>
@@ -118,26 +123,38 @@
             <td width="40%"><b>User name</b></td>
             <td width="40%"><b>Password</b></td>
             <td width="10%"><b>Links</b></td>
-            <td width="10%"><b></b></td>
-            <td width="10%"><b></b></td>
-            <td width="10%"><b></b></td>
+            <td width="10%"><b>Archive</b></td>
+            <td width="10%"><b>Actions</b></td>
+
         </tr>
         <c:forEach items="${list}" var="column">
             <tr>
                 <td width="40%">${column.userName}</td>
                 <td width="40%">*</td>
                 <td width="10%">
-                    <a href="/actions/links?owner=${column.userName}">${column.linkNumber}
+                    <a href="/actions/links?owner=${column.userName}">${column.linkCount}
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/${column.userName}/edit">Edit</a>
-                </td>
-                <td width="10%">
-                    <a href="/actions/users/${column.userName}/clear">Clear
+                    <a href="/actions/archive?owner=${column.userName}">${column.archiveCount}
                     </a></td>
                 <td width="10%">
-                    <a href="/actions/users/${column.userName}/delete">Delete
-                    </a></td>
+                    <div class="btn-group">
+                        <button type="button" data-toggle="dropdown"
+                                class="btn btn-primary dropdown-toggle" >Action
+                            <span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li><a
+                                    href="/actions/users/${column.userName}/edit"><span
+                                    class="glyphicon glyphicon-pencil"></span>Edit</a></li>
+                            <li><a
+                                    href="/actions/users/${column.userName}/clear"><span
+                                    class="glyphicon glyphicon-compressed"></span>Clear</a></li>
+                            <li><a
+                                    href="/actions/users/${column.userName}/delete"><span
+                                    class="glyphicon glyphicon-trash"></span>Delete</a></li>
+                        </ul>
+                    </div>
+                    </td>
             </tr>
         </c:forEach>
     </table>

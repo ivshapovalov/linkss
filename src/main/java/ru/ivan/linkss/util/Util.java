@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +65,11 @@ public class Util {
 
         String timeString = String.format("%03d:%02d:%02d:%02d", days, hours, minutes, seconds);
         return timeString;
+    }
+    public static String convertLocalDateTimeToString(LocalDateTime localDateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDateTime = localDateTime.format(formatter);
+        return formattedDateTime;
     }
 
     public static long convertPeriodToSeconds(String period) {

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<%@taglib prefix="s" uri="http://www.springframework.org/tags" %>
 
 <html>
 <%@include file="header.jsp" %>
@@ -25,7 +26,7 @@
                 <label for="key" class="control-label col-xs-2">Key</label>
                 <div class="col-xs-2">
                     <form:input path="key" class="form-control" id="key" name="key"
-                           placeholder="key" value="${key}"/>
+                                placeholder="key" value="${key}"/>
                 </div>
             </div>
         </div>
@@ -33,8 +34,9 @@
             <div class="form-group">
                 <label for="shortLink" class="control-label col-xs-2">Short link</label>
                 <div class="col-xs-2">
-                    <form:input path="shortLink" class="form-control" id="shortLink" name="shortLink"
-                           placeholder="shortLink" value="${shortLink}" readonly="readonly"/>
+                    <form:input path="shortLink" class="form-control" id="shortLink"
+                                name="shortLink"
+                                placeholder="shortLink" value="${shortLink}" readonly="readonly"/>
                 </div>
             </div>
         </div>
@@ -43,7 +45,7 @@
                 <label for="link" class="control-label col-xs-2">Link</label>
                 <div class="col-xs-2">
                     <form:input path="link" class="form-control" id="link" name="link"
-                           placeholder="link" value="${link}"/>
+                                placeholder="link" value="${link}"/>
                 </div>
             </div>
         </div>
@@ -51,8 +53,12 @@
             <div class="form-group">
                 <label for="secondsText" class="control-label col-xs-2">Expires </label>
                 <div class="col-xs-2">
-                    <input type="secondsText" class="form-control" id="secondsText" name="secondsText"
-                           placeholder="DDD:HH:mm:ss" value="${fullLink.getSecondsAsPeriod()}">
+                    <s:eval
+                            expression="T(ru.ivan.linkss.util.Util).convertSecondsToPeriod(fullLink.seconds)"
+                            var="seconds"/>
+                    <input type="secondsText" class="form-control" id="secondsText"
+                           name="secondsText"
+                           placeholder="DDD:HH:mm:ss" value="${seconds}">
                 </div>
             </div>
         </div>
@@ -61,7 +67,7 @@
                 <label for="userName" class="control-label col-xs-2">User</label>
                 <div class="col-xs-2">
                     <form:input path="userName" class="form-control" id="userName" name="userName"
-                           placeholder="userName" value="${userName}"/>
+                                placeholder="userName" value="${userName}"/>
                 </div>
             </div>
         </div>

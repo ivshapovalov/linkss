@@ -15,7 +15,11 @@ import ru.ivan.linkss.util.Util;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,18 +88,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, String.valueOf("1"));
             createKeys(1);
             syncCommands.hset(KEY_PREFERENCES, KEY_EXPIRATION_PERIOD, String.valueOf("30"));
-            String jAdmin="";
-            String jUser="";
+            String jAdmin = "";
+            String jUser = "";
             try {
-                 jAdmin = new ObjectMapper().writeValueAsString(new User(ADMIN_USER,
-                        ADMIN_PASSWORD,true,false));
-                 jUser = new ObjectMapper().writeValueAsString(new User(DEFAULT_USER,
-                        DEFAULT_PASSWORD,false,false));
+                jAdmin = new ObjectMapper().writeValueAsString(new User(ADMIN_USER,
+                        ADMIN_PASSWORD, true, false));
+                jUser = new ObjectMapper().writeValueAsString(new User(DEFAULT_USER,
+                        DEFAULT_PASSWORD, false, false));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
 
-            syncCommands.hset(KEY_USERS,ADMIN_USER,jAdmin);
+            syncCommands.hset(KEY_USERS, ADMIN_USER, jAdmin);
             syncCommands.hset(KEY_USERS, DEFAULT_USER, jUser);
         }
     }
@@ -199,7 +203,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage) {
+    public List<FullLink> getUserLinks(String contextPath, int offset, int recordsOnPage) {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -246,7 +250,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<FullLink> getFullStat(String userName, String contextPath, int offset, int recordsOnPage) {
+    public List<FullLink> getUserLinks(String userName, String contextPath, int offset, int recordsOnPage) {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -278,6 +282,44 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     .filter(fullLink -> fullLink.getLink() != null)
                     .collect(Collectors.toList());
             return fullStat;
+        }
+    }
+
+    @Override
+    public List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
+            recordsOnPage) {
+        try (StatefulRedisConnection<String, String> connection = connect();
+             StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+
+            RedisCommands<String, String> syncCommands = connection.sync();
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+            List<FullLink> archive = syncCommandsLinks.hkeys(userName)
+                    .stream()
+                    .sorted()
+                    .skip(offset)
+                    .limit(recordsOnPage)
+                    .map(shortLink -> {
+                        FullLink fullLink = null;
+                        try {
+                            fullLink = new ObjectMapper().readValue(syncCommandsLinks.hget(userName, shortLink)
+                                    ,FullLink
+                                    .class);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        String shortLinkWithContext = contextPath + shortLink;
+                        fullLink.setShortLink(shortLinkWithContext);
+                        fullLink.setImageLink(shortLinkWithContext +".png" );
+                        return fullLink;
+
+                    })
+                    .filter(fullLink -> fullLink.getLink() != null)
+                    .collect(Collectors.toList());
+            return archive;
         }
     }
 
@@ -368,7 +410,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                                     "another name",
                             user.getUserName()));
                 }
-                String json="";
+                String json = "";
                 try {
                     user.setEmpty(false);
                     json = new ObjectMapper().writeValueAsString(user);
@@ -382,8 +424,13 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public List<User> getUsers(int offset, int recordsOnPage) {
-        try (StatefulRedisConnection<String, String> connection = connect()) {
+        try (StatefulRedisConnection<String, String> connection = connect();
+             StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
 
             List<User> users = syncCommands.hkeys(KEY_USERS)
                     .stream()
@@ -391,13 +438,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     .skip(offset)
                     .limit(recordsOnPage)
                     .map(userName -> {
-                        User user= null;
+                        User user = null;
                         try {
-                            user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName),User.class);
+                            user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName), User.class);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        user.setLinkNumber(syncCommands.hlen(userName));
+                        user.setLinkCount(syncCommands.hlen(userName));
+                        user.setArchiveCount(syncCommandsLinks.hlen(userName));
                         return user;
                     })
                     .collect(Collectors.toList());
@@ -439,7 +487,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             User dbUser = null;
             try {
                 dbUser = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, user
-                        .getUserName()),User
+                        .getUserName()), User
                         .class);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -475,13 +523,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             String link = syncCommandsLinks.get(shortLink);
             if (link != null) {
-                synchronized (redisClient) {
-                    synchronized (redisClientLinks) {
-                        //TODO
-                        decreaseVisits(shortLink, owner, syncCommands, link);
-                        syncCommandsLinks.del(shortLink);
-                    }
-                }
+                decreaseVisits(shortLink, owner, link, syncCommands, syncCommandsLinks);
+                syncCommandsLinks.del(shortLink);
             }
         }
     }
@@ -499,24 +542,40 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
         }
     }
 
-    private void decreaseVisits(String shortLink, String owner, RedisCommands<String, String> syncCommands, String link) {
-        //TODO
-        String visits = syncCommands.hget(KEY_VISITS, shortLink);
-        if (visits == null) visits = "0";
-        String domainName = Util.getDomainName(link);
-        String visitsByDomainActual = syncCommands.hget
-                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
-        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
-                && Integer.parseInt(visitsByDomainActual) != 0) {
-            int visitsCount = Integer.parseInt(visits);
-            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
-            int decrement = visitsCount > visitsCountByDomainActual
-                    ? visitsCountByDomainActual : visitsCount;
-            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
-                    -1 * decrement);
+    private void decreaseVisits(String shortLink, String owner, String link, RedisCommands<String,
+            String> syncCommands, RedisCommands<String, String> syncCommandsLinks) {
+
+        synchronized (redisClient) {
+            synchronized (redisClientLinks) {
+                syncCommands.select(DB_WORK_NUMBER);
+                String visits = syncCommands.hget(KEY_VISITS, shortLink);
+                syncCommands.hdel(KEY_VISITS, shortLink);
+                if (visits == null) visits = "0";
+                String domainName = Util.getDomainName(link);
+                String visitsByDomainActual = syncCommands.hget
+                        (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
+                if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
+                        && Integer.parseInt(visitsByDomainActual) != 0) {
+                    int visitsCount = Integer.parseInt(visits);
+                    int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
+                    int decrement = visitsCount > visitsCountByDomainActual
+                            ? visitsCountByDomainActual : visitsCount;
+                    syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                            -1 * decrement);
+                }
+                //syncCommands.hdel(KEY_VISITS, shortLink);
+                syncCommands.hdel(owner, shortLink);
+                syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+                FullLink fullLink=new FullLink(shortLink,link,owner,visits,LocalDateTime.now());
+                String json="";
+                try {
+                    json = new ObjectMapper().writeValueAsString(fullLink);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                syncCommandsLinks.hset(owner, shortLink, json);
+            }
         }
-        syncCommands.hdel(KEY_VISITS, shortLink);
-        syncCommands.hdel(owner, shortLink);
     }
 
     @Override
@@ -659,8 +718,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommandsLinks.select(DB_LINK_NUMBER);
             long seconds = syncCommandsLinks.ttl(shortLink);
-            if (seconds<0) {
-                seconds=0;
+            if (seconds < 0) {
+                seconds = 0;
             }
 
             return seconds;
@@ -685,7 +744,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             User user = null;
             try {
-                user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName),User
+                user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName), User
                         .class);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -725,14 +784,14 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                     }
                     syncCommands.hdel(KEY_USERS, oldUser.getUserName());
                 }
-                String json="";
+                String json = "";
                 try {
                     json = new ObjectMapper().writeValueAsString(newUser);
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
 
-                syncCommands.hset(KEY_USERS, newUser.getUserName(),json);
+                syncCommands.hset(KEY_USERS, newUser.getUserName(), json);
             }
         }
     }
@@ -796,34 +855,16 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     private void deleteAllUserLinksWithHistory(String userName, RedisCommands<String, String> syncCommands, RedisCommands<String, String> syncCommandsLinks) {
-        //TODO
         syncCommands.hkeys(userName)
                 .stream()
                 .map(shortLink -> {
-                    synchronized (redisClient) {
-                        String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                        syncCommands.hdel(KEY_VISITS, shortLink);
-                        String link = syncCommands.hget(userName, shortLink);
-                        String domainName = Util.getDomainName
-                                (link);
-                        String visitsByDomainActual = syncCommands.hget
-                                (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
-                        if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
-                                && Integer.parseInt(visitsByDomainActual) != 0) {
-                            int visitsCount = Integer.parseInt(visits);
-                            int visitsCountByDomainActual = Integer.parseInt(visitsByDomainActual);
-                            int decrement = visitsCount > visitsCountByDomainActual
-                                    ? visitsCountByDomainActual : visitsCount;
-                            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
-                                    -1 * decrement);
-                        }
-                        syncCommandsLinks.del(shortLink);
-                        return shortLink;
-                    }
+                    String link = syncCommands.hget(userName, shortLink);
+                    decreaseVisits(shortLink, userName, link, syncCommands,
+                            syncCommandsLinks);
+                    return shortLink;
                 })
                 .collect(Collectors.toList());
         syncCommands.del(userName);
-
     }
 
     @Override
@@ -854,7 +895,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
-            if (!syncCommandsLinks.hexists(KEY_USERS, owner)) {
+            if (syncCommandsLinks.exists(owner)!=1) {
                 throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
                         owner));
             }
@@ -927,7 +968,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         System.out.println(fullLink.getKey());
                         String shortLink = fullLink.getKey();
                         String link = syncCommands.hget(fullLink.getUserName(), fullLink.getKey());
-                        decreaseVisits(shortLink, fullLink.getUserName(), syncCommands, link);
+                        decreaseVisits(shortLink, fullLink.getUserName(), link, syncCommands,
+                                syncCommandsLinks);
                         return shortLink;
                     }).collect(Collectors.toList());
 

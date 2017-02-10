@@ -1,6 +1,12 @@
 package ru.ivan.linkss.repository.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import org.springframework.format.annotation.DateTimeFormat;
 import ru.ivan.linkss.util.Util;
 
 import java.time.Instant;
@@ -18,16 +24,34 @@ public class FullLink {
     private String imageLink;
     private String userName;
     private long seconds;
-    private long idle;
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    private LocalDateTime deleted;
 
     public FullLink() {
 
     }
-    public FullLink(String key, String link, long idle) {
+    public FullLink(String key, String link) {
         this.key = key;
         this.link = link;
-        this.idle = idle;
     }
+
+    public FullLink(LocalDateTime deleted) {
+        this.deleted = deleted;
+    }
+
+    public FullLink(String key, String shortLink, String link, String visits, LocalDateTime deleted, String imageLink, String userName, long seconds) {
+        this.key = key;
+        this.shortLink = shortLink;
+        this.link = link;
+        this.visits = visits;
+        this.deleted = deleted;
+        this.imageLink = imageLink;
+        this.userName = userName;
+        this.seconds = seconds;
+    }
+
     public FullLink(String key, String link, String userName) {
         this.key = key;
         this.link = link;
@@ -44,6 +68,16 @@ public class FullLink {
         this.userName = userName;
         this.seconds = seconds;
     }
+    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
+                    String userName, LocalDateTime deleted) {
+        this.key = key;
+        this.shortLink = shortLink;
+        this.link = link;
+        this.visits = visits;
+        this.imageLink = imageLink;
+        this.userName = userName;
+        this.deleted = deleted;
+    }
 
     public FullLink(String key, String shortLink, String link, String visits, String imageLink,
                     String userName) {
@@ -55,32 +89,33 @@ public class FullLink {
         this.userName = userName;
     }
 
+    public FullLink(String key, String link, String userName, String visits, LocalDateTime
+            deleted) {
+        this.key = key;
+        this.link = link;
+        this.visits = visits;
+        this.deleted = deleted;
+        this.userName = userName;
+    }
+
+    public LocalDateTime getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(LocalDateTime deleted) {
+        this.deleted = deleted;
+    }
 
     public long getSeconds() {
         return seconds;
     }
 
-    public String getSecondsAsPeriod() {
+    public String convertSecondsToPeriod() {
         if (seconds == 0) {
             return "";
         } else {
             return Util.convertSecondsToPeriod(seconds);
         }
-    }
-
-    public long getIdle() {
-        return idle;
-    }
-
-    public String getLastTime() {
-        LocalDateTime ldt=LocalDateTime.ofInstant(Instant.ofEpochSecond(System.currentTimeMillis()
-                        /1000-idle), ZoneId.systemDefault());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return ldt.format(formatter);
-    }
-
-    public void setIdle(long idle) {
-        this.idle = idle;
     }
 
     public String getKey() {

@@ -31,9 +31,12 @@ public interface LinkRepository {
 
     List<Domain> getShortStat(int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String contextPath, int offset, int recordsOnPage);
+    List<FullLink> getUserLinks(String contextPath, int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String userName, String contextPath, int offset, int
+    List<FullLink> getUserLinks(String userName, String contextPath, int offset, int
+            recordsOnPage);
+
+    List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage);
 
     User checkUser(User user);
@@ -61,6 +64,7 @@ public interface LinkRepository {
     BigInteger createKeys(final int length);
 
     long getUserLinksSize(User autorizedUser, String owner);
+
     long getUserArchiveSize(User autorizedUser, String owner);
 
     long getLinkExpirePeriod(String shortLink);

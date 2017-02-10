@@ -26,7 +26,10 @@ public interface LinksService {
 
     List<Domain> getShortStat(int offset, int recordsOnPage);
 
-    List<FullLink> getFullStat(String userName,String contextPath, int offset, int recordsOnPage);
+    List<FullLink> getUserLinks(String userName, String contextPath, int offset, int recordsOnPage);
+
+    List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
+            recordsOnPage);
 
     void createQRImage(String path,String shortLink, String fullShortLink) throws
             WriterException,

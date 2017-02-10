@@ -12,24 +12,24 @@
 </script>
 <section>
 
-    <h3>Links</h3>
+    <h3>Archive links</h3>
 
     <div class="bs-example">
         <ul class="pagination">
             <li>
-                <a href="/actions/links?page=${1}&owner=${owner}">
+                <a href="/actions/archive?page=${1}&owner=${owner}">
                     ${1}
                 </a>
             </li>
             <c:choose>
                 <c:when test="${currentPage lt 7}">
                     <li class="disabled"><a
-                            href="/actions/links?page=${currentPage - 6}&owner=${owner}">
+                            href="/actions/archive?page=${currentPage - 6}&owner=${owner}">
                         << </a></li>
                 </c:when>
                 <c:otherwise>
                     <li>
-                        <a href="/actions/links?page=${currentPage - 6}&owner=${owner}">
+                        <a href="/actions/archive?page=${currentPage - 6}&owner=${owner}">
                             << </a>
                     </li>
                 </c:otherwise>
@@ -37,13 +37,13 @@
             <c:choose>
                 <c:when test="${currentPage lt 2}">
                     <li class="disabled"><a
-                            href="/actions/links?page=${currentPage - 1}&owner=${owner}">
+                            href="/actions/archive?page=${currentPage - 1}&owner=${owner}">
                         < </a></li>
                 </c:when>
                 <c:otherwise>
                     <li>
 
-                        <a href="/actions/links?page=${currentPage - 1}&owner=${owner}">
+                        <a href="/actions/archive?page=${currentPage - 1}&owner=${owner}">
                             < </a>
                     </li>
                 </c:otherwise>
@@ -76,14 +76,14 @@
                 <c:choose>
                     <c:when test="${currentPage eq i}">
                         <li class="active">
-                            <a href="/actions/links?page=${currentPage}&owner=${owner}">
+                            <a href="/actions/archive?page=${currentPage}&owner=${owner}">
                                     ${i}
                             </a>
                         </li>
                     </c:when>
                     <c:otherwise>
                         <li>
-                            <a href="/actions/links?page=${i}&owner=${owner}">
+                            <a href="/actions/archive?page=${i}&owner=${owner}">
                                     ${i}
                             </a>
                         </li>
@@ -93,11 +93,11 @@
             <c:choose>
                 <c:when test="${currentPage gt numberOfPages-1}">
                     <li class="disabled"><a
-                            href="/actions/links?page=${currentPage + 1}&owner=${owner}">
+                            href="/actions/archive?page=${currentPage + 1}&owner=${owner}">
                         > </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/actions/links?page=${currentPage + 1}&owner=${owner}">
+                    <li><a href="/actions/archive?page=${currentPage + 1}&owner=${owner}">
                         > </a>
                     </li>
                 </c:otherwise>
@@ -105,16 +105,16 @@
             <c:choose>
                 <c:when test="${currentPage gt numberOfPages-6}">
                     <li class="disabled"><a
-                            href="/actions/links?page=${currentPage + 6}&owner=${owner}">
+                            href="/actions/archive?page=${currentPage + 6}&owner=${owner}">
                         >> </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/actions/links?page=${currentPage + 6}&owner=${owner}">
+                    <li><a href="/actions/archive?page=${currentPage + 6}&owner=${owner}">
                         >> </a>
                     </li>
                 </c:otherwise>
             </c:choose>
-            <li><a href="/actions/links?page=${numberOfPages}&owner=${owner}">
+            <li><a href="/actions/archive?page=${numberOfPages}&owner=${owner}">
                 ${numberOfPages} </a>
             </li>
 
@@ -126,7 +126,7 @@
             <td width="10%"><b>User</b></td>
             <td width="10%"><b>Key</b></td>
             <td width="40%"><b>Text</b></td>
-            <td width="10%"><b>Expires</b></td>
+            <td width="40%"><b>Deleted</b></td>
             <td width="10%"><b>Visits</b></td>
             <td width="20%"><b>Short Link</b></td>
             <td width="20%"><b>Action</b></td>
@@ -136,9 +136,10 @@
                 <td width="10%">${column.userName}</td>
                 <td width="10%">${column.key}</td>
                 <td width="40%">${column.link}</td>
-                <td width="10%"><s:eval expression="T(ru.ivan.linkss.util.Util).convertSecondsToPeriod(column.seconds)"
-                                        var="seconds" />${seconds}</td>
-
+                <s:eval
+                        expression="T(ru.ivan.linkss.util.Util).convertLocalDateTimeToString(column.deleted)"
+                        var="deleted"/>
+                <td width="40%">${deleted}</td>
                 <td width="10%">${column.visits}</td>
                 <td width="20%"><a href="${column.shortLink}">${column.shortLink}</a>
                 </td>
@@ -149,10 +150,16 @@
                              <span class="caret"></span></button>
                         <ul class="dropdown-menu">
                             <li><a
-                                    href="/actions/user/${column.userName}/links/edit/?key=${column.key}"><span
+                                    href="/actions/user/${column.userName}/archive/restore/?key
+                                    =${column.key}"><span
+                                    class="glyphicon glyphicon-open"></span>Restore</a></li>
+                            <li><a
+                                    href="/actions/user/${column.userName}/archive/edit/?key
+                                    =${column.key}"><span
                                     class="glyphicon glyphicon-pencil"></span>Edit</a></li>
                             <li><a
-                            href="/actions/user/${column.userName}/links/delete/?key=${column.key}"><span
+                                    href="/actions/user/${column.userName}/archive/delete/?key
+                                    =${column.key}"><span
                                     class="glyphicon glyphicon-trash"></span>Delete</a></li>
                         </ul>
                     </div>

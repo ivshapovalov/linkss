@@ -46,6 +46,7 @@ public class ActionsController {
     private static final String PAGE_FREE_LINKS = "freelinks";
     private static final String PAGE_LINK = "link";
     private static final String PAGE_LINKS = "links";
+    private static final String PAGE_ARCHIVE = "archive";
     private static final String ACTION_LOGOUT = "logout";
 
     private static final String ACTION_LOGIN = "login";
@@ -496,7 +497,7 @@ public class ActionsController {
         }
         String contextPath = getContextPath(request);
         int offset = (currentPage - 1) * recordsOnPage;
-        List<FullLink> list = service.getFullStat(owner, contextPath, offset, recordsOnPage);
+        List<FullLink> list = service.getUserLinks(owner, contextPath, offset, recordsOnPage);
         long linksCount = (int) service.getUserLinksSize(autorizedUser, owner);
         if (linksCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have links. Try another!");
@@ -510,6 +511,45 @@ public class ActionsController {
         model.addAttribute(ATTRIBUTE_OWNER, owner);
 
         return PAGE_LINKS;
+    }
+
+    @RequestMapping(value = PAGE_ARCHIVE, method = RequestMethod.GET)
+    public String archive(Model model,
+                        @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                        HttpServletRequest request,
+                        HttpSession session) {
+        int currentPage = 1;
+        int recordsOnPage = 10;
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, archive available only for logged " +
+                    "users!");
+            return PAGE_ERROR;
+        }
+
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter(ATTRIBUTE_PAGE));
+        }
+
+        if (owner == null || owner.equals("")) {
+            owner = autorizedUser.getUserName();
+        }
+        String contextPath = getContextPath(request);
+        int offset = (currentPage - 1) * recordsOnPage;
+        List<FullLink> list = service.getUserArchive(owner, contextPath, offset, recordsOnPage);
+        long archiveSize = (int) service.getUserArchiveSize(autorizedUser, owner);
+        if (archiveSize == 0) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have archive. Try another!");
+            return PAGE_ERROR;
+        }
+        int numberOfPages = Math.max(1, (int) Math.ceil((double) archiveSize / recordsOnPage));
+
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_OWNER, owner);
+
+        return PAGE_ARCHIVE;
     }
 
     @RequestMapping(value = PAGE_DOMAINS, method = RequestMethod.GET)
