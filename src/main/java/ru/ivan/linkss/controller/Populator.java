@@ -22,9 +22,10 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
+    private static final int USERS = 100;
     private static final int W_REQUESTS = 500;
-    private static final int R_REQUESTS = 1000;
-    private static final int RW_REQUESTS = 500;
+    private static final int R_REQUESTS = 10000;
+    private static final int RW_REQUESTS = 5000;
 
     @Autowired
     private LinksService service;
@@ -33,10 +34,13 @@ public class Populator {
     @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
 
+
     private String path;
     private String context;
 
     final static List<String> domains = new ArrayList<>();
+
+    List<User> users;
 
     static {
         domains.add("ya.com");
@@ -86,13 +90,14 @@ public class Populator {
 //            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
         RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
         RedisClient redisClientLinks = RedisClient.create(System.getenv
-                ("HEROKU_REDIS_AMBER_URL"));;
+                ("HEROKU_REDIS_AMBER_URL"));
+        ;
 
-        RedisTwoDBLinkRepositoryImpl repository=new RedisTwoDBLinkRepositoryImpl(redisClient,
+        RedisTwoDBLinkRepositoryImpl repository = new RedisTwoDBLinkRepositoryImpl(redisClient,
                 redisClientLinks);
-        Populator populator=new Populator();
+        Populator populator = new Populator();
 
-        LinksServiceImpl service=new LinksServiceImpl();
+        LinksServiceImpl service = new LinksServiceImpl();
         service.setRepository(repository);
         populator.setRepository(repository);
         populator.setService(service);
@@ -102,24 +107,36 @@ public class Populator {
         populator.init();
 
     }
+
     public void init() {
 
         repository.init();
 
+        users = new ArrayList<>();
+        for (int i = 0; i < USERS; i++) {
+            try {
+                User user = new User("user" + i);
+                service.createUser(user);
+                users.add(user);
+            } catch (Exception e) {
+            }
+
+        }
+
         long startTime = System.nanoTime();
         //executeCreateInOneThread();
         executeCreateMultiThread();
-        long linksSize=service.getDBLinksSize();
-        long freeLinksSize=service.getDBFreeLinksSize();
+        long linksSize = service.getDBLinksSize();
+        long freeLinksSize = service.getDBFreeLinksSize();
         long endTime = System.nanoTime();
         System.out.println(String.valueOf(W_REQUESTS) + " write: " + (endTime -
                 startTime) / 1000 + " millis");
-        System.out.println(String.format("links: %s, free: %s",linksSize,freeLinksSize));
+        System.out.println(String.format("links: %s, free: %s", linksSize, freeLinksSize));
 
         startTime = System.nanoTime();
         //executeReadInOneThread();
 
-        //executeReadMultiThread();
+        executeReadMultiThread();
         endTime = System.nanoTime();
         System.out.println(String.valueOf(R_REQUESTS) + " read: " + (endTime -
                 startTime) / 1000 + " millis");
@@ -134,14 +151,16 @@ public class Populator {
     }
 
     private void executeCreateReadMultiThread() {
-        boolean isWrite=true;
+        boolean isWrite = true;
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        Random random=new Random();
         for (int i = 1; i <= RW_REQUESTS; i++) {
             Runnable client;
+            User user=users.get(random.nextInt(users.size()-1));
             if (isWrite) {
-                client = new Creator(i);
+                client = new Creator(user,i);
             } else {
-                client = new Visitor(i);
+                client = new Visitor(user,i);
             }
             executor.execute(client);
             isWrite = !isWrite;
@@ -153,8 +172,10 @@ public class Populator {
 
     private void executeReadMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        Random random=new Random();
         for (int i = 1; i <= R_REQUESTS; i++) {
-            Runnable reader = new Visitor(i);
+            User user=users.get(random.nextInt(users.size()-1));
+            Runnable reader = new Visitor(user,i);
             executor.execute(reader);
         }
         executor.shutdown();
@@ -164,8 +185,17 @@ public class Populator {
 
     private void executeCreateMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
+        Random random=new Random();
         for (int i = 1; i <= W_REQUESTS; i++) {
-            Runnable creator = new Creator(i);
+
+            User user= null;
+            int a=random.nextInt(users.size()-1);
+            try {
+                user = users.get(a);
+            } catch (Exception e) {
+                System.out.println(a);
+            }
+            Runnable creator = new Creator(user,i);
             executor.execute(creator);
         }
         executor.shutdown();
@@ -174,23 +204,26 @@ public class Populator {
     }
 
     private void executeCreateInOneThread() {
+        Random random=new Random(users.size());
         for (int i = 1; i <= W_REQUESTS; i++) {
-            new Creator(i).run();
+            User user=users.get(random.nextInt(users.size()-1));
+            new Creator(user,i).run();
         }
 
     }
 
     private void executeReadInOneThread() {
-
+        Random random=new Random();
         for (int i = 1; i <= R_REQUESTS; i++) {
-            new Visitor(i).run();
+            User user=users.get(random.nextInt(users.size()-1));
+            new Visitor(user,i).run();
         }
     }
 
     private class Creator extends Client {
 
-        public Creator(int number) {
-            super(number);
+        public Creator(User user,int number) {
+            super(user,number);
         }
 
         @Override
@@ -198,13 +231,15 @@ public class Populator {
             Thread.currentThread().setName("t" + number);
 
             String link = getRandomDomain() + "/" + number;
-            String shortLink = service.createShortLink(new User("user","user"),link,path,context);
+            String shortLink = service.createShortLink(user,
+                    link, path,
+                    context);
             //            service.uploadImage();
 
 
             if (shortLink == null) {
-                    System.out.println(Thread.currentThread().getName() +
-                            ": free short links ended ");
+                System.out.println(Thread.currentThread().getName() +
+                        ": free short links ended ");
 //            } else {
 //                    System.out.println(Thread.currentThread().getName() +
 //                           ": create '" + shortLink + "' - link '" + link + "'");
@@ -214,8 +249,8 @@ public class Populator {
 
     private class Visitor extends Client {
 
-        public Visitor(int number) {
-            super(number);
+        public Visitor(User user,int number) {
+            super(user,number);
         }
 
         @Override
@@ -230,7 +265,7 @@ public class Populator {
                     link = service.visitLink(shortLink);
 //                            System.out.println(Thread.currentThread().getName() +
 //                                    ": get '" + shortLink + "': '" + link + "'");
-                    failed=false;
+                    failed = false;
                 } else {
                     failed = true;
                     System.out.println("random link null. retry");
@@ -241,10 +276,12 @@ public class Populator {
     }
 
     private abstract class Client implements Runnable {
+        protected final User user;
         protected final int number;
         protected final Random random = new Random();
 
-        public Client(int number) {
+        public Client(User user, int number) {
+            this.user = user;
             this.number = number;
         }
 
