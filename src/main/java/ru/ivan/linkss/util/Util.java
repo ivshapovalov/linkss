@@ -4,9 +4,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,8 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Util {
 
@@ -55,6 +50,33 @@ public class Util {
         } catch (Exception e) {
             System.out.println(e);
         }
+    }
+    public static void downloadImageFromFTP(String filePath, String key) {
+
+        FTPManager ftpManager =
+                null;
+        try {
+            ftpManager = new FTPManager(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
+                    System.getenv("FTP_PASSWORD"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.downloadFile(filePath,key);
+        ftpManager.disconnect();
+    }
+    public static void uploadImageToFTP(String filePath, String key) {
+
+        FTPManager ftpManager =
+                null;
+        try {
+            ftpManager = new FTPManager(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
+                    System.getenv("FTP_PASSWORD"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.uploadFile(filePath,key);
+        ftpManager.disconnect();
+
     }
 
     public static String convertSecondsToPeriod(long allSeconds) {

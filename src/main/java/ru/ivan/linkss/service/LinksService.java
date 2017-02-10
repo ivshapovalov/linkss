@@ -35,7 +35,7 @@ public interface LinksService {
             WriterException,
             IOException;
 
-    void sendFileToS3(String imagePath, String key);
+    void sendFileToFTP(String imagePath, String key);
 
     User checkUser(User user);
 
@@ -77,7 +77,7 @@ public interface LinksService {
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 
-    void downloadImageFromS3(String filePath, String key);
+    void downloadImageFromFTP(String filePath, String key);
 
     void deleteFreeLink(String shortLink);
 }

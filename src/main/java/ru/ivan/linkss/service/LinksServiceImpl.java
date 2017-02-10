@@ -79,8 +79,8 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void downloadImageFromS3(String filePath, String key) {
-        Util.downloadImageFromS3(filePath, key);
+    public void downloadImageFromFTP(String filePath, String key) {
+        Util.downloadImageFromFTP(filePath, key);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class LinksServiceImpl implements LinksService {
 
             try {
                 createQRImage(imagePath, shortLink, shortLinkPath);
-                //sendFileToS3(imagePath, shortLink);
+                sendFileToFTP(imagePath, shortLink);
             } catch (IOException | WriterException e) {
                 e.printStackTrace();
             }
@@ -218,15 +218,9 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void sendFileToS3(String imagePath, String key) {
+    public void sendFileToFTP(String imagePath, String key) {
 
-        final AmazonS3 s3 = new AmazonS3Client();
-        try {
-            File file = new File(imagePath);
-            PutObjectResult result = s3.putObject(System.getenv("S3_BUCKET_NAME"), key, file);
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        Util.uploadImageToFTP(imagePath,key);
     }
 
     @Override
