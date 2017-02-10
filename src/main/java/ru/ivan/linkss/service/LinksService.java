@@ -31,14 +31,17 @@ public interface LinksService {
     List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage);
 
-    void createQRImage(String path,String shortLink, String fullShortLink) throws
+    void createQRImage(String path, String shortLink, String fullShortLink) throws
             WriterException,
             IOException;
-     void sendFileToS3(String imagePath,String key) ;
+
+    void sendFileToS3(String imagePath, String key);
 
     User checkUser(User user);
 
     void deleteUserLink(User user, String shortLink, String owner);
+
+    void deleteArchiveLink(User user, String shortLink, String owner);
 
     List<User> getUsers(int offset, int recordsOnPage);
 
@@ -68,7 +71,7 @@ public interface LinksService {
 
     long getUserArchiveSize(User autorizedUser, String owner);
 
-    FullLink getFullLink(User autorizedUser, String shortLink, String owner,String contextPath);
+    FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 

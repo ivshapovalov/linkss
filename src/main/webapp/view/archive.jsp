@@ -150,16 +150,13 @@
                              <span class="caret"></span></button>
                         <ul class="dropdown-menu">
                             <li><a
-                                    href="/actions/user/${column.userName}/archive/restore/?key
-                                    =${column.key}"><span
+                                    href="/actions/user/${column.userName}/archive/restore/?key=${column.key}"><span
                                     class="glyphicon glyphicon-open"></span>Restore</a></li>
                             <li><a
-                                    href="/actions/user/${column.userName}/archive/edit/?key
-                                    =${column.key}"><span
+                                    href="/actions/user/${column.userName}/archive/edit/?key=${column.key}"><span
                                     class="glyphicon glyphicon-pencil"></span>Edit</a></li>
                             <li><a
-                                    href="/actions/user/${column.userName}/archive/delete/?key
-                                    =${column.key}"><span
+                                    href="/actions/user/${column.userName}/archive/delete/?key=${column.key}"><span
                                     class="glyphicon glyphicon-trash"></span>Delete</a></li>
                         </ul>
                     </div>

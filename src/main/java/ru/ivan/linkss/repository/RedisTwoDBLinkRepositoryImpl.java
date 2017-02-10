@@ -305,15 +305,15 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         FullLink fullLink = null;
                         try {
                             fullLink = new ObjectMapper().readValue(syncCommandsLinks.hget(userName, shortLink)
-                                    ,FullLink
-                                    .class);
+                                    , FullLink
+                                            .class);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
                         String shortLinkWithContext = contextPath + shortLink;
                         fullLink.setShortLink(shortLinkWithContext);
-                        fullLink.setImageLink(shortLinkWithContext +".png" );
+                        fullLink.setImageLink(shortLinkWithContext + ".png");
                         return fullLink;
 
                     })
@@ -530,6 +530,27 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public void deleteArchiveLink(User autorizedUser, String shortLink, String owner) {
+        try (StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+            if (syncCommandsLinks.exists(owner) != 1) {
+                throw new RuntimeException(String.format("Archive of user '%s' is not exists",
+                        owner));
+            }
+            if (!autorizedUser.isAdmin()) {
+                if (!syncCommandsLinks.hexists(autorizedUser.getUserName(), shortLink)) {
+                    throw new RuntimeException(String.format("User '%s' does not have archive " +
+                                    "link '%s'",
+                            autorizedUser.getUserName(), shortLink));
+                }
+            }
+            syncCommandsLinks.hdel(owner,shortLink);
+        }
+    }
+
+    @Override
     public void deleteFreeLink(String shortLink) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -566,8 +587,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                 //syncCommands.hdel(KEY_VISITS, shortLink);
                 syncCommands.hdel(owner, shortLink);
                 syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
-                FullLink fullLink=new FullLink(shortLink,link,owner,visits,LocalDateTime.now());
-                String json="";
+                FullLink fullLink = new FullLink(shortLink, link, owner, visits, LocalDateTime.now());
+                String json = "";
                 try {
                     json = new ObjectMapper().writeValueAsString(fullLink);
                 } catch (JsonProcessingException e) {
@@ -895,7 +916,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
-            if (syncCommandsLinks.exists(owner)!=1) {
+            if (syncCommandsLinks.exists(owner) != 1) {
                 throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
                         owner));
             }

@@ -56,7 +56,6 @@ public class ActionsController {
     private static final String ACTION_CHECK_EXPIRED = "checkExpired";
 
     private static final String ATTRIBUTE_USER = "user";
-    private static final String ATTRIBUTE_LINKS = "links";
     private static final String ATTRIBUTE_LIST = "list";
     private static final String ATTRIBUTE_KEY = "key";
     private static final String ATTRIBUTE_OLD_KEY = "oldKey";
@@ -188,11 +187,10 @@ public class ActionsController {
         return ACTION_LOGIN;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
-            + WEB_SEPARTOR+ ACTION_DELETE,
-            method = RequestMethod.GET)
-    public String deleteUserlink(Model model,
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
+            + WEB_SEPARTOR+ ACTION_DELETE,method = RequestMethod.GET)
+    public String deleteLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
                                  @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                                  HttpSession session,
@@ -216,7 +214,43 @@ public class ActionsController {
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 
-            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), ATTRIBUTE_LINKS,
+            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_LINKS,
+                    ATTRIBUTE_OWNER, owner);
+        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+    }
+
+    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_ARCHIVE
+            + WEB_SEPARTOR+ ACTION_DELETE,
+            method = RequestMethod.GET)
+    public String deleteArchiveLink(Model model,
+                             @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                             HttpSession session,
+                             HttpServletRequest request) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Archive link owner is not defined!");
+            return PAGE_ERROR;
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Archive link is not defined!");
+            return PAGE_ERROR;
+        }
+
+        try {
+            service.deleteArchiveLink(autorizedUser, shortLink, owner);
+            model.addAttribute(ATTRIBUTE_KEY, null);
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+
+            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_ARCHIVE,
                     ATTRIBUTE_OWNER, owner);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
@@ -271,7 +305,7 @@ public class ActionsController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
             + WEB_SEPARTOR+ ACTION_EDIT, method = RequestMethod.GET)
     public String editLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,

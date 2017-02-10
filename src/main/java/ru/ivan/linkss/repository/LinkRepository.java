@@ -43,6 +43,8 @@ public interface LinkRepository {
 
     void deleteUserLink(User user, String shortLink, String owner);
 
+    void deleteArchiveLink(User user, String shortLink, String owner);
+
     void deleteFreeLink(String shortLink);
 
     List<User> getUsers(int offset, int recordsOnPage);
