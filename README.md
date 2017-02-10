@@ -4,7 +4,8 @@ Short link repo service on Heroku
 ####DB: Heroku Redis
 ####DB client:lettuce
 ####WEB: Spring MVC + Spring AOP 
-####Other:zxing QR code + ASW S3 Storage
+####Other:zxing QR code + FTP Storage
+####Front - Bootstrap+JQuery
 
 
 ####REDIS INSTANCE 1

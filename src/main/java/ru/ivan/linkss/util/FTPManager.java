@@ -1,15 +1,22 @@
 package ru.ivan.linkss.util;
 
+import com.lambdaworks.redis.RedisClient;
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 
 public class FTPManager {
 
     FTPClient ftp = null;
+
+    public FTPManager() throws Exception {
+        this(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
+                System.getenv("FTP_PASSWORD"));
+    }
 
     public FTPManager(String host, String user, String pwd) throws Exception {
         ftp = new FTPClient();

@@ -369,7 +369,7 @@ public class ActionsController {
                     + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION;
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
-                Util.downloadImageFromFTP(realImagePath, shortLink);
+                service.downloadImageFromFTP(realImagePath, shortLink);
             }
 
             String link = service.getLink(shortLink);

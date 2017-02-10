@@ -13,7 +13,7 @@ import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
-import ru.ivan.linkss.util.Util;
+import ru.ivan.linkss.util.FTPManager;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -36,6 +36,7 @@ public class LinksServiceImpl implements LinksService {
     @Autowired
     @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
+
 
     ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
 
@@ -66,7 +67,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public BigInteger updateFreeLinks()  throws Exception{
+    public BigInteger updateFreeLinks() throws Exception {
         return repository.checkFreeLinksDB();
     }
 
@@ -77,7 +78,14 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public void downloadImageFromFTP(String filePath, String key) {
-        Util.downloadImageFromFTP(filePath, key);
+        FTPManager ftpManager = null;
+        try {
+            ftpManager = new FTPManager();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.downloadFile(filePath, key);
+        ftpManager.disconnect();
     }
 
     @Override
@@ -100,7 +108,12 @@ public class LinksServiceImpl implements LinksService {
 
             try {
                 createQRImage(imagePath, shortLink, shortLinkPath);
-                sendFileToFTP(imagePath, shortLink);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        uploadImageToFTP(imagePath, shortLink);
+                    }
+                }).start();
             } catch (IOException | WriterException e) {
                 e.printStackTrace();
             }
@@ -118,6 +131,7 @@ public class LinksServiceImpl implements LinksService {
     public List<User> getUsers(int offset, int recordsOnPage) {
         return repository.getUsers(offset, recordsOnPage);
     }
+
     @Override
     public List<String> getFreeLinks(int offset, int recordsOnPage) {
         return repository.getFreeLinks(offset, recordsOnPage);
@@ -134,8 +148,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void clearUser(User autorizedUser, String userName)
-    {
+    public void clearUser(User autorizedUser, String userName) {
         repository.clearUser(autorizedUser, userName);
     }
 
@@ -193,6 +206,7 @@ public class LinksServiceImpl implements LinksService {
     public List<FullLink> getUserLinks(String userName, String contextPath, int offset, int recordsOnPage) {
         return repository.getUserLinks(userName, contextPath, offset, recordsOnPage);
     }
+
     @Override
     public List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage) {
@@ -215,9 +229,17 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void sendFileToFTP(String imagePath, String key) {
+    public void uploadImageToFTP(String imagePath, String key) {
 
-        Util.uploadImageToFTP(imagePath,key);
+        FTPManager ftpManager =
+                null;
+        try {
+            ftpManager = new FTPManager();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.uploadFile(imagePath, key);
+        ftpManager.disconnect();
     }
 
     @Override

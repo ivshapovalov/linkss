@@ -26,34 +26,6 @@ public class Util {
         }
     }
 
-    public static void downloadImageFromFTP(String filePath, String key) {
-
-        FTPManager ftpManager =
-                null;
-        try {
-            ftpManager = new FTPManager(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
-                    System.getenv("FTP_PASSWORD"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ftpManager.downloadFile(filePath,key);
-        ftpManager.disconnect();
-    }
-    public static void uploadImageToFTP(String filePath, String key) {
-
-        FTPManager ftpManager =
-                null;
-        try {
-            ftpManager = new FTPManager(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
-                    System.getenv("FTP_PASSWORD"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ftpManager.uploadFile(filePath,key);
-        ftpManager.disconnect();
-
-    }
-
     public static String convertSecondsToPeriod(long allSeconds) {
         long days = allSeconds / 3600 / 24;
         long hours = (allSeconds % (3600 * 24)) / 3600;

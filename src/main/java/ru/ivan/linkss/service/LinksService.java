@@ -35,7 +35,7 @@ public interface LinksService {
             WriterException,
             IOException;
 
-    void sendFileToFTP(String imagePath, String key);
+    void uploadImageToFTP(String imagePath, String key);
 
     User checkUser(User user);
 
