@@ -22,9 +22,9 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
-    private static final int W_REQUESTS = 50;
-    private static final int R_REQUESTS = 100;
-    private static final int RW_REQUESTS = 50;
+    private static final int W_REQUESTS = 500;
+    private static final int R_REQUESTS = 1000;
+    private static final int RW_REQUESTS = 500;
 
     @Autowired
     private LinksService service;

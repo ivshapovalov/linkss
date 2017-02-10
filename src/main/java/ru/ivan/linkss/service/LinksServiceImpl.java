@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Service
 @Qualifier(value = "service")
@@ -36,9 +34,6 @@ public class LinksServiceImpl implements LinksService {
     @Autowired
     @Qualifier(value = "repositoryTwo")
     private LinkRepository repository;
-
-
-    ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
 
     public LinksServiceImpl() {
     }
@@ -108,15 +103,12 @@ public class LinksServiceImpl implements LinksService {
 
             try {
                 createQRImage(imagePath, shortLink, shortLinkPath);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        uploadImageToFTP(imagePath, shortLink);
-                    }
-                }).start();
-            } catch (IOException | WriterException e) {
+            } catch (WriterException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+            uploadImageToFTP(imagePath, shortLink);
 
         }
         return shortLink;
