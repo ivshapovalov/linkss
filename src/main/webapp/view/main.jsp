@@ -27,11 +27,11 @@
             <br>
             <div class="row">
                 <div class="form-group">
-                    <label for="link" class="control-label col-xs-1">Text</label>
+                    <label for="link" class="control-label col-xs-1">Text/Link</label>
                     <div class="col-xs-4">
                             <textarea path="link" class="form-control" id="link"
                                       name="link"
-                                      placeholder="text" value="${link}">${link} </textarea>
+                                      placeholder="Text/Link" value="${link}">${link} </textarea>
                     </div>
 
                 </div>
@@ -39,20 +39,14 @@
             <br>
             <div class="row">
                 <div class="form-group">
-                    <label for="shortLink" class="control-label col-xs-1">Short link</label>
-                    <div class="col-xs-4">
-                        <a href="${shortLink}" id="shortLink">${shortLink} </a>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group">
                     <label for="shortLink" class="control-label col-xs-1"></label>
-                    <div class="col-xs-4">
-                        <img src="${image}"/>
+                    <div class="col-xs-6">
+                        <h2><img src="${image}"/>
+                        <a href="${shortLink}" id="shortLink">${shortLink} </a></h2>
                     </div>
                 </div>
             </div>
+
 
         </form>
     </form:form>
