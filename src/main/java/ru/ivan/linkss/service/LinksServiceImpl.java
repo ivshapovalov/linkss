@@ -178,6 +178,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
+    public void restoreArchiveLink(User user, String shortLink, String owner) {
+        repository.restoreArchiveLink(user, shortLink, owner);
+    }
+
+    @Override
     public void deleteFreeLink(String shortLink) {
         repository.deleteFreeLink(shortLink);
     }

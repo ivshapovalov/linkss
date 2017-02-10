@@ -28,13 +28,13 @@ import java.util.List;
 @RequestMapping(value = "/actions/")
 public class ActionsController {
 
-    private static final String ACTION_EDIT = "edit";
     private static final String FILE_SEPARTOR = File.separator;
     private static final String RESOURCE_FOLDER = "resources";
     private static final String IMAGE_EXTENSION = ".png";
 
     private static final String WEB_SEPARTOR = "/";
     private static final String PAGE_ERROR = "error";
+    private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_SIGNUP = "signup";
     private static final String PAGE_SIGNIN = "signin";
@@ -49,8 +49,10 @@ public class ActionsController {
     private static final String PAGE_ARCHIVE = "archive";
     private static final String ACTION_LOGOUT = "logout";
 
+    private static final String ACTION_EDIT = "edit";
     private static final String ACTION_LOGIN = "login";
     private static final String ACTION_DELETE = "delete";
+    private static final String ACTION_RESTORE = "restore";
     private static final String ACTION_CLEAR = "clear";
     private static final String ACTION_POPULATE = "populate";
     private static final String ACTION_CHECK_EXPIRED = "checkExpired";
@@ -130,7 +132,7 @@ public class ActionsController {
         long usersCount = (int) service.getUsersSize(autorizedUser);
         if (usersCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have users. Try later!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) usersCount / recordsOnPage));
 
@@ -247,6 +249,42 @@ public class ActionsController {
 
         try {
             service.deleteArchiveLink(autorizedUser, shortLink, owner);
+            model.addAttribute(ATTRIBUTE_KEY, null);
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+
+            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_ARCHIVE,
+                    ATTRIBUTE_OWNER, owner);
+        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+    }
+
+    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_ARCHIVE
+            + WEB_SEPARTOR+ ACTION_RESTORE,
+            method = RequestMethod.GET)
+    public String restoreArchiveLink(Model model,
+                                    @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                    @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                                    HttpSession session,
+                                    HttpServletRequest request) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Archive link owner is not defined!");
+            return PAGE_ERROR;
+        }
+        if (shortLink == null || shortLink.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Archive link is not defined!");
+            return PAGE_ERROR;
+        }
+
+        try {
+            service.restoreArchiveLink(autorizedUser, shortLink, owner);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 
@@ -519,7 +557,7 @@ public class ActionsController {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
 
         if (request.getParameter(ATTRIBUTE_PAGE) != null) {
@@ -535,7 +573,7 @@ public class ActionsController {
         long linksCount = (int) service.getUserLinksSize(autorizedUser, owner);
         if (linksCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have links. Try another!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) linksCount / recordsOnPage));
 
@@ -574,7 +612,7 @@ public class ActionsController {
         long archiveSize = (int) service.getUserArchiveSize(autorizedUser, owner);
         if (archiveSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have archive. Try another!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) archiveSize / recordsOnPage));
 
@@ -611,7 +649,7 @@ public class ActionsController {
         long domainsSize = (int) service.getDomainsSize(autorizedUser);
         if (domainsSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have domains visits. Try later!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) domainsSize / recordsOnPage));
 
@@ -650,7 +688,7 @@ public class ActionsController {
         if (freeLinksSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have free links. Try " +
                     "later!");
-            return PAGE_ERROR;
+            return PAGE_MESSAGE;
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) freeLinksSize / recordsOnPage));
 

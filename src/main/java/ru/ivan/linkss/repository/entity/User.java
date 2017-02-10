@@ -5,7 +5,6 @@ public class User {
     private String password="";
     private String email="";
     private boolean isAdmin;
-    private boolean isArchive;
     private boolean isEmpty=true;
     private long linkCount;
     private long archiveCount;
@@ -49,14 +48,6 @@ public class User {
 
     public void setArchiveCount(long archiveCount) {
         this.archiveCount = archiveCount;
-    }
-
-    public boolean isArchive() {
-        return isArchive;
-    }
-
-    public void setArchive(boolean archive) {
-        isArchive = archive;
     }
 
     public String getEmail() {

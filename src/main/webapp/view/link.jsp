@@ -16,8 +16,12 @@
             <div class="form-group">
                 <label class="control-label col-xs-2"><h4>Short link '${key}'</h4></label>
                 <div class="col-xs-2">
-                    <button type="submit" class="btn btn-primary"><h4>Update link</h4></button>
+                    <button type="submit" class="btn btn-primary"><h4>Update</h4></button>
+                    <button type="button" class="btn btn-danger"
+                            onclick="location.href='/actions/user/${owner}/links/delete/?key=${key}'"><h4>Delete</h4></button>
                 </div>
+
+
             </div>
         </div>
         <br>

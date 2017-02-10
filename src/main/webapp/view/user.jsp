@@ -14,6 +14,9 @@
                     <label class="control-label col-xs-2"><h4>User '${user.getUserName()}'</h4></label>
                     <div class="col-xs-2">
                         <button type="submit" class="btn btn-primary"><h4>Update user</h4></button>
+                        <button type="button" class="btn btn-danger"
+                                onclick="location.href='/actions/users/${user.userName}/delete'"><h4>
+                            Delete</h4></button>
                     </div>
                 </div>
             </div>

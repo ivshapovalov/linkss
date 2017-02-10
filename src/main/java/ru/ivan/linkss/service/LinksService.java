@@ -43,6 +43,8 @@ public interface LinksService {
 
     void deleteArchiveLink(User user, String shortLink, String owner);
 
+    void restoreArchiveLink(User user, String shortLink, String owner);
+
     List<User> getUsers(int offset, int recordsOnPage);
 
     List<String> getFreeLinks(int offset, int recordsOnPage);

@@ -45,6 +45,8 @@ public interface LinkRepository {
 
     void deleteArchiveLink(User user, String shortLink, String owner);
 
+    void restoreArchiveLink(User user, String shortLink, String owner);
+
     void deleteFreeLink(String shortLink);
 
     List<User> getUsers(int offset, int recordsOnPage);

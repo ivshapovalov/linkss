@@ -546,7 +546,85 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                             autorizedUser.getUserName(), shortLink));
                 }
             }
-            syncCommandsLinks.hdel(owner,shortLink);
+            syncCommandsLinks.hdel(owner, shortLink);
+        }
+    }
+
+    @Override
+    public void restoreArchiveLink(User autorizedUser, String shortLink, String owner) {
+        try (StatefulRedisConnection<String, String> connection = connect();
+             StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
+
+            syncCommands.select(DB_ARCHIVE_NUMBER);
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+            if (syncCommandsLinks.exists(owner) != 1) {
+                throw new RuntimeException(String.format("Archive of user '%s' is not exists",
+                        owner));
+            }
+            if (!autorizedUser.isAdmin()) {
+                if (!syncCommandsLinks.hexists(autorizedUser.getUserName(), shortLink)) {
+                    throw new RuntimeException(String.format("User '%s' does not have archive " +
+                                    "link '%s'",
+                            autorizedUser.getUserName(), shortLink));
+                }
+            }
+            FullLink fullLink = null;
+            try {
+                fullLink = new ObjectMapper().readValue(syncCommandsLinks.hget(owner, shortLink),
+                        FullLink
+                        .class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            synchronized (redisClient) {
+                synchronized (redisClientLinks) {
+
+                    syncCommands.select(DB_WORK_NUMBER);
+                    syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+                    String user = syncCommandsLinks.hget(KEY_USERS, fullLink.getUserName());
+                    if (user == null) {
+                        if (syncCommands.hget(KEY_USERS, fullLink.getUserName()) == null) {
+                            String json = "";
+                            try {
+                                json = new ObjectMapper().writeValueAsString(new User(fullLink
+                                        .getUserName(), "", false, false));
+                            } catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+                            syncCommands.hset(KEY_USERS, fullLink.getUserName(), json);
+                        }
+                    } else {
+                        if (syncCommands.hget(KEY_USERS, fullLink.getUserName()) == null) {
+                            syncCommands.hset(KEY_USERS, fullLink.getUserName(), user);
+                        }
+                    }
+
+                    syncCommands.hset(fullLink.getUserName(), fullLink.getKey(), fullLink
+                            .getLink());
+                    if (!syncCommands.hexists(KEY_VISITS,shortLink)) {
+                        syncCommands.hset(KEY_VISITS,shortLink,"0");
+                    }
+                    long visits=Long.parseLong(fullLink.getVisits ());
+                    syncCommands.hincrby(KEY_VISITS, shortLink, visits);
+
+                    String domainName = Util.getDomainName(fullLink.getLink());
+                    if (!syncCommands.hexists(KEY_VISITS_BY_DOMAIN_ACTUAL,domainName)) {
+                        syncCommands.hset(KEY_VISITS_BY_DOMAIN_ACTUAL,domainName,"0");
+                    }
+                    if (!"".equals(fullLink.getLink())) {
+                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,visits );
+                    }
+
+                    syncCommandsLinks.select(DB_LINK_NUMBER);
+                    syncCommandsLinks.set(fullLink.getKey(), fullLink.getLink());
+
+                    syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+                    syncCommandsLinks.hdel(owner, shortLink);
+                }
+            }
         }
     }
 
@@ -825,7 +903,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommands.select(DB_WORK_NUMBER);
-            syncCommandsLinks.select(DB_LINK_NUMBER);
             if (!syncCommands.hexists(KEY_USERS, userName)) {
                 throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
                         userName));
@@ -845,6 +922,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             if (syncCommands.exists(userName) == 1) {
                 deleteAllUserLinksWithHistory(userName, syncCommands, syncCommandsLinks);
             }
+            String json = syncCommands.hget(KEY_USERS, userName);
+            syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
+            syncCommandsLinks.hset(KEY_USERS, userName, json);
             syncCommands.hdel(KEY_USERS, userName);
         }
     }
@@ -916,10 +996,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommandsLinks = connectionLinks.sync();
 
             syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
-            if (syncCommandsLinks.exists(owner) != 1) {
-                throw new RuntimeException(String.format("User '%s' is not exists. Try another name",
-                        owner));
-            }
+
             if (!autorizedUser.isAdmin()) {
                 if (!autorizedUser.getUserName().equals(owner)) {
                     throw new RuntimeException(String.format("User '%s' does not have permissions to " +
