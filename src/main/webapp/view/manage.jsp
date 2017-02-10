@@ -46,10 +46,6 @@
             <td width="10%"><b><a href="/actions/toplinks" class="glyphicon glyphicon-thumbs-up">Top
                 used links</a></b></td>
         </tr>
-        <tr>
-            <td width="10%"><b><a href="/actions/archive" class="glyphicon glyphicon-folder-open">Archive
-                links</a></b></td>
-        </tr>
 
     </table>
 

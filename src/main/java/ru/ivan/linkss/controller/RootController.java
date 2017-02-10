@@ -118,6 +118,7 @@ public class RootController {
         if (link == null || "".equals(link)) {
             return PAGE_MAIN;
         }
+        link=link.trim();
         String path = request.getServletContext().getRealPath("/");
         String context = request.getRequestURL().toString();
         String shortLink = "";

@@ -1,29 +1,17 @@
 package ru.ivan.linkss.repository;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.*;
-
-import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl;
-import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -34,7 +22,7 @@ public class RepositoryTest {
 
     private static final RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
     private static final RedisClient redisClientLinks = RedisClient.create(System.getenv("HEROKU_REDIS_AMBER_URL"));
-    private static final LinkRepository repository=new RedisTwoDBLinkRepositoryImpl(redisClient,redisClientLinks);
+    private static final LinkRepository repository = new RedisTwoDBLinkRepositoryImpl(redisClient, redisClientLinks);
 
     //REDIS 1
     private static final int DB_WORK_NUMBER = 0;
@@ -66,7 +54,7 @@ public class RepositoryTest {
     }
 
     @Before
-    public void before(){
+    public void before() {
         repository.init();
         connection = connect();
         syncCommands = connection.sync();
@@ -76,8 +64,9 @@ public class RepositoryTest {
         //syncCommands.flushdb();
 
     }
+
     @After
-    public void after(){
+    public void after() {
         syncCommands.flushall();
         connection.close();
         syncCommandsLinks.flushall();
@@ -114,88 +103,83 @@ public class RepositoryTest {
 
 
     @Test
-    public void initTest()
-    {
+    public void initTest() {
         syncCommands.select(DB_WORK_NUMBER);
-        String expected="255";
+        String expected = "255";
         syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, expected);
-        String actual=syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
+        String actual = syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
         assertEquals(expected, actual);
     }
 
     @Test
-    public void getDBLinkSizeTest()
-    {
-        Long expected=0L;
-        Long actual=repository.getDBLinksSize();
-        assertEquals(expected,actual);
+    public void getDBLinkSizeTest() {
+        Long expected = 0L;
+        Long actual = repository.getDBLinksSize();
+        assertEquals(expected, actual);
 
         //
         repository.createKeys(1);
-        repository.createShortLink(new User("user","password"),"ya.ru");
-        repository.createShortLink(new User("user","password"),"mail.ru");
-        expected=2L;
-        actual=repository.getDBLinksSize();
-        assertEquals(expected,actual);
+        repository.createShortLink(new User("user", "password"), "ya.ru");
+        repository.createShortLink(new User("user", "password"), "mail.ru");
+        expected = 2L;
+        actual = repository.getDBLinksSize();
+        assertEquals(expected, actual);
     }
 
     @Test
-    public void getDBFreeLinkSizeTest()
-    {
+    public void getDBFreeLinkSizeTest() {
         repository.createKeys(1);
-        Long expected=62L;
-        Long actual=repository.getDBFreeLinksSize();
-        assertEquals(expected,actual);
+        Long expected = 62L;
+        Long actual = repository.getDBFreeLinksSize();
+        assertEquals(expected, actual);
 
     }
 
     @Test
-    public void getRandomShortLinkTest()
-    {
+    public void getRandomShortLinkTest() {
         syncCommandsLinks.select(DB_LINK_NUMBER);
-        syncCommandsLinks.set("shortLink","link");
-        String expected="shortLink";
-        String actual=repository.getRandomShortLink();
-        assertEquals(expected,actual);
+        syncCommandsLinks.set("shortLink", "link");
+        String expected = "shortLink";
+        String actual = repository.getRandomShortLink();
+        assertEquals(expected, actual);
 
     }
 
     @Test
-    public void createShortLinkTest()
-    {
+    public void createShortLinkTest() {
         syncCommands.select(DB_FREELINK_NUMBER);
-        syncCommands.append("shortLink","");
-        String expected="shortLink";
-        String expectedLink="link";
-        String actual=repository.createShortLink(new User("user","password"),expectedLink);
-        String actualLink=repository.getLink(actual);
-        assertEquals(expected,actual);
-        assertEquals(expectedLink,actualLink);
+        syncCommands.append("shortLink", "");
+        String expected = "shortLink";
+        String expectedLink = "link";
+        String actual = repository.createShortLink(new User("user", "password"), expectedLink);
+        String actualLink = repository.getLink(actual);
+        assertEquals(expected, actual);
+        assertEquals(expectedLink, actualLink);
 
     }
+
     @Test
-    public void createUserTest()
-    {
+    public void createUserTest() {
         syncCommands.select(DB_WORK_NUMBER);
-        String userName="user1";
-        String expectedPassword="password";
-        repository.createUser(new User(userName,expectedPassword));
-        String actualPassword=syncCommands.hget(KEY_USERS,userName);
+        String userName = "user1";
+        String expectedPassword = "password";
+        repository.createUser(new User(userName, expectedPassword));
+        String actualPassword = syncCommands.hget(KEY_USERS, userName);
 //        assertEquals(expectedPassword,actualPassword);
-        assertThat(expectedPassword,is(actualPassword));
+        assertThat(expectedPassword, is(actualPassword));
 
     }
 
-    @Test (expected = RuntimeException.class)
-    public void createExistedUserTest()
-    {
+    @Test(expected = RuntimeException.class)
+    public void createExistedUserTest() {
         syncCommands.select(DB_WORK_NUMBER);
-        String userName="user";
-        String expectedPassword="password";
+        String userName = "user";
+        String expectedPassword = "password";
 
-        repository.createUser(new User(userName,expectedPassword));
+        repository.createUser(new User(userName, expectedPassword));
 
     }
+
     @Test
     @Ignore
     public void testScan()
@@ -203,27 +187,32 @@ public class RepositoryTest {
     {
         List<String> freeLinks = new ArrayList<>();
         syncCommands.select(DB_FREELINK_NUMBER);
-        KeyScanCursor cursor=syncCommands.scan();
-        while (!cursor.isFinished())  {
-            List<String> keys=cursor.getKeys();
-            keys.stream().forEach(key->freeLinks.add(key));
-            cursor=syncCommands.scan(cursor);
+        KeyScanCursor cursor = syncCommands.scan();
+        while (!cursor.isFinished()) {
+            List<String> keys = cursor.getKeys();
+            keys.stream().forEach(key -> freeLinks.add(key));
+            cursor = syncCommands.scan(cursor);
         }
     }
 
     @Test
     @Ignore
-    public void testJson()
+    public void testUrl()
 
     {
-        User user=new User("name1","password1","email1");
-        try {
-            String json = new ObjectMapper().writeValueAsString(user);
-            User user1=  new ObjectMapper().readValue(json,User.class);
-            System.out.println(user1);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String link="  https://dashboard.heroku.com/apps/linkss/deploy/github";
+        match(link);
+
+    }
+
+    void match(String link) {
+        final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\" +
+                ".[a-z0-9-]+)+([/?].*)?$";
+        Pattern p = Pattern.compile(URL_REGEX);
+        Matcher m = p.matcher(link);
+        System.out.println(m.find()+":"+link);
+
+
     }
 
 }
