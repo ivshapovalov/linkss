@@ -30,6 +30,12 @@
             <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
             <version>3.3.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.webjars</groupId>
+                    <artifactId>jquery</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--Servlet -->
@@ -129,6 +135,7 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    
                 </configuration>
             </plugin>
             <plugin>
@@ -148,7 +155,9 @@
                                     <destFileName>webapp-runner.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
+                            
                         </configuration>
+                        
                     </execution>
                 </executions>
             </plugin>

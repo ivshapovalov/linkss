@@ -80,7 +80,7 @@ public class Populator {
     }
 
     public static void main(String[] args) {
-        //        RedisClient redisClient = RedisClient.create
+//                RedisClient redisClient = RedisClient.create
 //            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
 //       RedisClient redisClientLinks = RedisClient.create
 //            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
@@ -97,6 +97,7 @@ public class Populator {
         populator.setRepository(repository);
         populator.setService(service);
         populator.setContext("localhost:8080\\");
+        populator.setContext("links.herokuapp.com\\");
         populator.setPath("C:\\JavaStudy\\my\\linkss\\target\\linkss\\");
         populator.init();
 

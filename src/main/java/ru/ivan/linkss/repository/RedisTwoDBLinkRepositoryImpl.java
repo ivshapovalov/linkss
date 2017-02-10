@@ -659,6 +659,9 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommandsLinks.select(DB_LINK_NUMBER);
             long seconds = syncCommandsLinks.ttl(shortLink);
+            if (seconds<0) {
+                seconds=0;
+            }
 
             return seconds;
         }

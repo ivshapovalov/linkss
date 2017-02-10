@@ -272,7 +272,7 @@ public class ActionsController {
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ATTRIBUTE_LINKS
             + WEB_SEPARTOR+ ACTION_EDIT, method = RequestMethod.GET)
-    public String updateuserlink(Model model,
+    public String editLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
                                  @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                                  HttpSession session,

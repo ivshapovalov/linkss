@@ -4,60 +4,61 @@
 <%@include file="header.jsp" %>
 
 <body>
-<script type="text/javascript" src="/resources/js/makeAdmin.js" defer></script>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-      crossorigin="anonymous">
-<link rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
-      integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
-      crossorigin="anonymous">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-        crossorigin="anonymous"></script>
-<style type="text/css">
-    .bs-example {
-        margin: 20px;
-    }
-</style>
 <br>
-<H3>
-    User '${user.getUserName()}'
-</H3>
 
 <form action="/actions/user" method="post">
     <input type="hidden" name="oldUserName" value="${oldUserName}">
-    <table border="1" class="table">
-        <tr>
-            <td><label path="userName">User</label></td>
-            <td>
-                <input type="text" name="userName" value=${user.userName}></td>
-        </tr>
-        <tr>
-            <td><label path="email">E-mail</label></td>
-            <td>
-                <input type="text" name="email" value=${user.email}></td>
-        </tr>
-        <tr>
-            <td><label path="password">Password</label></td>
-            <td>
-                <input type="password" name="password" value=${user.password}></td>
-        </tr>
-        <tr>
-
-            <td><label path="isAdmin">Admin</label></td>
-            <td>
-                <input type="checkbox" onClick="makeAdmin(this)" id="admin" name="admin"
-                       value="${user.admin}" <c:if
-                        test="${user.admin}"> checked=" checked"</c:if>>
-            </td>
-
-        </tr>
-    </table>
-    <br>
-    <input type="submit" value="Update"/>
-
+        <form class="form-horizontal">
+            <div class="row">
+                <div class="form-group">
+                    <label class="control-label col-xs-2"><h4>User '${user.getUserName()}'</h4></label>
+                    <div class="col-xs-2">
+                        <button type="submit" class="btn btn-primary"><h4>Update user</h4></button>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <div class="form-group">
+                    <label for="userName" class="control-label col-xs-2">Name</label>
+                    <div class="col-xs-2">
+                        <input type="userName" class="form-control" id="userName" name="userName"
+                               placeholder="userName" value="${user.userName}">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+            <div class="form-group">
+                <label for="email" class="control-label col-xs-2">E-mail</label>
+                <div class="col-xs-2">
+                    <input type="email" class="form-control" id="email" name="email"
+                           placeholder="email" value="${user.email}">
+                </div>
+            </div>
+            </div>
+            <div class="row">
+            <div class="form-group">
+                <label for="password" class="control-label col-xs-2">Password</label>
+                <div class="col-xs-2">
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Password" value="${user.password}">
+                </div>
+            </div>
+            </div>
+            <div class="row">
+            <div class="form-group">
+                <label class="control-label col-xs-2">Admin</label>
+                <div class="col-xs-2">
+                    <div class="isAdmin">
+                        <label> <input type="checkbox" onClick="makeAdmin(this)" id="admin"
+                                       name="admin"
+                                       value="${user.admin}" <c:if
+                                test="${user.admin}"> checked=" checked"</c:if>></label>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </form>
 </form>
 </body>
 </html>
