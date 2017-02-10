@@ -83,7 +83,7 @@ public class RootController {
         String filePath = request.getServletContext().getRealPath("") + "resources" + FILE_SEPARTOR + shortLink;
         File imageOnDisk = new File(filePath);
         if (!imageOnDisk.exists()) {
-            service.downloadImageFromS3(filePath, key);
+            //service.downloadImageFromS3(filePath, key);
         }
         FileInputStream fis = new FileInputStream(imageOnDisk);
         int bytes;

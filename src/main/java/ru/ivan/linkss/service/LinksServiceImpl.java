@@ -103,7 +103,7 @@ public class LinksServiceImpl implements LinksService {
 
             try {
                 createQRImage(imagePath, shortLink, shortLinkPath);
-                sendFileToS3(imagePath, shortLink);
+                //sendFileToS3(imagePath, shortLink);
             } catch (IOException | WriterException e) {
                 e.printStackTrace();
             }
