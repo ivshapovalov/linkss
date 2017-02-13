@@ -35,6 +35,8 @@ public class RootController {
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
 
+    private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
+
     private static final String ATTRIBUTE_MESSAGE = "message";
     private static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\" +
             ".[a-z0-9-]+)+([/?].*)?$";
@@ -42,9 +44,9 @@ public class RootController {
     @RequestMapping(value = {WEB_SEPARTOR, WEB_SEPARTOR+ PAGE_MAIN}, method = RequestMethod.GET)
     public String main(Model model,
                        HttpSession session) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty()) {
-            model.addAttribute("autorizedUser", autorizedUser);
+            model.addAttribute(ATTRIBUTE_AUTORIZED_USER, autorizedUser);
         }
         return PAGE_MAIN;
     }
@@ -83,7 +85,7 @@ public class RootController {
         String filePath = request.getServletContext().getRealPath("") + "resources" + FILE_SEPARTOR + shortLink;
         File imageOnDisk = new File(filePath);
         if (!imageOnDisk.exists()) {
-            //service.downloadImageFromS3(filePath, key);
+            service.downloadImageFromFTP(filePath, key);
         }
         FileInputStream fis = new FileInputStream(imageOnDisk);
         int bytes;
@@ -112,7 +114,7 @@ public class RootController {
     @RequestMapping(value = WEB_SEPARTOR, method = RequestMethod.POST)
     public String createShortLink(Model model, HttpSession session,
                                   HttpServletRequest request) {
-        User autorizedUser = (User) session.getAttribute("autorizedUser");
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
         String link = request.getParameter("link");
         if (link == null || "".equals(link)) {

@@ -39,6 +39,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
+    public void clear() {
+        repository.clear();
+    }
+
+    @Override
     public long getDBLinksSize() {
         return repository.getDBLinksSize();
     }

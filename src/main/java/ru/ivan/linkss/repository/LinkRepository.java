@@ -77,4 +77,5 @@ public interface LinkRepository {
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 
+    void clear();
 }

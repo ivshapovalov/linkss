@@ -13,7 +13,7 @@ import java.util.Date;
 public class ScheduledTasks {
 
     @Autowired
-    private LinksService service;
+    LinksService service;
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 

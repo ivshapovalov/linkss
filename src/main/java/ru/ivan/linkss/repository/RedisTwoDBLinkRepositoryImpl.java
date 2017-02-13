@@ -393,6 +393,11 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public void clear() {
+        init();
+    }
+
+    @Override
     public void createUser(User user) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
