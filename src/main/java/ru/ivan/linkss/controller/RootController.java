@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public class RootController {
 
     @Autowired
-    private LinksService service;
+    LinksService service;
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String WEB_SEPARTOR = "/";
@@ -36,6 +36,11 @@ public class RootController {
     private static final String PAGE_MAIN = "main";
 
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
+    private static final String ATTRIBUTE_USER = "user";
+    private static final String ATTRIBUTE_SHORTLINK = "shortLink";
+    private static final String ATTRIBUTE_LINK = "link";
+    private static final String ATTRIBUTE_IMAGE = "image";
+
 
     private static final String ATTRIBUTE_MESSAGE = "message";
     private static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\" +
@@ -57,7 +62,6 @@ public class RootController {
 
         String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1));
         if (link != null) {
-
             Pattern p = Pattern.compile(URL_REGEX);
             Matcher m = p.matcher(link);
             if(!m.find()) {
@@ -116,7 +120,7 @@ public class RootController {
                                   HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
-        String link = request.getParameter("link");
+        String link = request.getParameter(ATTRIBUTE_LINK);
         if (link == null || "".equals(link)) {
             return PAGE_MAIN;
         }
@@ -133,10 +137,10 @@ public class RootController {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");
             return PAGE_ERROR;
         }
-        model.addAttribute("user", autorizedUser);
-        model.addAttribute("image", FILE_SEPARTOR + shortLink + IMAGE_EXTENSION);
-        model.addAttribute("link", link);
-        model.addAttribute("shortLink", request.getRequestURL() + shortLink);
+        model.addAttribute(ATTRIBUTE_USER, autorizedUser);
+        model.addAttribute(ATTRIBUTE_IMAGE, FILE_SEPARTOR + shortLink + IMAGE_EXTENSION);
+        model.addAttribute(ATTRIBUTE_LINK, link);
+        model.addAttribute(ATTRIBUTE_SHORTLINK, request.getRequestURL() + shortLink);
         return PAGE_MAIN;
     }
 }
