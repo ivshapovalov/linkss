@@ -54,7 +54,7 @@ public class FTPManager {
     public void deleteAllFiles() {
         try {
             FTPFile[] files = this.ftp.listFiles();
-            if (files.length != 0) {
+            if (files!=null&&files.length != 0) {
                 Arrays.asList(files).forEach(file -> {
                     try {
                         if (file.isFile()) {
