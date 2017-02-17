@@ -57,7 +57,9 @@ public class FTPManager {
             if (files.length != 0) {
                 Arrays.asList(files).forEach(file -> {
                     try {
-                        ftp.deleteFile(file.getName());
+                        if (file.isFile()) {
+                            ftp.deleteFile(file.getName());
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
