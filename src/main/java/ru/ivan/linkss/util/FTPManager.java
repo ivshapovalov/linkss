@@ -8,7 +8,6 @@ import org.apache.commons.net.ftp.FTPReply;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class FTPManager {
 
@@ -37,7 +36,7 @@ public class FTPManager {
     }
 
     public void downloadFile(String localFilePath, String key) {
-        try (FileOutputStream fos = new FileOutputStream(key+"."+ IMAGE_EXTENSION)) {
+        try (FileOutputStream fos = new FileOutputStream(key + "." + IMAGE_EXTENSION)) {
             this.ftp.retrieveFile(localFilePath, fos);
         } catch (IOException e) {
             e.printStackTrace();
@@ -46,7 +45,7 @@ public class FTPManager {
 
     public void deleteFile(String key) {
         try {
-            this.ftp.deleteFile(key+ "."+ IMAGE_EXTENSION);
+            this.ftp.deleteFile(key + "." + IMAGE_EXTENSION);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,14 +53,16 @@ public class FTPManager {
 
     public void deleteAllFiles() {
         try {
-            List<FTPFile> files= new ArrayList<>(Arrays.asList(this.ftp.listFiles()));
-            files.forEach(file->{
-                try {
-                    ftp.deleteFile(file.getName());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
+            FTPFile[] files = this.ftp.listFiles();
+            if (files.length != 0) {
+                Arrays.asList(files).forEach(file -> {
+                    try {
+                        ftp.deleteFile(file.getName());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,7 +74,7 @@ public class FTPManager {
         try {
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
             File firstLocalFile = new File(localFilePath);
-            String firstRemoteFile = key+"."+ IMAGE_EXTENSION;
+            String firstRemoteFile = key + "." + IMAGE_EXTENSION;
             InputStream inputStream = new FileInputStream(firstLocalFile);
             boolean done = ftp.storeFile(firstRemoteFile, inputStream);
             inputStream.close();

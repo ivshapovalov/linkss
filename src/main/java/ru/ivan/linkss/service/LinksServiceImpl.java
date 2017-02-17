@@ -281,10 +281,12 @@ public class LinksServiceImpl implements LinksService {
         //local
         String filePath = path + "resources\\";
         File directory = new File(filePath);
-        List<File> files = new ArrayList<>(Arrays.asList(directory.listFiles()));
-        files.forEach(file -> {
-            if (file.isFile())file.delete();
-        });
+        File[] files=directory.listFiles();
+        if (files.length!=0) {
+             Arrays.asList(files).forEach(file -> {
+                if (file.isFile()) file.delete();
+            });
+        }
 
     }
 
