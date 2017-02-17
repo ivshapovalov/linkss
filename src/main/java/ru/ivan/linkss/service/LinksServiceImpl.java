@@ -31,7 +31,7 @@ import java.util.List;
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;
-    private static final String IMAGE_FILE_EXTENSION = ".png";
+    private static final String IMAGE_EXTENSION = "png";
     private final String fileSepartor = File.separator;
 
     @Autowired
@@ -107,7 +107,8 @@ public class LinksServiceImpl implements LinksService {
 
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
-            String imagePath = path + "resources" + fileSepartor + shortLink + ".png";
+            String imagePath = path + "resources" + fileSepartor + shortLink +
+                    "."+ IMAGE_EXTENSION;
             String shortLinkPath = context + shortLink;
 
             try {
@@ -186,7 +187,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteArchiveLink(User user, String shortLink, String owner, String path) {
         repository.deleteArchiveLink(user, shortLink, owner);
-        String imagePath = path + "resources" + fileSepartor + shortLink + ".png";
+        String imagePath = path + "resources" + fileSepartor + shortLink + "."+ IMAGE_EXTENSION;
 
         deleteImage(path, shortLink);
     }
@@ -259,7 +260,7 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources\\" + key + IMAGE_FILE_EXTENSION;
+        String filePath = path + "resources\\" + key + "."+ IMAGE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
 
@@ -320,6 +321,6 @@ public class LinksServiceImpl implements LinksService {
                 }
             }
         }
-        ImageIO.write(image, IMAGE_FILE_EXTENSION, qrFile);
+        ImageIO.write(image, IMAGE_EXTENSION, qrFile);
     }
 }

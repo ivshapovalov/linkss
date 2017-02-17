@@ -1,6 +1,5 @@
 package ru.ivan.linkss.util;
 
-import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -13,7 +12,7 @@ import java.util.List;
 
 public class FTPManager {
 
-    private static final String IMAGE_FILE_EXTENSION = ".png";
+    private static final String IMAGE_EXTENSION = "png";
     FTPClient ftp = null;
 
     public FTPManager() throws Exception {
@@ -38,7 +37,7 @@ public class FTPManager {
     }
 
     public void downloadFile(String localFilePath, String key) {
-        try (FileOutputStream fos = new FileOutputStream(key+IMAGE_FILE_EXTENSION)) {
+        try (FileOutputStream fos = new FileOutputStream(key+"."+ IMAGE_EXTENSION)) {
             this.ftp.retrieveFile(localFilePath, fos);
         } catch (IOException e) {
             e.printStackTrace();
@@ -47,7 +46,7 @@ public class FTPManager {
 
     public void deleteFile(String key) {
         try {
-            this.ftp.deleteFile(key+ IMAGE_FILE_EXTENSION);
+            this.ftp.deleteFile(key+ "."+ IMAGE_EXTENSION);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,7 +73,7 @@ public class FTPManager {
         try {
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
             File firstLocalFile = new File(localFilePath);
-            String firstRemoteFile = key+IMAGE_FILE_EXTENSION;
+            String firstRemoteFile = key+"."+ IMAGE_EXTENSION;
             InputStream inputStream = new FileInputStream(firstLocalFile);
             boolean done = ftp.storeFile(firstRemoteFile, inputStream);
             inputStream.close();

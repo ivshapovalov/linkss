@@ -29,8 +29,8 @@ public class RootController {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String WEB_SEPARTOR = "/";
-    private static final String IMAGE_EXTENSION = ".png";
-    private static final String ICON_EXTENSION = ".ico";
+    private static final String IMAGE_EXTENSION_WITH_DOT = ".png";
+    private static final String ICON_EXTENSION_WITH_DOT = ".ico";
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
@@ -79,7 +79,7 @@ public class RootController {
         return PAGE_ERROR;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*"+IMAGE_EXTENSION, method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR+"*"+ IMAGE_EXTENSION_WITH_DOT, method = RequestMethod.GET)
     public void openImage(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
@@ -99,7 +99,7 @@ public class RootController {
         fis.close();
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*"+ICON_EXTENSION, method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR+"*"+ ICON_EXTENSION_WITH_DOT, method = RequestMethod.GET)
     public void openIcon(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
@@ -138,7 +138,7 @@ public class RootController {
             return PAGE_ERROR;
         }
         model.addAttribute(ATTRIBUTE_USER, autorizedUser);
-        model.addAttribute(ATTRIBUTE_IMAGE, FILE_SEPARTOR + shortLink + IMAGE_EXTENSION);
+        model.addAttribute(ATTRIBUTE_IMAGE, FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT);
         model.addAttribute(ATTRIBUTE_LINK, link);
         model.addAttribute(ATTRIBUTE_SHORTLINK, request.getRequestURL() + shortLink);
         return PAGE_MAIN;

@@ -30,7 +30,7 @@ public class ActionsController {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String RESOURCE_FOLDER = "resources";
-    private static final String IMAGE_EXTENSION = ".png";
+    private static final String IMAGE_EXTENSION_WITH_DOT = ".png";
 
     private static final String WEB_SEPARTOR = "/";
     private static final String PAGE_ERROR = "error";
@@ -367,7 +367,7 @@ public class ActionsController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION;
+                    + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
             if (!imageOnDisk.exists()) {
                 service.downloadImageFromFTP(realImagePath, shortLink);
@@ -375,7 +375,7 @@ public class ActionsController {
 
             String link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
-            String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION;
+            String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION_WITH_DOT;
             FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
                     "", urlImagePath,
                     owner, service.getLinkExpirePeriod(shortLink));
@@ -733,7 +733,7 @@ public class ActionsController {
         });
         populatorThread.setName("Populator");
         populatorThread.start();
-        return PAGE_MANAGE;
+        return "redirect:"+PAGE_MANAGE;
     }
 
     @RequestMapping(value = ACTION_CHECK_EXPIRED, method = RequestMethod.GET)
