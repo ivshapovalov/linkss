@@ -260,7 +260,7 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources\\" + key + "."+ IMAGE_EXTENSION;
+        String filePath = path + "resources"+fileSepartor + key + "."+ IMAGE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
 
@@ -279,7 +279,7 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources\\";
+        String filePath = path + "resources"+fileSepartor;
         File directory = new File(filePath);
         File[] files=directory.listFiles();
         if (files!=null && files.length!=0) {
