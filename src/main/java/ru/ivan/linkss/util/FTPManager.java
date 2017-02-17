@@ -3,9 +3,13 @@ package ru.ivan.linkss.util;
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class FTPManager {
 
@@ -44,6 +48,22 @@ public class FTPManager {
     public void deleteFile(String key) {
         try {
             this.ftp.deleteFile(key+ IMAGE_FILE_EXTENSION);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteAllFiles() {
+        try {
+            List<FTPFile> files= new ArrayList<>(Arrays.asList(this.ftp.listFiles()));
+            files.forEach(file->{
+                try {
+                    ftp.deleteFile(file.getName());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
         } catch (IOException e) {
             e.printStackTrace();
         }

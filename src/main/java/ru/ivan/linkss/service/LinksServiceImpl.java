@@ -21,6 +21,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -40,8 +42,9 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void clear() {
+    public void clear(String path) {
         repository.clear();
+        deleteImages(path);
     }
 
     @Override
@@ -181,11 +184,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void deleteArchiveLink(User user, String shortLink, String owner,String path) {
+    public void deleteArchiveLink(User user, String shortLink, String owner, String path) {
         repository.deleteArchiveLink(user, shortLink, owner);
         String imagePath = path + "resources" + fileSepartor + shortLink + ".png";
 
-        deleteImage(path,shortLink);
+        deleteImage(path, shortLink);
     }
 
     @Override
@@ -243,7 +246,7 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
     }
 
-    private void deleteImage(String path,String key) {
+    private void deleteImage(String path, String key) {
 
         FTPManager ftpManager =
                 null;
@@ -256,9 +259,31 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath=path+"resources\\"+key+IMAGE_FILE_EXTENSION;
+        String filePath = path + "resources\\" + key + IMAGE_FILE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
+
+    }
+
+    private void deleteImages(String path) {
+
+        FTPManager ftpManager =
+                null;
+        try {
+            ftpManager = new FTPManager();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.deleteAllFiles();
+        ftpManager.disconnect();
+
+        //local
+        String filePath = path + "resources\\";
+        File directory = new File(filePath);
+        List<File> files = new ArrayList<>(Arrays.asList(directory.listFiles()));
+        files.forEach(file -> {
+            if (file.isFile())file.delete();
+        });
 
     }
 

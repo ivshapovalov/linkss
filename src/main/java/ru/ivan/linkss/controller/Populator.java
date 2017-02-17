@@ -110,8 +110,6 @@ public class Populator {
 
     public void init() {
 
-        repository.init();
-
         users = new ArrayList<>();
         for (int i = 0; i < USERS; i++) {
             try {

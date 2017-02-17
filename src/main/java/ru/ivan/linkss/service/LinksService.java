@@ -14,7 +14,7 @@ public interface LinksService {
 
     String getRandomShortLink();
 
-    void clear();
+    void clear(String path);
 
     String createShortLink(User autorizedUser, String link, String path, String context);
 

@@ -724,6 +724,7 @@ public class ActionsController {
         Thread populatorThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                service.clear(path);
                 Populator populator = applicationContext.getBean(Populator.class);
                 populator.setPath(path);
                 populator.setContext(context);
