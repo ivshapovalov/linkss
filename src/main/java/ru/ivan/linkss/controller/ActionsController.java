@@ -247,8 +247,9 @@ public class ActionsController {
             return PAGE_ERROR;
         }
 
+        String path = request.getServletContext().getRealPath("/");
         try {
-            service.deleteArchiveLink(autorizedUser, shortLink, owner);
+            service.deleteArchiveLink(autorizedUser, shortLink, owner, path);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 

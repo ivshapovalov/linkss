@@ -7,6 +7,8 @@ Short link repo service on Heroku
 ####Other:zxing QR code + FTP Storage
 ####Front - Bootstrap+JQuery
 
+### <a href="http://linkss.herokuapp.com/" target=_blank>Демо разрабатываемого приложения</a>
+
 
 ####REDIS INSTANCE 1
 #####redis:0 WORK_DB

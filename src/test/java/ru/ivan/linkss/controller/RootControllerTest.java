@@ -24,10 +24,7 @@ public class RootControllerTest {
 
     private static final String ATTRIBUTE_MESSAGE = "message";
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
-    private static final String ATTRIBUTE_USER = "user";
-    private static final String ATTRIBUTE_SHORTLINK = "shortLink";
     private static final String ATTRIBUTE_LINK = "link";
-    private static final String ATTRIBUTE_IMAGE = "image";
 
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_MESSAGE = "message";

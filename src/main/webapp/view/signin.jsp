@@ -21,5 +21,9 @@
         </tr>
     </table>
 </form:form>
+
+<h3> Defaults</h3>
+<b>User - admin, password - admin</b><br>
+<b>User - user,  password - user </b>
 </body>
 </html>

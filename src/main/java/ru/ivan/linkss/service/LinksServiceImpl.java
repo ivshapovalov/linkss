@@ -29,6 +29,7 @@ import java.util.List;
 public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;
+    private static final String IMAGE_FILE_EXTENSION = ".png";
     private final String fileSepartor = File.separator;
 
     @Autowired
@@ -180,8 +181,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void deleteArchiveLink(User user, String shortLink, String owner) {
+    public void deleteArchiveLink(User user, String shortLink, String owner,String path) {
         repository.deleteArchiveLink(user, shortLink, owner);
+        String imagePath = path + "resources" + fileSepartor + shortLink + ".png";
+
+        deleteImage(path,shortLink);
     }
 
     @Override
@@ -239,13 +243,31 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
     }
 
+    private void deleteImage(String path,String key) {
+
+        FTPManager ftpManager =
+                null;
+        try {
+            ftpManager = new FTPManager();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ftpManager.deleteFile(key);
+        ftpManager.disconnect();
+
+        //local
+        String filePath=path+"resources\\"+key+IMAGE_FILE_EXTENSION;
+        File imageFile = new File(filePath);
+        imageFile.delete();
+
+    }
+
     @Override
     public void createQRImage(String filePath, String shortLink, String fullShortLink) throws
             WriterException,
             IOException {
 
         int size = 125;
-        String fileType = "png";
         File qrFile = new File(filePath);
 
         // Create the ByteMatrix for the QR-Code that encodes the given String
@@ -273,6 +295,6 @@ public class LinksServiceImpl implements LinksService {
                 }
             }
         }
-        ImageIO.write(image, fileType, qrFile);
+        ImageIO.write(image, IMAGE_FILE_EXTENSION, qrFile);
     }
 }

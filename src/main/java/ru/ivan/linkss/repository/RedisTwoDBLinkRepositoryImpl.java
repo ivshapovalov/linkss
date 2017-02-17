@@ -1068,7 +1068,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                             .collect(Collectors.toList()))
                     .flatMap(Collection::stream)
                     .map(fullLink -> {
-                        System.out.println(fullLink.getKey());
                         String shortLink = fullLink.getKey();
                         String link = syncCommands.hget(fullLink.getUserName(), fullLink.getKey());
                         decreaseVisits(shortLink, fullLink.getUserName(), link, syncCommands,

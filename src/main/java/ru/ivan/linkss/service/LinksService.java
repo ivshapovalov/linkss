@@ -43,7 +43,7 @@ public interface LinksService {
 
     void deleteUserLink(User user, String shortLink, String owner);
 
-    void deleteArchiveLink(User user, String shortLink, String owner);
+    void deleteArchiveLink(User user, String shortLink, String owner,String path);
 
     void restoreArchiveLink(User user, String shortLink, String owner);
 
@@ -78,6 +78,7 @@ public interface LinksService {
     FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
+
 
     void downloadImageFromFTP(String filePath, String key);
 
