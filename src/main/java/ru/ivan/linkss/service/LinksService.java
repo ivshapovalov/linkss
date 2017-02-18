@@ -80,7 +80,7 @@ public interface LinksService {
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
 
 
-    void downloadImageFromFTP(String filePath, String key);
+    boolean downloadImageFromFTP(String remote, String local);
 
     void deleteFreeLink(String shortLink);
 }

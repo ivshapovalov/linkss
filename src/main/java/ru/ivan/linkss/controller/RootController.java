@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.User;
@@ -34,6 +35,7 @@ public class RootController {
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
+    private static final String PAGE_IMAGE = "image";
 
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
     private static final String ATTRIBUTE_USER = "user";
@@ -46,7 +48,7 @@ public class RootController {
     private static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\" +
             ".[a-z0-9-]+)+([/?].*)?$";
 
-    @RequestMapping(value = {WEB_SEPARTOR, WEB_SEPARTOR+ PAGE_MAIN}, method = RequestMethod.GET)
+    @RequestMapping(value = {WEB_SEPARTOR, WEB_SEPARTOR + PAGE_MAIN}, method = RequestMethod.GET)
     public String main(Model model,
                        HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -56,19 +58,20 @@ public class RootController {
         return PAGE_MAIN;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*", method = RequestMethod.GET)
-    public String redirect(Model model,HttpServletRequest request) {
-        String shortLink = request.getServletPath();
+    @RequestMapping(value = WEB_SEPARTOR + "*", method = RequestMethod.GET)
+    public String redirect(Model model, HttpServletRequest request) {
+        String servletPath = request.getServletPath();
 
-        String link = service.visitLink(shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1));
+        String shortLink=servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
+        String link = service.visitLink(shortLink);
         if (link != null) {
             Pattern p = Pattern.compile(URL_REGEX);
             Matcher m = p.matcher(link);
-            if(!m.find()) {
+            if (!m.find()) {
                 model.addAttribute(ATTRIBUTE_MESSAGE, link);
                 return PAGE_MESSAGE;
 
-            }else {
+            } else {
                 if (link.contains(":")) {
                     return "redirect:" + link;
                 } else {
@@ -76,35 +79,49 @@ public class RootController {
                 }
             }
         }
+        model.addAttribute("message",String.format("Link '%s' does not exist",shortLink));
         return PAGE_ERROR;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*"+ IMAGE_EXTENSION_WITH_DOT, method = RequestMethod.GET)
-    public void openImage(HttpServletRequest request, HttpServletResponse response)
+    @RequestMapping(value = WEB_SEPARTOR + "*"  + IMAGE_EXTENSION_WITH_DOT, method =
+            RequestMethod.GET)
+    public void openImage(Model model, HttpServletRequest request, HttpServletResponse response
+                            )
             throws IOException {
         String shortLink = request.getServletPath();
-        OutputStream os = response.getOutputStream();
         String key = shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1, shortLink.lastIndexOf
                 ("."));
-        String filePath = request.getServletContext().getRealPath("") + "resources" + FILE_SEPARTOR + shortLink;
+        String filePath = request.getServletContext().getRealPath("") + "resources" +
+                FILE_SEPARTOR + shortLink;
         File imageOnDisk = new File(filePath);
+        boolean downloaded = true;
         if (!imageOnDisk.exists()) {
-            service.downloadImageFromFTP(filePath, key);
+            downloaded = service.downloadImageFromFTP(key+IMAGE_EXTENSION_WITH_DOT,filePath);
         }
-        FileInputStream fis = new FileInputStream(imageOnDisk);
-        int bytes;
-        while ((bytes = fis.read()) != -1) {
-            os.write(bytes);
+
+        if (downloaded) {
+            OutputStream os = response.getOutputStream();
+            FileInputStream fis = new FileInputStream(imageOnDisk);
+            int bytes;
+            while ((bytes = fis.read()) != -1) {
+                os.write(bytes);
+            }
+            fis.close();
+        }  else {
+            //response.setStatus(404);
+            response.setContentType("text/plain");
+            response.getWriter().write(String.format("Sorry. Image '%s' does not exists",key));
         }
-        fis.close();
     }
 
-    @RequestMapping(value = WEB_SEPARTOR+"*"+ ICON_EXTENSION_WITH_DOT, method = RequestMethod.GET)
+    @RequestMapping(value = WEB_SEPARTOR + "{"+ATTRIBUTE_SHORTLINK+"}" + ICON_EXTENSION_WITH_DOT, method =
+            RequestMethod
+            .GET)
     public void openIcon(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
         OutputStream os = response.getOutputStream();
-        String filePath = request.getServletContext().getRealPath("") + "resources"+FILE_SEPARTOR+"images" +
+        String filePath = request.getServletContext().getRealPath("") + "resources" + FILE_SEPARTOR + "images" +
                 FILE_SEPARTOR + "favicon.ico";
         File imageOnDisk = new File(filePath);
         FileInputStream fis = new FileInputStream(imageOnDisk);
@@ -124,7 +141,7 @@ public class RootController {
         if (link == null || "".equals(link)) {
             return PAGE_MAIN;
         }
-        link=link.trim();
+        link = link.trim();
         String path = request.getServletContext().getRealPath("/");
         String context = request.getRequestURL().toString();
         String shortLink = "";

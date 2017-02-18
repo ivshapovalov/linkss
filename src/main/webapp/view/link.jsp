@@ -79,7 +79,7 @@
             <div class="form-group">
                 <label class="control-label col-xs-2">QR</label>
                 <div class="col-xs-2">
-                    <img src="${fullLink.imageLink}"/>
+                    <img src="${fullLink.imageLink}" alt="QR code does not exists"/>
                 </div>
             </div>
         </div>

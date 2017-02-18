@@ -6,7 +6,6 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class FTPManager {
@@ -35,11 +34,25 @@ public class FTPManager {
         ftp.enterLocalPassiveMode();
     }
 
-    public void downloadFile(String localFilePath, String key) {
-        try (FileOutputStream fos = new FileOutputStream(key + "." + IMAGE_EXTENSION)) {
-            this.ftp.retrieveFile(localFilePath, fos);
+    public boolean downloadFile(String remote, String local) {
+        String names[];
+        try {
+            names = ftp.listNames(remote);
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
+        }
+        if (names == null || names.length == 0) {
+            return false;
+        } else {
+            try (FileOutputStream fos = new FileOutputStream(local)) {
+
+                return ftp.retrieveFile(remote, fos);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
     }
 
@@ -54,7 +67,7 @@ public class FTPManager {
     public void deleteAllFiles() {
         try {
             FTPFile[] files = this.ftp.listFiles();
-            if (files!=null&&files.length != 0) {
+            if (files != null && files.length != 0) {
                 Arrays.asList(files).forEach(file -> {
                     try {
                         if (file.isFile()) {

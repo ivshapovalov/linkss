@@ -369,8 +369,10 @@ public class ActionsController {
             String realImagePath = request.getServletContext().getRealPath("")
                     + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
+            boolean downloaded=true;
             if (!imageOnDisk.exists()) {
-                service.downloadImageFromFTP(realImagePath, shortLink);
+                downloaded=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
+                        realImagePath);
             }
 
             String link = service.getLink(shortLink);

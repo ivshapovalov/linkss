@@ -21,7 +21,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
@@ -81,15 +80,20 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void downloadImageFromFTP(String filePath, String key) {
+    public boolean downloadImageFromFTP(String remote, String local) {
         FTPManager ftpManager = null;
+        boolean downloaded = false;
         try {
             ftpManager = new FTPManager();
+            downloaded = ftpManager.downloadFile(remote, local);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (ftpManager != null) {
+                ftpManager.disconnect();
+            }
         }
-        ftpManager.downloadFile(filePath, key);
-        ftpManager.disconnect();
+        return downloaded;
     }
 
     @Override
@@ -108,7 +112,7 @@ public class LinksServiceImpl implements LinksService {
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
             String imagePath = path + "resources" + fileSepartor + shortLink +
-                    "."+ IMAGE_EXTENSION;
+                    "." + IMAGE_EXTENSION;
             String shortLinkPath = context + shortLink;
 
             try {
@@ -187,7 +191,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteArchiveLink(User user, String shortLink, String owner, String path) {
         repository.deleteArchiveLink(user, shortLink, owner);
-        String imagePath = path + "resources" + fileSepartor + shortLink + "."+ IMAGE_EXTENSION;
+        String imagePath = path + "resources" + fileSepartor + shortLink + "." + IMAGE_EXTENSION;
 
         deleteImage(path, shortLink);
     }
@@ -260,7 +264,7 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources"+fileSepartor + key + "."+ IMAGE_EXTENSION;
+        String filePath = path + "resources" + fileSepartor + key + "." + IMAGE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
 
@@ -279,11 +283,11 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources"+fileSepartor;
+        String filePath = path + "resources" + fileSepartor;
         File directory = new File(filePath);
-        File[] files=directory.listFiles();
-        if (files!=null && files.length!=0) {
-             Arrays.asList(files).forEach(file -> {
+        File[] files = directory.listFiles();
+        if (files != null && files.length != 0) {
+            Arrays.asList(files).forEach(file -> {
                 if (file.isFile()) file.delete();
             });
         }

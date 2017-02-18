@@ -99,11 +99,13 @@ public class Populator {
 
         LinksServiceImpl service = new LinksServiceImpl();
         service.setRepository(repository);
+        String path="C:\\JavaStudy\\my\\linkss\\target\\linkss\\";
+        service.clear(path);
         populator.setRepository(repository);
         populator.setService(service);
         populator.setContext("localhost:8080\\");
         populator.setContext("links.herokuapp.com\\");
-        populator.setPath("C:\\JavaStudy\\my\\linkss\\target\\linkss\\");
+        populator.setPath(path);
         populator.init();
 
     }

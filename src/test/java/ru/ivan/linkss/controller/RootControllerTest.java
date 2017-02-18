@@ -168,6 +168,7 @@ public class RootControllerTest {
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         ServletOutputStream os = Mockito.mock(ServletOutputStream.class);
         ServletContext context = Mockito.mock(ServletContext.class);
+        Model model = Mockito.mock(Model.class);
         String fileName="AA"+IMAGE_EXTENSION;
         Mockito.when(request.getServletPath()).thenReturn("/" + fileName);
         Mockito.when(request.getServletContext()).thenReturn(context);
@@ -180,7 +181,7 @@ public class RootControllerTest {
         createDirAndFile(path+"/resources",fileName);
 
         //when
-        controller.openImage(request, response);
+        controller.openImage(model,request, response);
 
         //then
         Mockito.verify(request).getServletPath();
@@ -195,6 +196,7 @@ public class RootControllerTest {
     public void openImageTestNonExistingFile() throws IOException {
         //given
         LinksService service = Mockito.mock(LinksService.class);
+        Model model = Mockito.mock(Model.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         ServletOutputStream os = Mockito.mock(ServletOutputStream.class);
@@ -218,7 +220,7 @@ public class RootControllerTest {
 
         //when
         controller.service = service;
-        controller.openImage(request, response);
+        controller.openImage(model,request, response);
 
         //then
         Mockito.verify(request).getServletPath();
