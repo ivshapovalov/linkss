@@ -215,7 +215,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             while (!cursor.isFinished()) {
                 List<String> keys = cursor.getKeys();
                 keys.stream().forEach(key -> links.add(key));
-                cursor = syncCommands.scan(cursor);
+                cursor = syncCommandsLinks.scan(cursor);
             }
             List<FullLink> fullStat = links
                     .stream()
@@ -508,7 +508,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public void deleteUserLink(User autorizedUser, String shortLink, String owner) {
+    public void deleteLink(User autorizedUser, String shortLink, String owner) {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -529,6 +529,8 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             String link = syncCommandsLinks.get(shortLink);
             if (link != null) {
                 decreaseVisits(shortLink, owner, link, syncCommands, syncCommandsLinks);
+                //TODO
+                syncCommandsLinks.select(DB_LINK_NUMBER);
                 syncCommandsLinks.del(shortLink);
             }
         }
@@ -1034,7 +1036,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             }
             throw new Exception(String.format("No '%s' in '%s'!", KEY_LENGTH, KEY_PREFERENCES));
         } catch (Exception e) {
-            throw new Exception("Cannot connect to databases!");
+            throw new Exception("Task: Check freelink DB. Cannot connect to databases!");
         }
     }
 
@@ -1052,7 +1054,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             while (!cursor.isFinished()) {
                 List<String> keys = cursor.getKeys();
                 keys.stream().forEach(key -> links.add(key));
-                cursor = syncCommands.scan(cursor);
+                cursor = syncCommandsLinks.scan(cursor);
             }
             List<String> deletedKeys = links
                     .stream()
@@ -1077,7 +1079,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
             return BigInteger.valueOf(deletedKeys.size());
         } catch (Exception e) {
-            throw new Exception("Cannot connect to databases!");
+            throw new Exception("Task: Delete expired links. Cannot connect to databases!");
         }
     }
 

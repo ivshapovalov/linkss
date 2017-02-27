@@ -41,7 +41,7 @@ public interface LinkRepository {
 
     User checkUser(User user);
 
-    void deleteUserLink(User user, String shortLink, String owner);
+    void deleteLink(User user, String shortLink, String owner);
 
     void deleteArchiveLink(User user, String shortLink, String owner);
 

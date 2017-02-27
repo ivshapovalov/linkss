@@ -73,7 +73,7 @@ public class ActionsController {
     private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
 
     @Autowired
-    private LinksService service;
+    LinksService service;
 
     @RequestMapping(value = PAGE_SIGNUP, method = RequestMethod.GET)
     public String registration(Model model)
@@ -102,7 +102,6 @@ public class ActionsController {
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
-            model.addAttribute("linksSize", service.getDBLinksSize());
             model.addAttribute("linksSize", service.getDBLinksSize());
             model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
             model.addAttribute("usersSize", service.getUsersSize(autorizedUser));

@@ -12,11 +12,13 @@ import ru.ivan.linkss.service.LinksService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import static org.junit.Assert.assertEquals;
 
@@ -157,6 +159,7 @@ public class RootControllerTest {
         //then
         Mockito.verify(request).getServletPath();
         Mockito.verify(service).visitLink(Mockito.anyString());
+        Mockito.verify(model).addAttribute(Mockito.anyString(),Mockito.anyString());
         Mockito.verifyNoMoreInteractions(request, model, service);
         assertEquals(PAGE_ERROR, actual);
     }
@@ -193,7 +196,7 @@ public class RootControllerTest {
     }
 
     @Test
-    public void openImageTestNonExistingFile() throws IOException {
+    public void openImageTestNonExistingLocalFile() throws IOException {
         //given
         LinksService service = Mockito.mock(LinksService.class);
         Model model = Mockito.mock(Model.class);
@@ -208,14 +211,15 @@ public class RootControllerTest {
                 .getPath();
         Mockito.when(context.getRealPath("")).thenReturn(path);
         Mockito.when(response.getOutputStream()).thenReturn(os);
-        Mockito.doAnswer(new Answer<String>() {
-            public String answer(InvocationOnMock invocation) throws IOException {
+        Mockito.doAnswer(new Answer<Boolean>() {
+            public Boolean answer(InvocationOnMock invocation) throws IOException {
                 createDirAndFile(path+"/resources",fileName);
-                return "";
+                return true;
             }
         }).when(service).downloadImageFromFTP(Mockito
                 .anyString(), Mockito
                 .anyString());
+
         Mockito.doNothing().when(os).write(Mockito.anyByte());
 
         //when
@@ -228,6 +232,47 @@ public class RootControllerTest {
         Mockito.verify(response).getOutputStream();
         Mockito.verify(context).getRealPath(Mockito.anyString());
         Mockito.verify(service).downloadImageFromFTP(Mockito.anyString(), Mockito.anyString());
+        Mockito.verifyNoMoreInteractions(request, response, context,service);
+        deleteDirAndFile(path+"/resources",fileName);
+    }
+
+    @Test
+    public void openImageTestNonExistingLocalAndFTPFile() throws IOException {
+        //given
+        LinksService service = Mockito.mock(LinksService.class);
+        Model model = Mockito.mock(Model.class);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
+        ServletOutputStream os = Mockito.mock(ServletOutputStream.class);
+        ServletContext context = Mockito.mock(ServletContext.class);
+        PrintWriter printWriter = Mockito.mock(PrintWriter.class);
+        String fileName="AA"+IMAGE_EXTENSION;
+        Mockito.when(request.getServletPath()).thenReturn("/" + fileName);
+        Mockito.when(request.getServletContext()).thenReturn(context);
+        String path = RootControllerTest.class.getProtectionDomain().getCodeSource().getLocation()
+                .getPath();
+        Mockito.when(context.getRealPath("")).thenReturn(path);
+        Mockito.when(response.getOutputStream()).thenReturn(os);
+        Mockito.when(response.getWriter()).thenReturn(printWriter);
+        Mockito.when(service.downloadImageFromFTP(Mockito
+                .anyString(), Mockito
+                .anyString())).thenReturn(false);
+
+        Mockito.doNothing().when(os).write(Mockito.anyByte());
+        Mockito.doNothing().when(printWriter).write(Mockito.anyString());
+
+        //when
+        controller.service = service;
+        controller.openImage(model,request, response);
+
+        //then
+        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getServletContext();
+        Mockito.verify(context).getRealPath(Mockito.anyString());
+        Mockito.verify(service).downloadImageFromFTP(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(response).setContentType(Mockito.anyString());
+        Mockito.verify(response).getWriter();
+        Mockito.verify(printWriter).write(Mockito.anyString());
         Mockito.verifyNoMoreInteractions(request, response, context,service);
         deleteDirAndFile(path+"/resources",fileName);
     }

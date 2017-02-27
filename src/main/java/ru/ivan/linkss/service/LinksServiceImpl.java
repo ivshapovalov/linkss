@@ -185,7 +185,7 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public void deleteUserLink(User user, String shortLink, String owner) {
-        repository.deleteUserLink(user, shortLink, owner);
+        repository.deleteLink(user, shortLink, owner);
     }
 
     @Override

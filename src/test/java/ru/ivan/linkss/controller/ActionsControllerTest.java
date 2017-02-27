@@ -21,77 +21,134 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 
 public class ActionsControllerTest {
-//
-//    private static final String FILE_SEPARTOR = File.separator;
-//    private static final String RESOURCE_FOLDER = "resources";
-//    private static final String IMAGE_EXTENSION = ".png";
-//
-//    private static final String WEB_SEPARTOR = "/";
-//    private static final String PAGE_ERROR = "error";
-//    private static final String PAGE_MESSAGE = "message";
-//    private static final String PAGE_MAIN = "main";
-//    private static final String PAGE_SIGNUP = "signup";
-//    private static final String PAGE_SIGNIN = "signin";
-//    private static final String PAGE_MANAGE = "manage";
-//    private static final String PAGE_REGISTER = "register";
-//    private static final String PAGE_USER = "user";
-//    private static final String PAGE_USERS = "users";
-//    private static final String PAGE_DOMAINS = "domains";
-//    private static final String PAGE_FREE_LINKS = "freelinks";
-//    private static final String PAGE_LINK = "link";
-//    private static final String PAGE_LINKS = "links";
-//    private static final String PAGE_ARCHIVE = "archive";
-//    private static final String ACTION_LOGOUT = "logout";
-//
-//    private static final String ACTION_EDIT = "edit";
-//    private static final String ACTION_LOGIN = "login";
-//    private static final String ACTION_DELETE = "delete";
-//    private static final String ACTION_RESTORE = "restore";
-//    private static final String ACTION_CLEAR = "clear";
-//    private static final String ACTION_POPULATE = "populate";
-//    private static final String ACTION_CHECK_EXPIRED = "checkExpired";
-//
-//    private static final String ATTRIBUTE_USER = "user";
-//    private static final String ATTRIBUTE_LIST = "list";
-//    private static final String ATTRIBUTE_KEY = "key";
-//    private static final String ATTRIBUTE_OLD_KEY = "oldKey";
-//    private static final String ATTRIBUTE_OLD_USERNAME = "oldUserName";
-//    private static final String ATTRIBUTE_OLD_PASSWORD = "oldPassword";
-//    private static final String ATTRIBUTE_FULL_LINK = "fullLink";
-//    private static final String ATTRIBUTE_OWNER = "owner";
-//    private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
-//    private static final String ATTRIBUTE_MESSAGE = "message";
-//    private static final String ATTRIBUTE_ACTION = "action";
-//    private static final String ATTRIBUTE_PAGE = "page";
-//    private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
-//    private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
-//
-//    ActionsController controller;
-//
-//    @Before
-//    public void setUp() {
-//        controller = new ActionsController();
-//    }
-//
-//
-//
-//    @Test
-//    public void mainTestOk() {
-//        //given
-//        HttpSession session = Mockito.mock(HttpSession.class);
-//        Model model = Mockito.mock(Model.class);
-//        User user = new User("admin", "", true, false);
-//        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
-//
-//        //when
-//        String actual = controller.main(model, session);
-//
-//        //then
-//        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
-//        Mockito.verify(model).addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
-//        Mockito.verifyNoMoreInteractions(session, model);
-//        assertEquals(PAGE_MAIN, actual);
-//    }
+
+    private static final String FILE_SEPARTOR = File.separator;
+    private static final String RESOURCE_FOLDER = "resources";
+    private static final String IMAGE_EXTENSION = ".png";
+
+    private static final String WEB_SEPARTOR = "/";
+    private static final String PAGE_ERROR = "error";
+    private static final String PAGE_MESSAGE = "message";
+    private static final String PAGE_MAIN = "main";
+    private static final String PAGE_SIGNUP = "signup";
+    private static final String PAGE_SIGNIN = "signin";
+    private static final String PAGE_MANAGE = "manage";
+    private static final String PAGE_REGISTER = "register";
+    private static final String PAGE_USER = "user";
+    private static final String PAGE_USERS = "users";
+    private static final String PAGE_DOMAINS = "domains";
+    private static final String PAGE_FREE_LINKS = "freelinks";
+    private static final String PAGE_LINK = "link";
+    private static final String PAGE_LINKS = "links";
+    private static final String PAGE_ARCHIVE = "archive";
+    private static final String ACTION_LOGOUT = "logout";
+
+    private static final String ACTION_EDIT = "edit";
+    private static final String ACTION_LOGIN = "login";
+    private static final String ACTION_DELETE = "delete";
+    private static final String ACTION_RESTORE = "restore";
+    private static final String ACTION_CLEAR = "clear";
+    private static final String ACTION_POPULATE = "populate";
+    private static final String ACTION_CHECK_EXPIRED = "checkExpired";
+
+    private static final String ATTRIBUTE_USER = "user";
+    private static final String ATTRIBUTE_LIST = "list";
+    private static final String ATTRIBUTE_KEY = "key";
+    private static final String ATTRIBUTE_OLD_KEY = "oldKey";
+    private static final String ATTRIBUTE_OLD_USERNAME = "oldUserName";
+    private static final String ATTRIBUTE_OLD_PASSWORD = "oldPassword";
+    private static final String ATTRIBUTE_FULL_LINK = "fullLink";
+    private static final String ATTRIBUTE_OWNER = "owner";
+    private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
+    private static final String ATTRIBUTE_MESSAGE = "message";
+    private static final String ATTRIBUTE_ACTION = "action";
+    private static final String ATTRIBUTE_PAGE = "page";
+    private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
+    private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
+
+    ActionsController controller;
+
+    @Before
+    public void setUp() {
+        controller = new ActionsController();
+    }
+
+    @Test
+    public void registrationTestOk() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+
+        //when
+        String actual = controller.registration(model);
+
+        //then
+        Mockito.verify(model).addAttribute(Mockito.anyString(), Mockito.any(User.class));
+        Mockito.verifyNoMoreInteractions(model);
+        assertEquals(PAGE_SIGNUP, actual);
+    }
+
+    @Test
+    public void signinTestOk() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+
+        //when
+        String actual = controller.signin(model);
+
+        //then
+        Mockito.verify(model).addAttribute(Mockito.anyString(), Mockito.any(User.class));
+        Mockito.verifyNoMoreInteractions(model);
+        assertEquals(PAGE_SIGNIN, actual);
+    }
+
+    @Test
+    public void logoutTestOk() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+
+        //when
+        String actual = controller.logout(model,session);
+
+        //then
+        Mockito.verify(model).addAttribute(ATTRIBUTE_AUTORIZED_USER,null);
+        Mockito.verify(session).setAttribute(ATTRIBUTE_AUTORIZED_USER,null);
+        Mockito.verifyNoMoreInteractions(session,model);
+        assertEquals("redirect:/", actual);
+    }
+    @Test
+    public void manageTestAdminRole() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+        User user = Mockito.mock(User.class);
+        LinksService service= Mockito.mock(LinksService.class);
+
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isAdmin()).thenReturn(true);
+        Mockito.when(service.getDBLinksSize()).thenReturn(0L);
+        Mockito.when(service.getDBFreeLinksSize()).thenReturn(0L);
+        Mockito.when(service.getDomainsSize(user)).thenReturn(0L);
+        Mockito.when(service.getUsersSize(user)).thenReturn(0L);
+
+        //when
+        controller.service=service;
+        String actual = controller.manage(model,session);
+
+        //then
+        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isAdmin();
+        Mockito.verify(model,Mockito.times(4)).addAttribute(Mockito.anyString(),Mockito.anyLong());
+        Mockito.verify(service).getDBFreeLinksSize();
+        Mockito.verify(service).getDBLinksSize();
+        Mockito.verify(service).getDomainsSize(user);
+        Mockito.verify(service).getUsersSize(user);
+        Mockito.verifyNoMoreInteractions(session,model,service);
+        assertEquals(PAGE_MANAGE, actual);
+    }
+
 //
 //    @Test
 //    public void mainTestWithoutUser() {
