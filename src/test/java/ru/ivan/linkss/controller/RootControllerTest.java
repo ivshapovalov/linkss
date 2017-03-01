@@ -48,7 +48,11 @@ public class RootControllerTest {
         //given
         HttpSession session = Mockito.mock(HttpSession.class);
         Model model = Mockito.mock(Model.class);
-        User user = new User("admin", "", true, false);
+        User user = new User.UserBuilder()
+                .addUserName("admin")
+                .addIsAdmin(true)
+                .addisEmpty(false)
+                .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
 
         //when
@@ -335,7 +339,11 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User("admin", "", true, false);
+        User user = new User.UserBuilder()
+                .addUserName("admin")
+                .addIsAdmin(true)
+                .addisEmpty(false)
+                .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
         Mockito.when(request.getServletContext()).thenReturn(servletContext);
@@ -411,8 +419,11 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User("admin", "", true, false);
-        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        User user = new User.UserBuilder()
+                .addUserName("admin")
+                .addIsAdmin(true)
+                .addisEmpty(false)
+                .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
 
         //when
@@ -436,8 +447,11 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User("admin", "", true, false);
-        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        User user = new User.UserBuilder()
+                .addUserName("admin")
+                .addIsAdmin(true)
+                .addisEmpty(false)
+                .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
         Mockito.when(request.getServletContext()).thenReturn(servletContext);
         Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer

@@ -3,27 +3,31 @@
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 <html>
 
-<%@include file="header.jsp" %>
 <body>
-<form:form action="/actions/login" method="post" modelAttribute="user">
-    <table class="table">
-        <tr>
-            <td>User name</td>
-            <td><form:input path="userName" id="userName" value="${userName}"/></td>
-        </tr>
-        <tr>
-            <td>Password</td>
-            <td><form:input type="password" path="password" id="password" value="${password}"/></td>
-        </tr>
-        <tr>
-            <td></td>
-            <td><input type="submit" value="Login" id="login"/></td>
-        </tr>
-    </table>
-</form:form>
+<div class="container" style="alignment: center">
+    <%@include file="header.jsp" %>
+    <h2> SIGN IN </h2>
+    <form:form action="/actions/login" method="post" modelAttribute="user">
+        <table class="table">
+            <tr>
+                <td>User name</td>
+                <td><form:input path="userName" id="userName" value="${userName}"/></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td><form:input type="password" path="password" id="password"
+                                value="${password}"/></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Login" id="login"/></td>
+            </tr>
+        </table>
+    </form:form>
 
-<h3> Defaults</h3>
-<b>User - admin, password - admin</b><br>
-<b>User - user,  password - user </b>
+    <h3> Defaults</h3>
+    <b>User - admin, password - admin</b><br>
+    <b>User - user, password - user </b>
+</div>
 </body>
 </html>

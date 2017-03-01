@@ -4,6 +4,7 @@ import com.google.zxing.WriterException;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.repository.entity.UserDTO;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -47,7 +48,7 @@ public interface LinksService {
 
     void restoreArchiveLink(User user, String shortLink, String owner);
 
-    List<User> getUsers(int offset, int recordsOnPage);
+    List<UserDTO> getUsersDTO(int offset, int recordsOnPage);
 
     List<String> getFreeLinks(int offset, int recordsOnPage);
 

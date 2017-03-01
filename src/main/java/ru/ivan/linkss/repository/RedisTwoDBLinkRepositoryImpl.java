@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.repository.entity.UserDTO;
 import ru.ivan.linkss.util.Util;
 
 import java.io.IOException;
@@ -91,10 +92,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             String jAdmin = "";
             String jUser = "";
             try {
-                jAdmin = new ObjectMapper().writeValueAsString(new User(ADMIN_USER,
-                        ADMIN_PASSWORD, true, false));
-                jUser = new ObjectMapper().writeValueAsString(new User(DEFAULT_USER,
-                        DEFAULT_PASSWORD, false, false));
+                jAdmin = new ObjectMapper().writeValueAsString(
+                        new User.UserBuilder()
+                                .addUserName(ADMIN_USER)
+                                .addPassword(ADMIN_PASSWORD)
+                                .addIsAdmin(true)
+                                .addisEmpty(false).build());
+                jUser = new ObjectMapper().writeValueAsString(
+                new User.UserBuilder()
+                        .addUserName(DEFAULT_USER)
+                        .addPassword(DEFAULT_PASSWORD)
+                        .addIsAdmin(false)
+                        .addisEmpty(false).build());
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -428,7 +437,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public List<User> getUsers(int offset, int recordsOnPage) {
+    public List<UserDTO> getUsersDTO(int offset, int recordsOnPage) {
         try (StatefulRedisConnection<String, String> connection = connect();
              StatefulRedisConnection<String, String> connectionLinks = connectLinks()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -437,7 +446,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_WORK_NUMBER);
             syncCommandsLinks.select(DB_ARCHIVE_NUMBER);
 
-            List<User> users = syncCommands.hkeys(KEY_USERS)
+            List<UserDTO> usersDTO = syncCommands.hkeys(KEY_USERS)
                     .stream()
                     .sorted()
                     .skip(offset)
@@ -449,12 +458,12 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        user.setLinkCount(syncCommands.hlen(userName));
-                        user.setArchiveCount(syncCommandsLinks.hlen(userName));
-                        return user;
+                        UserDTO userDTO=new UserDTO(user,syncCommands.hlen(userName),syncCommandsLinks.hlen(userName));
+
+                        return userDTO;
                     })
                     .collect(Collectors.toList());
-            return users;
+            return usersDTO;
         }
     }
 
@@ -529,7 +538,6 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             String link = syncCommandsLinks.get(shortLink);
             if (link != null) {
                 decreaseVisits(shortLink, owner, link, syncCommands, syncCommandsLinks);
-                //TODO
                 syncCommandsLinks.select(DB_LINK_NUMBER);
                 syncCommandsLinks.del(shortLink);
             }
@@ -581,7 +589,7 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
             try {
                 fullLink = new ObjectMapper().readValue(syncCommandsLinks.hget(owner, shortLink),
                         FullLink
-                        .class);
+                                .class);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -596,8 +604,10 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
                         if (syncCommands.hget(KEY_USERS, fullLink.getUserName()) == null) {
                             String json = "";
                             try {
-                                json = new ObjectMapper().writeValueAsString(new User(fullLink
-                                        .getUserName(), "", false, false));
+                                json = new ObjectMapper().writeValueAsString(new User.UserBuilder()
+                                        .addUserName(fullLink.getUserName())
+                                        .addIsAdmin(false)
+                                        .addisEmpty(false).build());
                             } catch (JsonProcessingException e) {
                                 e.printStackTrace();
                             }
@@ -611,18 +621,18 @@ public class RedisTwoDBLinkRepositoryImpl implements LinkRepository {
 
                     syncCommands.hset(fullLink.getUserName(), fullLink.getKey(), fullLink
                             .getLink());
-                    if (!syncCommands.hexists(KEY_VISITS,shortLink)) {
-                        syncCommands.hset(KEY_VISITS,shortLink,"0");
+                    if (!syncCommands.hexists(KEY_VISITS, shortLink)) {
+                        syncCommands.hset(KEY_VISITS, shortLink, "0");
                     }
-                    long visits=Long.parseLong(fullLink.getVisits ());
+                    long visits = Long.parseLong(fullLink.getVisits());
                     syncCommands.hincrby(KEY_VISITS, shortLink, visits);
 
                     String domainName = Util.getDomainName(fullLink.getLink());
-                    if (!syncCommands.hexists(KEY_VISITS_BY_DOMAIN_ACTUAL,domainName)) {
-                        syncCommands.hset(KEY_VISITS_BY_DOMAIN_ACTUAL,domainName,"0");
+                    if (!syncCommands.hexists(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName)) {
+                        syncCommands.hset(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, "0");
                     }
                     if (!"".equals(fullLink.getLink())) {
-                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,visits );
+                        syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, visits);
                     }
 
                     syncCommandsLinks.select(DB_LINK_NUMBER);

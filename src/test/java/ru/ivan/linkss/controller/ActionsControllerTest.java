@@ -116,6 +116,7 @@ public class ActionsControllerTest {
         Mockito.verifyNoMoreInteractions(session,model);
         assertEquals("redirect:/", actual);
     }
+
     @Test
     public void manageTestAdminRole() throws IOException {
         //given
@@ -147,6 +148,87 @@ public class ActionsControllerTest {
         Mockito.verify(service).getUsersSize(user);
         Mockito.verifyNoMoreInteractions(session,model,service);
         assertEquals(PAGE_MANAGE, actual);
+    }
+
+    @Test
+    public void manageTestNullUser() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(null);
+
+        //when
+        String actual = controller.manage(model,session);
+
+        //then
+        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Mockito.verifyNoMoreInteractions(session,model);
+        assertEquals(PAGE_MAIN, actual);
+    }
+
+    @Test
+    public void manageTestEmptyUser() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+        User user = Mockito.mock(User.class);
+
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        Mockito.when(user.isEmpty()).thenReturn(true);
+
+        //when
+        String actual = controller.manage(model,session);
+
+        //then
+        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Mockito.verify(user).isEmpty();
+        Mockito.verifyNoMoreInteractions(session,model);
+        assertEquals(PAGE_MAIN, actual);
+    }
+
+    @Test
+    public void manageTestNotAdminUser() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+        User user = Mockito.mock(User.class);
+
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isAdmin()).thenReturn(false);
+
+        //when
+        String actual = controller.manage(model,session);
+
+        //then
+        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isAdmin();
+        Mockito.verifyNoMoreInteractions(session,model);
+        assertEquals(PAGE_MAIN, actual);
+    }
+
+    @Test
+    public void usersTest() throws IOException {
+        //given
+        Model model = Mockito.mock(Model.class);
+        HttpSession session = Mockito.mock(HttpSession.class);
+        User user = Mockito.mock(User.class);
+
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isAdmin()).thenReturn(false);
+
+        //when
+        String actual = controller.manage(model,session);
+
+        //then
+        Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isAdmin();
+        Mockito.verifyNoMoreInteractions(session,model);
+        assertEquals(PAGE_MAIN, actual);
     }
 
 //

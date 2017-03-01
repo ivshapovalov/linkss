@@ -119,8 +119,15 @@ public class RepositoryTest {
 
         //
         repository.createKeys(1);
-        repository.createShortLink(new User("user", "password"), "ya.ru");
-        repository.createShortLink(new User("user", "password"), "mail.ru");
+
+        repository.createShortLink(new User.UserBuilder()
+                .addUserName("user")
+                .addPassword("password")
+                .build(), "ya.ru");
+        repository.createShortLink(new User.UserBuilder()
+                .addUserName("user")
+                .addPassword("password")
+                .build(), "mail.ru");
         expected = 2L;
         actual = repository.getDBLinksSize();
         assertEquals(expected, actual);
@@ -151,7 +158,11 @@ public class RepositoryTest {
         syncCommands.append("shortLink", "");
         String expected = "shortLink";
         String expectedLink = "link";
-        String actual = repository.createShortLink(new User("user", "password"), expectedLink);
+        String actual = repository.createShortLink(
+                new User.UserBuilder()
+                .addUserName("user")
+                .addPassword("password")
+                .build(), expectedLink);
         String actualLink = repository.getLink(actual);
         assertEquals(expected, actual);
         assertEquals(expectedLink, actualLink);
@@ -163,7 +174,10 @@ public class RepositoryTest {
         syncCommands.select(DB_WORK_NUMBER);
         String userName = "user1";
         String expectedPassword = "password";
-        repository.createUser(new User(userName, expectedPassword));
+        repository.createUser(new User.UserBuilder()
+                .addUserName(userName)
+                .addPassword(expectedPassword)
+                .build());
         String actualPassword = syncCommands.hget(KEY_USERS, userName);
 //        assertEquals(expectedPassword,actualPassword);
         assertThat(expectedPassword, is(actualPassword));
@@ -176,7 +190,10 @@ public class RepositoryTest {
         String userName = "user";
         String expectedPassword = "password";
 
-        repository.createUser(new User(userName, expectedPassword));
+        repository.createUser(new User.UserBuilder()
+                .addUserName(userName)
+                .addPassword(expectedPassword)
+                .build());
 
     }
 

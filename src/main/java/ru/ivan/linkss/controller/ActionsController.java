@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.repository.entity.UserDTO;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.Util;
 
@@ -78,14 +79,14 @@ public class ActionsController {
     @RequestMapping(value = PAGE_SIGNUP, method = RequestMethod.GET)
     public String registration(Model model)
             throws IOException {
-        model.addAttribute(ATTRIBUTE_USER, new User());
+        model.addAttribute(ATTRIBUTE_USER, new User.UserBuilder().build());
         return PAGE_SIGNUP;
     }
 
     @RequestMapping(value = PAGE_SIGNIN, method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
-        model.addAttribute(ATTRIBUTE_USER, new User());
+        model.addAttribute(ATTRIBUTE_USER, new User.UserBuilder().build());
         return PAGE_SIGNIN;
     }
 
@@ -127,7 +128,7 @@ public class ActionsController {
         }
 
         int offset = (currentPage - 1) * recordsOnPage;
-        List<User> users = service.getUsers(offset, recordsOnPage);
+        List<UserDTO> usersDTO = service.getUsersDTO(offset, recordsOnPage);
         long usersCount = (int) service.getUsersSize(autorizedUser);
         if (usersCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have users. Try later!");
@@ -135,7 +136,7 @@ public class ActionsController {
         }
         int numberOfPages = Math.max(1, (int) Math.ceil((double) usersCount / recordsOnPage));
 
-        model.addAttribute(ATTRIBUTE_LIST, users);
+        model.addAttribute(ATTRIBUTE_LIST, usersDTO);
         model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
         model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
         model.addAttribute(ATTRIBUTE_AUTORIZED_USER, autorizedUser);
@@ -171,7 +172,7 @@ public class ActionsController {
             try {
                 return autoLogin(model, user, session);
             } catch (RuntimeException e) {
-                model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+                model.addAttribute(ATTRIBUTE_MESSAGE, "Login/password is incorrect");
                 return PAGE_ERROR;
             }
         }
@@ -485,7 +486,7 @@ public class ActionsController {
             return PAGE_ERROR;
         }
         try {
-            User oldUser = new User(oldUserName);
+            User oldUser = new User.UserBuilder().addUserName(oldUserName).build();
             newUser.setEmpty(false);
             service.updateUser(autorizedUser, newUser, oldUser);
             model.addAttribute("oldUserName", null);

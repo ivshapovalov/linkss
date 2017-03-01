@@ -13,6 +13,7 @@ import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.repository.entity.UserDTO;
 import ru.ivan.linkss.util.FTPManager;
 
 import javax.imageio.ImageIO;
@@ -134,8 +135,8 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<User> getUsers(int offset, int recordsOnPage) {
-        return repository.getUsers(offset, recordsOnPage);
+    public List<UserDTO> getUsersDTO(int offset, int recordsOnPage) {
+        return repository.getUsersDTO(offset, recordsOnPage);
     }
 
     @Override

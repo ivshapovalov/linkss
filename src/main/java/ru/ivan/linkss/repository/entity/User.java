@@ -2,68 +2,20 @@ package ru.ivan.linkss.repository.entity;
 
 public class User {
     private String userName;
-    private String password="";
-    private String email="";
+    private String password = "";
+    private String email = "";
     private boolean isAdmin;
-    private boolean isEmpty=true;
-    private long linkCount;
-    private long archiveCount;
+    private boolean isEmpty = true;
+
+    public User(UserBuilder builder) {
+        this.userName = builder.userName;
+        this.password = builder.password;
+        this.email = builder.email;
+        this.isAdmin = builder.isAdmin;
+        this.isEmpty = builder.isEmpty;
+    }
 
     public User() {
-
-    }
-
-    public User(String userName) {
-        this.userName = userName;
-    }
-
-    public User(String userName, String password) {
-        this.userName = userName;
-        this.password = password;
-    }
-
-    public User(String userName, String password, boolean isAdmin, boolean isEmpty) {
-        this.userName = userName;
-        this.password = password;
-        this.isAdmin = isAdmin;
-        this.isEmpty = isEmpty;
-    }
-
-    public User(String userName, String password, String email) {
-        this.userName = userName;
-        this.password = password;
-        this.email = email;
-    }
-
-    public User(String userName, String password, long linkCount, long archiveCount) {
-        this.userName = userName;
-        this.password = password;
-        this.linkCount = linkCount;
-        this.archiveCount = archiveCount;
-    }
-
-    public long getArchiveCount() {
-        return archiveCount;
-    }
-
-    public void setArchiveCount(long archiveCount) {
-        this.archiveCount = archiveCount;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public long getLinkCount() {
-        return linkCount;
-    }
-
-    public void setLinkCount(long linkCount) {
-        this.linkCount = linkCount;
     }
 
     public String getUserName() {
@@ -74,28 +26,36 @@ public class User {
         this.userName = userName;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     public void setPassword(String password) {
         this.password = password;
     }
 
-    public boolean isAdmin() {
-        return isAdmin;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void setAdmin(boolean admin) {
         isAdmin = admin;
     }
 
-    public boolean isEmpty() {
-        return isEmpty;
-    }
-
     public void setEmpty(boolean empty) {
         isEmpty = empty;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public boolean isEmpty() {
+        return isEmpty;
     }
 
     @Override
@@ -104,5 +64,45 @@ public class User {
                 "userName='" + userName + '\'' +
                 ", isAdmin=" + isAdmin +
                 '}';
+    }
+
+    public static class UserBuilder {
+        private String userName;
+        private String password = "";
+        private String email = "";
+        private boolean isAdmin;
+        private boolean isEmpty = true;
+
+        public UserBuilder() {
+        }
+
+        public UserBuilder addUserName(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public UserBuilder addPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public UserBuilder addEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public UserBuilder addIsAdmin(boolean isAdmin) {
+            this.isAdmin = isAdmin;
+            return this;
+        }
+
+        public UserBuilder addisEmpty(boolean isEmpty) {
+            this.isEmpty = isEmpty;
+            return this;
+        }
+
+        public User build() {
+            return new User(this);
+        }
     }
 }

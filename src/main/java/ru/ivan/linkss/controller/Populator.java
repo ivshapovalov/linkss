@@ -115,7 +115,7 @@ public class Populator {
         users = new ArrayList<>();
         for (int i = 0; i < USERS; i++) {
             try {
-                User user = new User("user" + i);
+                User user = new User.UserBuilder().addUserName("user" + i).build();
                 service.createUser(user);
                 users.add(user);
             } catch (Exception e) {

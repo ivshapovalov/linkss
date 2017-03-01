@@ -2,11 +2,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
-<%@include file="header.jsp" %>
 <body>
 <section>
-    <h3>Free links</h3>
-    <div class="bs-example">
+    <div class="container" style="alignment: center">
+        <%@include file="header.jsp" %>
+        <h2> FREE LINKS </h2>
+            <div class="bs-example">
         <ul class="pagination">
             <li><a href="/actions/freelinks?page=${1}">
                 ${1} </a>
@@ -118,7 +119,7 @@
             </tr>
         </c:forEach>
     </table>
-
+    </div>
 </section>
 
 </body>

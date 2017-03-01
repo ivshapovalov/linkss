@@ -2,14 +2,16 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
 
-<%@include file="header.jsp" %>
 <br>
 
-<H3>ERROR</H3>
 <body>
-<br>
+<div class="container" style="alignment: center">
+    <%@include file="header.jsp" %>
+    <h2> ERROR </h2>
+    <br>
 
-Something wrong: ${message}<br>
+    Something wrong: ${message}<br>
+</div>
 </body>
 
 </html>

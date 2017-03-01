@@ -3,6 +3,7 @@ package ru.ivan.linkss.repository;
 import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
+import ru.ivan.linkss.repository.entity.UserDTO;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -49,7 +50,7 @@ public interface LinkRepository {
 
     void deleteFreeLink(String shortLink);
 
-    List<User> getUsers(int offset, int recordsOnPage);
+    List<UserDTO> getUsersDTO(int offset, int recordsOnPage);
 
     List<String> getFreeLinks(int offset, int recordsOnPage);
 

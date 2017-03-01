@@ -3,53 +3,53 @@
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 
 <html>
-<%@include file="header.jsp" %>
 <body>
-<section>
+<div class="container" style="alignment: center">
+    <%@include file="header.jsp" %>
     <form:form action="" method="post">
         <input type="hidden" name="user" value=${user}>
-        <form class="form-horizontal">
+        <form class="form-horizontal" >
             <br>
-            <div class="row">
-                <div class="form-group">
-                    <label class="control-label col-xs-1"></label>
-                    <div class="col-xs-4">
-                        <button type="submit" class="btn btn-success">Create short
-                            link
-                        </button>
-                        <button class="btn btn-success"
-                                onclick="location.href=''" type="button" class="btn btn-primary">
-                            Clear
-                        </button>
+            <div style="alignment: center">
+                <div class="row" style="text-align: center">
+                    <div class="form-group">
+                        <div class="col-xs-12">
+                            <button type="submit" class="btn btn-success">Create short
+                                link
+                            </button>
+                            <button class="btn btn-success"
+                                    onclick="location.href=''" type="button"
+                                    class="btn btn-primary">
+                                Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <br>
-            <div class="row">
-                <div class="form-group">
-                    <label for="link" class="control-label col-xs-1">Text/Link</label>
-                    <div class="col-xs-4">
-                            <textarea path="link" class="form-control" id="link"
+                <br>
+                <div class="row" style="text-align: center">
+                    <div class="form-group">
+                        <div class="col-xs-12" style="text-align: center">
+                            <textarea style="text-align: center" path="link" class="form-control"
+                                      id="link"
                                       name="link"
-                                      placeholder="Text/Link" value="${link}">${link} </textarea>
-                    </div>
+                                      placeholder="Text/Link" value="${link}">${link}
+                            </textarea>
+                        </div>
 
-                </div>
-            </div>
-            <br>
-            <div class="row">
-                <div class="form-group">
-                    <label for="shortLink" class="control-label col-xs-1"></label>
-                    <div class="col-xs-6">
-                        <h2><img src="${image}"/>
-                        <a href="${shortLink}" id="shortLink">${shortLink} </a></h2>
                     </div>
                 </div>
+                <br>
+                <div class="row" style="text-align: center">
+                    <div class="form-group">
+                        <div class="col-xs-12">
+                            <h2>
+                                <a href="${shortLink}" id="shortLink"><img src="${image}"/>${shortLink} </a></h2>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-
         </form>
     </form:form>
-</section>
+</div>
 </body>
 </html>
