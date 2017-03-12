@@ -17,6 +17,10 @@ public interface LinksService {
 
     void clear(String path);
 
+    void deleteAllImages(String path);
+
+    BigInteger deleteLocalImages(String path);
+
     String createShortLink(User autorizedUser, String link, String path, String context);
 
     void createUser(User user);

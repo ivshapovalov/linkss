@@ -18,19 +18,19 @@
         <div class="bs-example">
             <ul class="pagination">
                 <li>
-                    <a href="manage/archive?page=${1}&owner=${owner}">
+                    <a href="./archive?page=${1}">
                         ${1}
                     </a>
                 </li>
                 <c:choose>
                     <c:when test="${currentPage lt 7}">
                         <li class="disabled"><a
-                                href="manage/archive?page=${currentPage - 6}&owner=${owner}">
+                                href="./archive?page=${currentPage - 6}">
                             << </a></li>
                     </c:when>
                     <c:otherwise>
                         <li>
-                            <a href="manage/archive?page=${currentPage - 6}&owner=${owner}">
+                            <a href="./archive?page=${currentPage - 6}">
                                 << </a>
                         </li>
                     </c:otherwise>
@@ -38,13 +38,13 @@
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
                         <li class="disabled"><a
-                                href="manage/archive?page=${currentPage - 1}&owner=${owner}">
+                                href="./archive?page=${currentPage - 1}">
                             < </a></li>
                     </c:when>
                     <c:otherwise>
                         <li>
 
-                            <a href="manage/archive?page=${currentPage - 1}&owner=${owner}">
+                            <a href="./archive?page=${currentPage - 1}">
                                 < </a>
                         </li>
                     </c:otherwise>
@@ -77,14 +77,14 @@
                     <c:choose>
                         <c:when test="${currentPage eq i}">
                             <li class="active">
-                                <a href="manage/archive?page=${currentPage}&owner=${owner}">
+                                <a href="./archive?page=${currentPage}">
                                         ${i}
                                 </a>
                             </li>
                         </c:when>
                         <c:otherwise>
                             <li>
-                                <a href="manage/archive?page=${i}&owner=${owner}">
+                                <a href="./archive?page=${i}">
                                         ${i}
                                 </a>
                             </li>
@@ -94,11 +94,11 @@
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
                         <li class="disabled"><a
-                                href="manage/archive?page=${currentPage + 1}&owner=${owner}">
+                                href="./archive?page=${currentPage + 1}">
                             > </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="manage/archive?page=${currentPage + 1}&owner=${owner}">
+                        <li><a href="./archive?page=${currentPage + 1}">
                             > </a>
                         </li>
                     </c:otherwise>
@@ -106,16 +106,16 @@
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
                         <li class="disabled"><a
-                                href="manage/archive?page=${currentPage + 6}&owner=${owner}">
+                                href="./archive?page=${currentPage + 6}">
                             >> </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="manage/archive?page=${currentPage + 6}&owner=${owner}">
+                        <li><a href="./archive?page=${currentPage + 6}">
                             >> </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
-                <li><a href="manage/archive?page=${numberOfPages}&owner=${owner}">
+                <li><a href="./archive?page=${numberOfPages}">
                     ${numberOfPages} </a>
                 </li>
 
@@ -151,10 +151,10 @@
                                 <span class="caret"></span></button>
                             <ul class="dropdown-menu">
                                 <li><a
-                                        href="/manage/user/${column.userName}/archive/restore/?key=${column.key}"><span
+                                        href="./archive/${column.key}/restore"><span
                                         class="glyphicon glyphicon-open"></span>Restore</a></li>
                                 <li><a
-                                        href="/manage/user/${column.userName}/archive/delete/?key=${column.key}"><span
+                                        href="./archive/${column.key}/delete"><span
                                         class="glyphicon glyphicon-trash"></span>Delete</a></li>
                             </ul>
                         </div>

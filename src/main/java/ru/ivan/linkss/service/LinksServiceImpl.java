@@ -32,7 +32,8 @@ public class LinksServiceImpl implements LinksService {
 
     private static final int SIZE_OF_POOL = 15;
     private static final String IMAGE_EXTENSION = "png";
-    private final String fileSepartor = File.separator;
+    private static final String FILE_SEPARTOR = File.separator;
+    private static final String QR_FOLDER = "resources"+ FILE_SEPARTOR +"qr";
 
     @Autowired
     @Qualifier(value = "repositoryOne")
@@ -44,7 +45,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void clear(String path) {
         repository.clear();
-        deleteImages(path);
+        deleteAllImages(path);
     }
 
     @Override
@@ -112,7 +113,7 @@ public class LinksServiceImpl implements LinksService {
 
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
-            String imagePath = path + "resources" + fileSepartor + shortLink +
+            String imagePath = path + "resources" + FILE_SEPARTOR +"qr"+ FILE_SEPARTOR + shortLink +
                     "." + IMAGE_EXTENSION;
             String shortLinkPath = context + shortLink;
 
@@ -192,7 +193,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteArchiveLink(User user, String shortLink, String owner, String path) {
         repository.deleteArchiveLink(user, shortLink, owner);
-        String imagePath = path + "resources" + fileSepartor + shortLink + "." + IMAGE_EXTENSION;
+        String imagePath = path + "resources" + FILE_SEPARTOR + shortLink + "." + IMAGE_EXTENSION;
 
         deleteImage(path, shortLink);
     }
@@ -266,13 +267,14 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.disconnect();
 
         //local
-        String filePath = path + "resources" + fileSepartor + key + "." + IMAGE_EXTENSION;
+        String filePath = path + "resources" + FILE_SEPARTOR + key + "." + IMAGE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
 
     }
 
-    private void deleteImages(String path) {
+    @Override
+    public void deleteAllImages(String path) {
 
         FTPManager ftpManager =
                 null;
@@ -284,15 +286,24 @@ public class LinksServiceImpl implements LinksService {
         ftpManager.deleteAllFiles();
         ftpManager.disconnect();
 
+        deleteLocalImages(path+QR_FOLDER);
+
+    }
+
+    @Override
+    public BigInteger deleteLocalImages(String path) {
+
         //local
-        String filePath = path + "resources" + fileSepartor;
-        File directory = new File(filePath);
+        File directory = new File(path);
         File[] files = directory.listFiles();
+        final BigInteger[] deletedFiles = {BigInteger.ZERO};
         if (files != null && files.length != 0) {
             Arrays.asList(files).forEach(file -> {
                 if (file.isFile()) file.delete();
+                deletedFiles[0] = deletedFiles[0].add(BigInteger.ONE);
             });
         }
+        return deletedFiles[0];
 
     }
 

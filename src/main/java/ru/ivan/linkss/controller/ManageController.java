@@ -30,7 +30,7 @@ import java.util.List;
 public class ManageController {
 
     private static final String FILE_SEPARTOR = File.separator;
-    private static final String RESOURCE_FOLDER = "resources";
+    private static final String QR_FOLDER = "resources"+FILE_SEPARTOR+"qr";
     private static final String IMAGE_EXTENSION_WITH_DOT = ".png";
 
     private static final String WEB_SEPARTOR = "/";
@@ -45,9 +45,11 @@ public class ManageController {
     private static final String PAGE_USERS = "users";
     private static final String PAGE_DOMAINS = "domains";
     private static final String PAGE_FREE_LINKS = "freelinks";
+    private static final String PAGE_FREE_LINK = "freelink";
     private static final String PAGE_LINK = "link";
     private static final String PAGE_LINKS = "links";
     private static final String PAGE_ARCHIVE = "archive";
+    private static final String PAGE_ARCHIVES = "archives";
     private static final String ACTION_LOGOUT = "logout";
 
     private static final String ACTION_EDIT = "edit";
@@ -227,8 +229,8 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_ARCHIVE
-            + WEB_SEPARTOR+ ACTION_DELETE,
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVE
+            + WEB_SEPARTOR+"{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ ACTION_DELETE,
             method = RequestMethod.GET)
     public String deleteArchiveLink(Model model,
                              @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
@@ -255,8 +257,9 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 
-            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_ARCHIVE,
-                    ATTRIBUTE_OWNER, owner);
+            return String.format("redirect:%s", getControllerMapping())
+                    + PAGE_USER + WEB_SEPARTOR
+                    + owner + WEB_SEPARTOR +PAGE_ARCHIVES;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -264,8 +267,8 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_ARCHIVE
-            + WEB_SEPARTOR+ ACTION_RESTORE,
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVE
+            + WEB_SEPARTOR+ "{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ACTION_RESTORE,
             method = RequestMethod.GET)
     public String restoreArchiveLink(Model model,
                                     @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
@@ -291,15 +294,16 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 
-            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_ARCHIVE,
-                    ATTRIBUTE_OWNER, owner);
+            return String.format("redirect:%s", getControllerMapping())
+                    + PAGE_USER + WEB_SEPARTOR
+                    + owner + WEB_SEPARTOR +PAGE_ARCHIVES;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + PAGE_FREE_LINKS+ WEB_SEPARTOR
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_FREE_LINK+ WEB_SEPARTOR
             +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR + ACTION_DELETE,
             method = RequestMethod.GET)
     public String deleteFreeLink(Model model,
@@ -370,7 +374,7 @@ public class ManageController {
 
         try {
             String realImagePath = request.getServletContext().getRealPath("")
-                    + RESOURCE_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
+                    + QR_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
             boolean downloaded=true;
             if (!imageOnDisk.exists()) {
@@ -502,7 +506,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
             + WEB_SEPARTOR+"{"+ATTRIBUTE_OLD_KEY+"}"+WEB_SEPARTOR+ ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateLink(Model model,
@@ -594,8 +598,9 @@ public class ManageController {
         return PAGE_LINKS;
     }
 
-    @RequestMapping(value = PAGE_ARCHIVE, method = RequestMethod.GET)
-    public String archive(Model model,
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVES}, method = RequestMethod.GET)
+    public String archives(Model model,
                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                         HttpServletRequest request,
                         HttpSession session) {
@@ -630,7 +635,7 @@ public class ManageController {
         model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
         model.addAttribute(ATTRIBUTE_OWNER, owner);
 
-        return PAGE_ARCHIVE;
+        return PAGE_ARCHIVES;
     }
 
     @RequestMapping(value = PAGE_DOMAINS, method = RequestMethod.GET)

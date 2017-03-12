@@ -64,6 +64,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private final RedisClient redisClient;
 
     public RedisOneDBLinkRepositoryImpl() {
+        //TODO убрать
         this.redisClient = RedisClient.create(System.getenv("REDIS_ONE_URL"));
         //this.redisClient = RedisClient.create("redis://localhost:6379/0");
     }
@@ -320,7 +321,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     @Override
     public String createShortLink(User autorizedUser, String link) {
-
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);

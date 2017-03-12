@@ -50,4 +50,24 @@ public class ScheduledTasks {
             System.out.println(e.getMessage());
         }
     }
+
+    @Scheduled(cron = "0 0 1 * *  ?")
+//    @Scheduled(fixedRate = 5000)
+    public void deleteQrImages() {
+
+        try {
+            long startTime = System.nanoTime();
+            String path = getClass().getClassLoader().getResource("..//../resources//qr")
+                    .getPath();
+            BigInteger deletedImages = service.deleteLocalImages(path);
+            if (!BigInteger.ZERO.equals(deletedImages)) {
+                long endTime = System.nanoTime();
+                System.out.println(String.format("%s. Delete %s qr images in %s seconds",
+                        dateFormat.format(new Date()), deletedImages, (endTime -
+                                startTime) / 1000000000));
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

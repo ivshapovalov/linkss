@@ -9,27 +9,27 @@
         <h2> FREE LINKS </h2>
             <div class="bs-example">
         <ul class="pagination">
-            <li><a href="/manage/freelinks?page=${1}">
+            <li><a href="./freelinks?page=${1}">
                 ${1} </a>
             </li>
             <c:choose>
                 <c:when test="${currentPage lt 7}">
-                    <li class="disabled"><a href="/manage/freelinks?page=${currentPage - 6}">
+                    <li class="disabled"><a href="./freelinks?page=${currentPage - 6}">
                         << </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/manage/freelinks?page=${currentPage - 6}">
+                    <li><a href="./freelinks?page=${currentPage - 6}">
                         << </a>
                     </li>
                 </c:otherwise>
             </c:choose>
             <c:choose>
                 <c:when test="${currentPage lt 2}">
-                    <li class="disabled"><a href="/manage/freelinks?page=${currentPage- 1}">
+                    <li class="disabled"><a href="./freelinks?page=${currentPage- 1}">
                         < </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/manage/freelinks?page=${currentPage- 1}">
+                    <li><a href="./freelinks?page=${currentPage- 1}">
                         < </a>
                     </li>
                 </c:otherwise>
@@ -61,13 +61,13 @@
             <c:forEach begin="${min}" end="${max}" var="i">
                 <c:choose>
                     <c:when test="${currentPage eq i}">
-                        <li class="active"><a href="/manage/freelinks?page=${currentPage}">
+                        <li class="active"><a href="./freelinks?page=${currentPage}">
                                 ${i} </a>
                         </li>
                     </c:when>
                     <c:otherwise>
 
-                        <li><a href="/manage/freelinks?page=${i}">
+                        <li><a href="./freelinks?page=${i}">
                                 ${i} </a>
                         </li>
 
@@ -76,27 +76,27 @@
             </c:forEach>
             <c:choose>
                 <c:when test="${currentPage gt numberOfPages-1}">
-                    <li class="disabled"><a href="/manage/freelinks?page=${currentPage + 1}">
+                    <li class="disabled"><a href="./freelinks?page=${currentPage + 1}">
                         > </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/manage/freelinks?page=${currentPage + 1}">
+                    <li><a href="./freelinks?page=${currentPage + 1}">
                         > </a>
                     </li>
                 </c:otherwise>
             </c:choose>
             <c:choose>
                 <c:when test="${currentPage gt numberOfPages-6}">
-                    <li class="disabled"><a href="/manage/freelinks?page=${currentPage + 6}">
+                    <li class="disabled"><a href="./freelinks?page=${currentPage + 6}">
                         >> </a></li>
                 </c:when>
                 <c:otherwise>
-                    <li><a href="/manage/freelinks?page=${currentPage + 6}">
+                    <li><a href="./freelinks?page=${currentPage + 6}">
                         >> </a>
                     </li>
                 </c:otherwise>
             </c:choose>
-            <li><a href="/manage/freelinks?page=${numberOfPages}">
+            <li><a href="./freelinks?page=${numberOfPages}">
                 ${numberOfPages} </a>
             </li>
 
@@ -114,7 +114,7 @@
             <tr>
                 <td width="20%">${column}</td>
                 <td width="10%">
-                    <a href="/manage/freelinks/${column}/delete">Delete
+                    <a href="./freelink/${column}/delete">Delete
                     </a></td>
             </tr>
         </c:forEach>

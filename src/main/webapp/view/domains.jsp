@@ -10,7 +10,7 @@
         <div class="bs-example">
             <ul class="pagination">
                 <li>
-                    <a href="/manage/domains?page=${1}">
+                    <a href="./domains?page=${1}">
                         ${1}
                     </a>
                 </li>
@@ -20,18 +20,18 @@
                             << </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/manage/domains?page=${currentPage - 6}">
+                        <li><a href="./domains?page=${currentPage - 6}">
                             << </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
-                        <li class="disabled"><a href="/manage/domains?page=${currentPage - 1}">
+                        <li class="disabled"><a href="./domains?page=${currentPage - 1}">
                             < </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/manage/domains?page=${currentPage - 1}">
+                        <li><a href="./domains?page=${currentPage - 1}">
                             < </a>
                         </li>
                     </c:otherwise>
@@ -64,14 +64,14 @@
                     <c:choose>
                         <c:when test="${currentPage eq i}">
                             <li class="active">
-                                <a href="/manage/domains?page=${currentPage}">
+                                <a href="./domains?page=${currentPage}">
                                         ${i}
                                 </a>
                             </li>
                         </c:when>
                         <c:otherwise>
                             <li>
-                                <a href="/manage/domains?page=${i}">
+                                <a href="./domains?page=${i}">
                                         ${i}
                                 </a>
 
@@ -81,28 +81,28 @@
                 </c:forEach>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
-                        <li class="disabled"><a href="/manage/domains?page=${currentPage + 1}">
+                        <li class="disabled"><a href="./domains?page=${currentPage + 1}">
                             > </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/manage/domains?page=${currentPage + 1}">
+                        <li><a href="./domains?page=${currentPage + 1}">
                             > </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
-                        <li class="disabled"><a href="/manage/domains?page=${currentPage + 6}">
+                        <li class="disabled"><a href="./domains?page=${currentPage + 6}">
                             >> </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/manage/domains?page=${currentPage + 6}">
+                        <li><a href="./domains?page=${currentPage + 6}">
                             >> </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
 
-                <li><a href="/manage/domains?page=${numberOfPages}">
+                <li><a href="./domains?page=${numberOfPages}">
                     ${numberOfPages}
                 </li>
 

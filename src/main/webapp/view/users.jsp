@@ -137,7 +137,7 @@
                         ${column.linkCount}
                         </a></td>
                     <td width="10%">
-                        <a href="user/${column.userName}/archive">
+                        <a href="user/${column.userName}/archives">
                         ${column.archiveCount}
                         </a></td>
                     <td width="10%">

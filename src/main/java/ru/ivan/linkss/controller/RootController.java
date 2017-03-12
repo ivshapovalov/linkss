@@ -91,7 +91,8 @@ public class RootController {
         String shortLink = request.getServletPath();
         String key = shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1, shortLink.lastIndexOf
                 ("."));
-        String filePath = request.getServletContext().getRealPath("") + "resources" +
+        String filePath = request.getServletContext().getRealPath("") +
+                "resources"+FILE_SEPARTOR+"qr" +
                 FILE_SEPARTOR + shortLink;
         File imageOnDisk = new File(filePath);
         boolean downloaded = true;
