@@ -4,15 +4,15 @@ public class User {
     private String userName;
     private String password = "";
     private String email = "";
-    private boolean isAdmin;
-    private boolean isEmpty = true;
+    private boolean admin;
+    private boolean empty = true;
 
     public User(UserBuilder builder) {
         this.userName = builder.userName;
         this.password = builder.password;
         this.email = builder.email;
-        this.isAdmin = builder.isAdmin;
-        this.isEmpty = builder.isEmpty;
+        this.admin = builder.admin;
+        this.empty = builder.empty;
     }
 
     public User() {
@@ -35,11 +35,11 @@ public class User {
     }
 
     public void setAdmin(boolean admin) {
-        isAdmin = admin;
+        this.admin = admin;
     }
 
     public void setEmpty(boolean empty) {
-        isEmpty = empty;
+        this.empty = empty;
     }
 
     public String getPassword() {
@@ -51,18 +51,18 @@ public class User {
     }
 
     public boolean isAdmin() {
-        return isAdmin;
+        return admin;
     }
 
     public boolean isEmpty() {
-        return isEmpty;
+        return empty;
     }
 
     @Override
     public String toString() {
         return "User{" +
                 "userName='" + userName + '\'' +
-                ", isAdmin=" + isAdmin +
+                ", admin=" + admin +
                 '}';
     }
 
@@ -70,8 +70,8 @@ public class User {
         private String userName;
         private String password = "";
         private String email = "";
-        private boolean isAdmin;
-        private boolean isEmpty = true;
+        private boolean admin;
+        private boolean empty = true;
 
         public UserBuilder() {
         }
@@ -91,13 +91,13 @@ public class User {
             return this;
         }
 
-        public UserBuilder addIsAdmin(boolean isAdmin) {
-            this.isAdmin = isAdmin;
+        public UserBuilder addIsAdmin(boolean admin) {
+            this.admin = admin;
             return this;
         }
 
-        public UserBuilder addisEmpty(boolean isEmpty) {
-            this.isEmpty = isEmpty;
+        public UserBuilder addisEmpty(boolean empty) {
+            this.empty = empty;
             return this;
         }
 

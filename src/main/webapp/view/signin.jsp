@@ -7,7 +7,7 @@
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> SIGN IN </h2>
-    <form:form action="/actions/login" method="post" modelAttribute="user">
+    <form:form action="./login" method="post" modelAttribute="user">
         <table class="table">
             <tr>
                 <td>User name</td>

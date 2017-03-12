@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SimpleExceptionLogger {
     @AfterThrowing(
-            pointcut = "execution(* ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl.*(..))",
+            pointcut = "execution(* ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl.*(..))",
             throwing = "t")
     public void logException(JoinPoint call, Throwable t) {
         System.out.println("ASPECT.EXCEPTION-REPO-LOGGER: " + t.getMessage());

@@ -14,7 +14,8 @@ public class FTPManager {
     FTPClient ftp = null;
 
     public FTPManager() throws Exception {
-        this(System.getenv("FTP_HOST"), System.getenv("FTP_LOGIN"),
+        this(System.getenv("FTP_HOST"),
+                System.getenv("FTP_LOGIN"),
                 System.getenv("FTP_PASSWORD"));
     }
 

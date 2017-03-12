@@ -16,28 +16,28 @@
         <div class="bs-example">
             <ul class="pagination">
                 <li>
-                    <a href="/actions/users?page=${1}">
+                    <a href="./users?page=${1}">
                         ${1}
                     </a>
                 </li>
                 <c:choose>
                     <c:when test="${currentPage lt 7}">
-                        <li class="disabled"><a href="/actions/users?page=${currentPage - 6}">
+                        <li class="disabled"><a href="./users?page=${currentPage - 6}">
                             << </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/actions/users?page=${currentPage - 6}">
+                        <li><a href="./users?page=${currentPage - 6}">
                             << </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
-                        <li class="disabled"><a href="/actions/users?page=${currentPage - 1}">
+                        <li class="disabled"><a href="./users?page=${currentPage - 1}">
                             < </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/actions/users?page=${currentPage - 1}">
+                        <li><a href="./users?page=${currentPage - 1}">
                             < </a>
                         </li>
                     </c:otherwise>
@@ -70,14 +70,14 @@
                     <c:choose>
                         <c:when test="${currentPage eq i}">
                             <li class="active">
-                                <a href="/actions/users?page=${currentPage}">
+                                <a href="./users?page=${currentPage}">
                                         ${i}
                                 </a>
                             </li>
                         </c:when>
                         <c:otherwise>
                             <li>
-                                <a href="/actions/users?page=${i}">
+                                <a href="./users?page=${i}">
                                         ${i}
                                 </a>
 
@@ -87,11 +87,11 @@
                 </c:forEach>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
-                        <li class="disabled"><a href="/actions/users?page=${currentPage + 1}">
+                        <li class="disabled"><a href="./users?page=${currentPage + 1}">
                             > </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/actions/users?page=${currentPage + 1}">
+                        <li><a href="./users?page=${currentPage + 1}">
                             > </a>
                         </li>
                     </c:otherwise>
@@ -99,17 +99,17 @@
 
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
-                        <li class="disabled"><a href="/actions/users?page=${currentPage + 6}">
+                        <li class="disabled"><a href="./users?page=${currentPage + 6}">
                             >> </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="/actions/users?page=${currentPage + 6}">
+                        <li><a href="./users?page=${currentPage + 6}">
                             >> </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
 
-                <li><a href="/actions/users?page=${numberOfPages}">
+                <li><a href="./users?page=${numberOfPages}">
                     ${numberOfPages} </a>
                 </li>
 
@@ -129,14 +129,14 @@
             </tr>
             <c:forEach items="${list}" var="column">
                 <tr>
-                    <td width="40%"><a href="/actions/users/${column.userName}/edit">
+                    <td width="40%"><a href="users/${column.userName}/edit">
                             ${column.userName}</a></td>
                     <td width="40%">*</td>
                     <td width="10%">
-                        <a href="/actions/links?owner=${column.userName}">${column.linkCount}
+                        <a href="./links?owner=${column.userName}">${column.linkCount}
                         </a></td>
                     <td width="10%">
-                        <a href="/actions/archive?owner=${column.userName}">${column.archiveCount}
+                        <a href="./archive?owner=${column.userName}">${column.archiveCount}
                         </a></td>
                     <td width="10%">
                         <div class="btn-group">
@@ -145,13 +145,13 @@
                                 <span class="caret"></span></button>
                             <ul class="dropdown-menu">
                                 <li><a
-                                        href="/actions/users/${column.userName}/edit"><span
+                                        href="./users/${column.userName}/edit"><span
                                         class="glyphicon glyphicon-pencil"></span>Edit</a></li>
                                 <li><a
-                                        href="/actions/users/${column.userName}/clear"><span
+                                        href="./users/${column.userName}/clear"><span
                                         class="glyphicon glyphicon-compressed"></span>Clear</a></li>
                                 <li><a
-                                        href="/actions/users/${column.userName}/delete"><span
+                                        href="./users/${column.userName}/delete"><span
                                         class="glyphicon glyphicon-trash"></span>Delete</a></li>
                             </ul>
                         </div>

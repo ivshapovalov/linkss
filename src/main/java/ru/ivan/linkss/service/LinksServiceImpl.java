@@ -35,7 +35,7 @@ public class LinksServiceImpl implements LinksService {
     private final String fileSepartor = File.separator;
 
     @Autowired
-    @Qualifier(value = "repositoryTwo")
+    @Qualifier(value = "repositoryOne")
     private LinkRepository repository;
 
     public LinksServiceImpl() {
@@ -245,11 +245,12 @@ public class LinksServiceImpl implements LinksService {
                 null;
         try {
             ftpManager = new FTPManager();
+            ftpManager.uploadFile(imagePath, key);
+            ftpManager.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        ftpManager.uploadFile(imagePath, key);
-        ftpManager.disconnect();
+
     }
 
     private void deleteImage(String path, String key) {

@@ -43,7 +43,8 @@
                     <div class="form-group">
                         <div class="col-xs-12">
                             <h2>
-                                <a href="${shortLink}" id="shortLink"><img src="${image}"/>${shortLink} </a></h2>
+                                <a href="${shortLink}" id="shortLink"><img src="./${image}"/>
+                                ${shortLink} </a></h2>
                         </div>
                     </div>
                 </div>

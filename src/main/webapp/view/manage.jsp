@@ -33,19 +33,19 @@
         <h3>Manage</h3>
         <table border="1" width="50%" class="table">
             <tr>
-                <td width="10%"><b><a href="/actions/users"
+                <td width="10%"><b><a href="./users"
                                       class="glyphicon glyphicon-user">Users</a></b></td>
             </tr>
             <tr>
-                <td width="10%"><b><a href="/actions/domains"
+                <td width="10%"><b><a href="./domains"
                                       class="glyphicon glyphicon-globe">Domains</a></b></td>
             </tr>
             <tr>
-                <td width="10%"><b><a href="/actions/freelinks" class="glyphicon glyphicon-book">Free
+                <td width="10%"><b><a href="./freelinks" class="glyphicon glyphicon-book">Free
                     links</a></b></td>
             </tr>
             <tr>
-                <td width="10%"><b><a href="/actions/toplinks"
+                <td width="10%"><b><a href="./toplinks"
                                       class="glyphicon glyphicon-thumbs-up">Top
                     used links</a></b></td>
             </tr>
@@ -56,11 +56,11 @@
 
         <table border="1" width="50%" class="table">
             <tr>
-                <td width="10%"><b><a href="/actions/populate">Populate</a></b></td>
+                <td width="10%"><b><a href="./populate">Populate</a></b></td>
             </tr>
             <tr>
                 <td
-                        width="10%"><b><a href="/actions/checkExpired">Check and delete expired
+                        width="10%"><b><a href="./checkExpired">Check and delete expired
                     links</a></b></td>
             </tr>
         </table>

@@ -22,15 +22,15 @@ public class SimpleProfiler {
         }
     }
 
-    @Pointcut("execution(public * ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl.*(..)) " +
+    @Pointcut("execution(public * ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl.*(..)) " +
             "&& !checkFreeLinks() && !deleteExpiredUserLinks()")
     public void businessMethods() { }
 
-    @Pointcut("execution(* ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl" +
+    @Pointcut("execution(* ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl" +
             ".checkFreeLinks*(..))")
     private void checkFreeLinks() {}
 
-    @Pointcut("execution(* ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl" +
+    @Pointcut("execution(* ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl" +
             ".deleteExpiredUserLinks*(..))")
     private void deleteExpiredUserLinks() {}
 }

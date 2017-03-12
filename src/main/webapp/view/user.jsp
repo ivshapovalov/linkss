@@ -5,10 +5,21 @@
 <body>
 <br>
 
+<script type="text/javascript">
+    function makeAdmin(isAdminCheckBox) {
+        if (isAdminCheckBox.checked == true) {
+            isAdminCheckBox.value=true;
+        } else {
+            isAdminCheckBox.value=false;
+        }
+    }
+
+</script>
+<script src="js/makeAdmin.js"></script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> USER ${oldUserName}</h2>
-    <form action="/actions/user" method="post">
+    <form action="./save" method="post">
         <input type="hidden" name="oldUserName" value="${oldUserName}">
         <form class="form-horizontal">
             <div class="row">
@@ -18,7 +29,7 @@
                     <div class="col-xs-2">
                         <button type="submit" class="btn btn-primary"><h4>Update user</h4></button>
                         <button type="button" class="btn btn-danger"
-                                onclick="location.href='/actions/users/${user.userName}/delete'">
+                                onclick="location.href='delete'">
                             <h4>
                                 Delete</h4></button>
                     </div>
@@ -56,11 +67,11 @@
                 <div class="form-group">
                     <label class="control-label col-xs-2">Admin</label>
                     <div class="col-xs-2">
-                        <div class="isAdmin">
+                        <div class="admin">
                             <label> <input type="checkbox" onClick="makeAdmin(this)" id="admin"
                                            name="admin"
                                            value="${user.admin}" <c:if
-                                    test="${user.admin}"> checked=" checked"</c:if>></label>
+                                    test="${user.admin}"> checked="checked"</c:if>></label>
                         </div>
                     </div>
                 </div>

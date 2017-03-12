@@ -55,6 +55,7 @@ public class ActionsController {
     private static final String ACTION_DELETE = "delete";
     private static final String ACTION_RESTORE = "restore";
     private static final String ACTION_CLEAR = "clear";
+    private static final String ACTION_SAVE = "save";
     private static final String ACTION_POPULATE = "populate";
     private static final String ACTION_CHECK_EXPIRED = "checkExpired";
 
@@ -469,7 +470,8 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = {WEB_SEPARTOR+PAGE_USER}, method =
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
                              @ModelAttribute(ATTRIBUTE_USER) User newUser,
