@@ -6,7 +6,7 @@
 <body>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> MANAGE </h2>
+    <h2> CONFIG </h2>
     <section>
 
         <h3>Statistics</h3>
@@ -30,7 +30,7 @@
 
         </table>
 
-        <h3>Manage</h3>
+        <h3>Config</h3>
         <table border="1" width="50%" class="table">
             <tr>
                 <td width="10%"><b><a href="./users"

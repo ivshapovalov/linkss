@@ -93,22 +93,28 @@
     <div class="main_menu">
         <ul class="nav nav-pills">
             <li class="active"><a href="/linkss/">Home</a></li>
-            <li class="active"><a href="/linkss/actions/links">Links</a></li>
+            <c:choose>
+                <c:when test="${autorizedUser!=null}">
+                    <li
+                            class="active"><a href="/linkss/manage/user/${autorizedUser.userName}/links">
+                        Links</a></li>
+                </c:when>
+            </c:choose>
             <c:choose>
                 <c:when test="${autorizedUser!=null && autorizedUser.isAdmin()}">
-                    <li class="active"><a href="/linkss/actions/manage">Manage</a>
+                    <li class="active"><a href="/linkss/manage/config">Config</a>
                     </li>
                 </c:when>
             </c:choose>
-            <li class="active"><a href="/linkss/actions/signup">Sign up</a></li>
+            <li class="active"><a href="/linkss/manage/signup">Sign up</a></li>
             <c:choose>
                 <c:when test="${autorizedUser==null || autorizedUser.isEmpty()}">
-                    <li class="active"><a href="/linkss/actions/signin"
+                    <li class="active"><a href="/linkss/manage/signin"
                     >Sign in</a>
                     </li>
                 </c:when>
                 <c:otherwise>
-                    <li class="active"><a href="/linkss/actions/logout">Logout<span
+                    <li class="active"><a href="/linkss/manage/logout">Logout<span
                             class="badge">${autorizedUser.getUserName()}</span></a>
                     </li>
                 </c:otherwise>

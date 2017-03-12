@@ -4,23 +4,17 @@ package ru.ivan.linkss.controller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.ui.Model;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class ActionsControllerTest {
+public class ManageControllerTest {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String RESOURCE_FOLDER = "resources";
@@ -32,7 +26,7 @@ public class ActionsControllerTest {
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_SIGNUP = "signup";
     private static final String PAGE_SIGNIN = "signin";
-    private static final String PAGE_MANAGE = "manage";
+    private static final String PAGE_CONFIG = "config";
     private static final String PAGE_REGISTER = "register";
     private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
@@ -61,16 +55,15 @@ public class ActionsControllerTest {
     private static final String ATTRIBUTE_OWNER = "owner";
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
     private static final String ATTRIBUTE_MESSAGE = "message";
-    private static final String ATTRIBUTE_ACTION = "action";
     private static final String ATTRIBUTE_PAGE = "page";
     private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
     private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
 
-    ActionsController controller;
+    ManageController controller;
 
     @Before
     public void setUp() {
-        controller = new ActionsController();
+        controller = new ManageController();
     }
 
     @Test
@@ -118,7 +111,7 @@ public class ActionsControllerTest {
     }
 
     @Test
-    public void manageTestAdminRole() throws IOException {
+    public void configTestAdminRole() throws IOException {
         //given
         Model model = Mockito.mock(Model.class);
         HttpSession session = Mockito.mock(HttpSession.class);
@@ -135,7 +128,7 @@ public class ActionsControllerTest {
 
         //when
         controller.service=service;
-        String actual = controller.manage(model,session);
+        String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -147,11 +140,11 @@ public class ActionsControllerTest {
         Mockito.verify(service).getDomainsSize(user);
         Mockito.verify(service).getUsersSize(user);
         Mockito.verifyNoMoreInteractions(session,model,service);
-        assertEquals(PAGE_MANAGE, actual);
+        assertEquals(PAGE_CONFIG, actual);
     }
 
     @Test
-    public void manageTestNullUser() throws IOException {
+    public void configTestNullUser() throws IOException {
         //given
         Model model = Mockito.mock(Model.class);
         HttpSession session = Mockito.mock(HttpSession.class);
@@ -159,7 +152,7 @@ public class ActionsControllerTest {
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(null);
 
         //when
-        String actual = controller.manage(model,session);
+        String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -168,7 +161,7 @@ public class ActionsControllerTest {
     }
 
     @Test
-    public void manageTestEmptyUser() throws IOException {
+    public void configTestEmptyUser() throws IOException {
         //given
         Model model = Mockito.mock(Model.class);
         HttpSession session = Mockito.mock(HttpSession.class);
@@ -178,7 +171,7 @@ public class ActionsControllerTest {
         Mockito.when(user.isEmpty()).thenReturn(true);
 
         //when
-        String actual = controller.manage(model,session);
+        String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -188,7 +181,7 @@ public class ActionsControllerTest {
     }
 
     @Test
-    public void manageTestNotAdminUser() throws IOException {
+    public void configTestNotAdminUser() throws IOException {
         //given
         Model model = Mockito.mock(Model.class);
         HttpSession session = Mockito.mock(HttpSession.class);
@@ -199,7 +192,7 @@ public class ActionsControllerTest {
         Mockito.when(user.isAdmin()).thenReturn(false);
 
         //when
-        String actual = controller.manage(model,session);
+        String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -221,7 +214,7 @@ public class ActionsControllerTest {
         Mockito.when(user.isAdmin()).thenReturn(false);
 
         //when
-        String actual = controller.manage(model,session);
+        String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);

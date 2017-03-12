@@ -26,8 +26,8 @@ import java.util.List;
 
 @Controller
 @EnableScheduling
-@RequestMapping(value = "/actions/")
-public class ActionsController {
+@RequestMapping(value = "/manage/")
+public class ManageController {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String RESOURCE_FOLDER = "resources";
@@ -39,7 +39,7 @@ public class ActionsController {
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_SIGNUP = "signup";
     private static final String PAGE_SIGNIN = "signin";
-    private static final String PAGE_MANAGE = "manage";
+    private static final String PAGE_CONFIG = "config";
     private static final String PAGE_REGISTER = "register";
     private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
@@ -69,7 +69,6 @@ public class ActionsController {
     private static final String ATTRIBUTE_OWNER = "owner";
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
     private static final String ATTRIBUTE_MESSAGE = "message";
-    private static final String ATTRIBUTE_ACTION = "action";
     private static final String ATTRIBUTE_PAGE = "page";
     private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
     private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
@@ -99,8 +98,8 @@ public class ActionsController {
         return "redirect:/";
     }
 
-    @RequestMapping(value = PAGE_MANAGE, method = {RequestMethod.GET, RequestMethod.POST})
-    public String manage(Model model,HttpSession session)
+    @RequestMapping(value = PAGE_CONFIG, method = {RequestMethod.GET, RequestMethod.POST})
+    public String config(Model model,HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
@@ -108,7 +107,7 @@ public class ActionsController {
             model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
             model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
             model.addAttribute("domainsSize", service.getDomainsSize(autorizedUser));
-            return PAGE_MANAGE;
+            return PAGE_CONFIG;
         }
         return PAGE_MAIN;
     }
@@ -191,8 +190,9 @@ public class ActionsController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
-            + WEB_SEPARTOR+ ACTION_DELETE,method = RequestMethod.GET)
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
+            + WEB_SEPARTOR+"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+ ACTION_DELETE,method =
+            RequestMethod.GET)
     public String deleteLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
                                  @ModelAttribute(ATTRIBUTE_OWNER) String owner,
@@ -217,8 +217,9 @@ public class ActionsController {
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
 
-            return String.format("redirect:%s%s?%s=%s", getControllerMapping(), PAGE_LINKS,
-                    ATTRIBUTE_OWNER, owner);
+            return String.format("redirect:%s", getControllerMapping())
+                    + PAGE_USER + WEB_SEPARTOR
+                    + owner + WEB_SEPARTOR +PAGE_LINKS;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -344,9 +345,10 @@ public class ActionsController {
         return "";
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
-            + WEB_SEPARTOR+ ACTION_EDIT, method = RequestMethod.GET)
+    @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
+            + WEB_SEPARTOR+"{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ ACTION_EDIT}, method =
+            RequestMethod.GET)
     public String editLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
                                  @ModelAttribute(ATTRIBUTE_OWNER) String owner,
@@ -392,7 +394,7 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_CLEAR, method = RequestMethod.GET)
     public String clearUser(Model model,
                             @PathVariable(ATTRIBUTE_OWNER) String owner,
@@ -418,7 +420,7 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_EDIT, method = RequestMethod.GET)
     private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String key
             , HttpSession session) {
@@ -444,7 +446,7 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_DELETE, method = RequestMethod.GET)
     private String deleteUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String owner, HttpSession
             session) {
@@ -462,7 +464,6 @@ public class ActionsController {
         try {
             service.deleteUser(autorizedUser, owner);
             model.addAttribute(ATTRIBUTE_OWNER, null);
-            model.addAttribute(ATTRIBUTE_ACTION, null);
             return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
@@ -470,7 +471,7 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USERS + WEB_SEPARTOR
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
@@ -500,7 +501,9 @@ public class ActionsController {
         }
     }
 
-    @RequestMapping(value = PAGE_LINK, method =
+    @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS
+            + WEB_SEPARTOR+"{"+ATTRIBUTE_OLD_KEY+"}"+WEB_SEPARTOR+ ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateLink(Model model,
                              @ModelAttribute(ATTRIBUTE_FULL_LINK) FullLink fullLink,
@@ -552,7 +555,8 @@ public class ActionsController {
         return contextPath;
     }
 
-    @RequestMapping(value = PAGE_LINKS, method = RequestMethod.GET)
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS}, method = RequestMethod.GET)
     public String links(Model model,
                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                         HttpServletRequest request,
@@ -737,7 +741,7 @@ public class ActionsController {
         });
         populatorThread.setName("Populator");
         populatorThread.start();
-        return "redirect:"+PAGE_MANAGE;
+        return "redirect:"+ PAGE_CONFIG;
     }
 
     @RequestMapping(value = ACTION_CHECK_EXPIRED, method = RequestMethod.GET)
@@ -762,7 +766,7 @@ public class ActionsController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return PAGE_MANAGE;
+        return PAGE_CONFIG;
     }
 
     private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {

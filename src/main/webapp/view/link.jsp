@@ -9,7 +9,7 @@
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> LINK ${oldKey} </h2>
-    <form:form action="/actions/link" method="post" modelAttribute="fullLink">
+    <form:form action="./save" method="post" modelAttribute="fullLink">
         <input type="hidden" name="oldKey" value=${oldKey}>
         <input type="hidden" name="owner" value=${owner}>
         <form class="form-horizontal">
@@ -19,7 +19,8 @@
                     <div class="col-xs-2">
                         <button type="submit" class="btn btn-primary"><h4>Update</h4></button>
                         <button type="button" class="btn btn-danger"
-                                onclick="location.href='/actions/user/${owner}/links/delete/?key=${key}'">
+                                onclick="location.href='/manage/user/${owner}/links/delete/?key/ +
+                                        /=${key}'">
                             <h4>Delete</h4></button>
                     </div>
 

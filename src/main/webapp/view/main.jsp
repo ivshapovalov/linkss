@@ -8,7 +8,7 @@
     <%@include file="header.jsp" %>
     <form:form action="" method="post">
         <input type="hidden" name="user" value=${user}>
-        <form class="form-horizontal" >
+        <form class="form-horizontal">
             <br>
             <div style="alignment: center">
                 <div class="row" style="text-align: center">
@@ -43,8 +43,9 @@
                     <div class="form-group">
                         <div class="col-xs-12">
                             <h2>
-                                <a href="${shortLink}" id="shortLink"><img src="./${image}"/>
-                                ${shortLink} </a></h2>
+                                <a href="${shortLink}" id="shortLink">
+                                    <img src="./${image}" alt=""/>
+                                        ${shortLink} </a></h2>
                         </div>
                     </div>
                 </div>

@@ -6,7 +6,7 @@
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> SIGN UP </h2>
-    <form:form action="/actions/register" method="post" modelAttribute="user">
+    <form:form action="/manage/register" method="post" modelAttribute="user">
         <table class="table">
             <tr>
                 <td>User name</td>

@@ -129,14 +129,16 @@
             </tr>
             <c:forEach items="${list}" var="column">
                 <tr>
-                    <td width="40%"><a href="users/${column.userName}/edit">
+                    <td width="40%"><a href="user/${column.userName}/edit">
                             ${column.userName}</a></td>
                     <td width="40%">*</td>
                     <td width="10%">
-                        <a href="./links?owner=${column.userName}">${column.linkCount}
+                        <a href="user/${column.userName}/links">
+                        ${column.linkCount}
                         </a></td>
                     <td width="10%">
-                        <a href="./archive?owner=${column.userName}">${column.archiveCount}
+                        <a href="user/${column.userName}/archive">
+                        ${column.archiveCount}
                         </a></td>
                     <td width="10%">
                         <div class="btn-group">
@@ -145,13 +147,13 @@
                                 <span class="caret"></span></button>
                             <ul class="dropdown-menu">
                                 <li><a
-                                        href="./users/${column.userName}/edit"><span
+                                        href="./user/${column.userName}/edit"><span
                                         class="glyphicon glyphicon-pencil"></span>Edit</a></li>
                                 <li><a
-                                        href="./users/${column.userName}/clear"><span
+                                        href="./user/${column.userName}/clear"><span
                                         class="glyphicon glyphicon-compressed"></span>Clear</a></li>
                                 <li><a
-                                        href="./users/${column.userName}/delete"><span
+                                        href="./user/${column.userName}/delete"><span
                                         class="glyphicon glyphicon-trash"></span>Delete</a></li>
                             </ul>
                         </div>
