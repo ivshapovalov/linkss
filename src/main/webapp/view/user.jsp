@@ -22,19 +22,6 @@
     <form action="./save" method="post">
         <input type="hidden" name="oldUserName" value="${oldUserName}">
         <form class="form-horizontal">
-            <div class="row">
-                <div class="form-group">
-                    <label class="control-label col-xs-2"><h4>User '${user.getUserName()}'</h4>
-                    </label>
-                    <div class="col-xs-2">
-                        <button type="submit" class="btn btn-primary"><h4>Update user</h4></button>
-                        <button type="button" class="btn btn-danger"
-                                onclick="location.href='delete'">
-                            <h4>
-                                Delete</h4></button>
-                    </div>
-                </div>
-            </div>
             <br>
             <div class="row">
                 <div class="form-group">
@@ -73,6 +60,19 @@
                                            value="${user.admin}" <c:if
                                     test="${user.admin}"> checked="checked"</c:if>></label>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <%--<label class="control-label col-xs-2"><h4></h4>--%>
+                    <%--</label>--%>
+                    <div class="col-xs-1">
+                        <button type="submit" class="btn btn-primary"><h4>Update</h4></button>
+                    </div>
+                    <div class="col-xs-1">
+                        <button type="button" class="btn btn-danger"
+                                onclick="location.href='delete'"><h4>Delete</h4></button>
                     </div>
                 </div>
             </div>
