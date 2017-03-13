@@ -1,5 +1,6 @@
 package ru.ivan.linkss.controller;
 
+import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -376,10 +377,22 @@ public class ManageController {
             String realImagePath = request.getServletContext().getRealPath("")
                     + QR_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
-            boolean downloaded=true;
+            boolean created=true;
             if (!imageOnDisk.exists()) {
-                downloaded=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
+                created=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
                         realImagePath);
+            }
+            if (!created) {
+                String context = getContextPath(request);
+                String shortLinkPath = context + shortLink;
+                try {
+                    service.createQRImage(realImagePath,shortLink,shortLinkPath);
+                    service.uploadImageToFTP(realImagePath, shortLink);
+                } catch (WriterException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             String link = service.getLink(shortLink);

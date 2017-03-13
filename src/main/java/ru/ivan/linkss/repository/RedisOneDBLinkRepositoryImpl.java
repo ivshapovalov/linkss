@@ -64,7 +64,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private final RedisClient redisClient;
 
     public RedisOneDBLinkRepositoryImpl() {
-        //TODO убрать
         this.redisClient = RedisClient.create(System.getenv("REDIS_ONE_URL"));
         //this.redisClient = RedisClient.create("redis://localhost:6379/0");
     }

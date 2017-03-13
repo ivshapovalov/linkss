@@ -1,11 +1,11 @@
 package ru.ivan.linkss.controller;
 
 
+import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.User;
@@ -62,7 +62,7 @@ public class RootController {
     public String redirect(Model model, HttpServletRequest request) {
         String servletPath = request.getServletPath();
 
-        String shortLink=servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
+        String shortLink = servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
         String link = service.visitLink(shortLink);
         if (link != null) {
             Pattern p = Pattern.compile(URL_REGEX);
@@ -79,45 +79,64 @@ public class RootController {
                 }
             }
         }
-        model.addAttribute("message",String.format("Link '%s' does not exist",shortLink));
+        model.addAttribute("message", String.format("Link '%s' does not exist", shortLink));
         return PAGE_ERROR;
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + "*"  + IMAGE_EXTENSION_WITH_DOT, method =
+    @RequestMapping(value = WEB_SEPARTOR + "*" + IMAGE_EXTENSION_WITH_DOT, method =
             RequestMethod.GET)
     public void openImage(Model model, HttpServletRequest request, HttpServletResponse response
-                            )
+    )
             throws IOException {
         String shortLink = request.getServletPath();
         String key = shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1, shortLink.lastIndexOf
                 ("."));
-        String filePath = request.getServletContext().getRealPath("") +
-                "resources"+FILE_SEPARTOR+"qr" +
-                FILE_SEPARTOR + shortLink;
-        File imageOnDisk = new File(filePath);
-        boolean downloaded = true;
-        if (!imageOnDisk.exists()) {
-            downloaded = service.downloadImageFromFTP(key+IMAGE_EXTENSION_WITH_DOT,filePath);
-        }
 
-        if (downloaded) {
-            OutputStream os = response.getOutputStream();
-            FileInputStream fis = new FileInputStream(imageOnDisk);
-            int bytes;
-            while ((bytes = fis.read()) != -1) {
-                os.write(bytes);
+        String link = service.getLink(key);
+        if (link != null) {
+            String filePath = request.getServletContext().getRealPath("") +
+                    "resources" + FILE_SEPARTOR + "qr" +
+                    FILE_SEPARTOR + key + IMAGE_EXTENSION_WITH_DOT;
+            File imageOnDisk = new File(filePath);
+            boolean created = true;
+            if (!imageOnDisk.exists()) {
+                created = service.downloadImageFromFTP(key + IMAGE_EXTENSION_WITH_DOT, filePath);
             }
-            fis.close();
-        }  else {
-            //response.setStatus(404);
+            if (!created) {
+                String context = getContextPath(request);
+                String shortLinkPath = context + key;
+                try {
+                    service.createQRImage(filePath, key, shortLinkPath);
+                    service.uploadImageToFTP(filePath, key);
+                    created = true;
+                } catch (WriterException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (created) {
+                OutputStream os = response.getOutputStream();
+                FileInputStream fis = new FileInputStream(imageOnDisk);
+                int bytes;
+                while ((bytes = fis.read()) != -1) {
+                    os.write(bytes);
+                }
+                fis.close();
+            }  else{
+                response.setContentType("text/plain");
+                response.getWriter().write(String.format("Sorry. Image '%s' does not exists", key));
+
+            }
+        } else {
             response.setContentType("text/plain");
-            response.getWriter().write(String.format("Sorry. Image '%s' does not exists",key));
+            response.getWriter().write(String.format("Sorry. Link '%s' does not exists", key));
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + "{"+ATTRIBUTE_SHORTLINK+"}" + ICON_EXTENSION_WITH_DOT, method =
+    @RequestMapping(value = WEB_SEPARTOR + "{" + ATTRIBUTE_SHORTLINK + "}" + ICON_EXTENSION_WITH_DOT, method =
             RequestMethod
-            .GET)
+                    .GET)
     public void openIcon(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String shortLink = request.getServletPath();
@@ -160,6 +179,17 @@ public class RootController {
         model.addAttribute(ATTRIBUTE_LINK, link);
         model.addAttribute(ATTRIBUTE_SHORTLINK, request.getRequestURL() + shortLink);
         return PAGE_MAIN;
+    }
+
+    private String getContextPath(HttpServletRequest request) {
+        String p = request.getRequestURL().toString();
+        String cp = request.getServletPath();
+
+        String contextPath = "";
+        if (p.endsWith(cp)) {
+            contextPath = p.substring(0, p.length() - cp.length() + 1);
+        }
+        return contextPath;
     }
 }
 
