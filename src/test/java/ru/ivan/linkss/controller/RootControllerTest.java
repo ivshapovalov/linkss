@@ -215,14 +215,14 @@ public class RootControllerTest {
                 .getPath();
         Mockito.when(context.getRealPath("")).thenReturn(path);
         Mockito.when(response.getOutputStream()).thenReturn(os);
-        Mockito.doAnswer(new Answer<Boolean>() {
-            public Boolean answer(InvocationOnMock invocation) throws IOException {
-                createDirAndFile(path+"/resources",fileName);
-                return true;
-            }
-        }).when(service).downloadImageFromFTP(Mockito
-                .anyString(), Mockito
-                .anyString());
+//        Mockito.doAnswer(new Answer<Boolean>() {
+//            public Boolean answer(InvocationOnMock invocation) throws IOException {
+//                createDirAndFile(path+"/resources",fileName);
+//                return true;
+//            }
+//        }).when(service).downloadImageFromFTP(Mockito
+//                .anyString(), Mockito
+//                .anyString());
 
         Mockito.doNothing().when(os).write(Mockito.anyByte());
 
@@ -235,7 +235,6 @@ public class RootControllerTest {
         Mockito.verify(request).getServletContext();
         Mockito.verify(response).getOutputStream();
         Mockito.verify(context).getRealPath(Mockito.anyString());
-        Mockito.verify(service).downloadImageFromFTP(Mockito.anyString(), Mockito.anyString());
         Mockito.verifyNoMoreInteractions(request, response, context,service);
         deleteDirAndFile(path+"/resources",fileName);
     }
@@ -258,9 +257,9 @@ public class RootControllerTest {
         Mockito.when(context.getRealPath("")).thenReturn(path);
         Mockito.when(response.getOutputStream()).thenReturn(os);
         Mockito.when(response.getWriter()).thenReturn(printWriter);
-        Mockito.when(service.downloadImageFromFTP(Mockito
-                .anyString(), Mockito
-                .anyString())).thenReturn(false);
+//        Mockito.when(service.downloadImageFromFTP(Mockito
+//                .anyString(), Mockito
+//                .anyString())).thenReturn(false);
 
         Mockito.doNothing().when(os).write(Mockito.anyByte());
         Mockito.doNothing().when(printWriter).write(Mockito.anyString());
@@ -273,7 +272,6 @@ public class RootControllerTest {
         Mockito.verify(request).getServletPath();
         Mockito.verify(request).getServletContext();
         Mockito.verify(context).getRealPath(Mockito.anyString());
-        Mockito.verify(service).downloadImageFromFTP(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(response).setContentType(Mockito.anyString());
         Mockito.verify(response).getWriter();
         Mockito.verify(printWriter).write(Mockito.anyString());

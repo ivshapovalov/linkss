@@ -14,7 +14,6 @@ import ru.ivan.linkss.repository.entity.Domain;
 import ru.ivan.linkss.repository.entity.FullLink;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.repository.entity.UserDTO;
-import ru.ivan.linkss.util.FTPManager;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -79,23 +78,6 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public BigInteger deleteExpiredUserLinks() throws Exception {
         return repository.deleteExpiredUserLinks();
-    }
-
-    @Override
-    public boolean downloadImageFromFTP(String remote, String local) {
-        FTPManager ftpManager = null;
-        boolean downloaded = false;
-        try {
-            ftpManager = new FTPManager();
-            downloaded = ftpManager.downloadFile(remote, local);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (ftpManager != null) {
-                ftpManager.disconnect();
-            }
-        }
-        return downloaded;
     }
 
     @Override
@@ -239,34 +221,8 @@ public class LinksServiceImpl implements LinksService {
         repository.updateLink(autorizedUser, oldFullLink, newFullLink);
     }
 
-    @Override
-    public void uploadImageToFTP(String imagePath, String key) {
-
-        FTPManager ftpManager =
-                null;
-        try {
-            ftpManager = new FTPManager();
-            ftpManager.uploadFile(imagePath, key);
-            ftpManager.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
     private void deleteImage(String path, String key) {
 
-        FTPManager ftpManager =
-                null;
-        try {
-            ftpManager = new FTPManager();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ftpManager.deleteFile(key);
-        ftpManager.disconnect();
-
-        //local
         String filePath = path + "resources" + FILE_SEPARTOR + key + "." + IMAGE_EXTENSION;
         File imageFile = new File(filePath);
         imageFile.delete();
@@ -275,16 +231,6 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public void deleteAllImages(String path) {
-
-        FTPManager ftpManager =
-                null;
-        try {
-            ftpManager = new FTPManager();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ftpManager.deleteAllFiles();
-        ftpManager.disconnect();
 
         deleteLocalImages(path+QR_FOLDER);
 

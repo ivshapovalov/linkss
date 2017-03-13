@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 
-
 public interface LinksService {
 
     String getRandomShortLink();
@@ -41,8 +40,6 @@ public interface LinksService {
     void createQRImage(String path, String shortLink, String fullShortLink) throws
             WriterException,
             IOException;
-
-    void uploadImageToFTP(String imagePath, String key);
 
     User checkUser(User user);
 
@@ -83,9 +80,6 @@ public interface LinksService {
     FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
 
     void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
-
-
-    boolean downloadImageFromFTP(String remote, String local);
 
     void deleteFreeLink(String shortLink);
 }
