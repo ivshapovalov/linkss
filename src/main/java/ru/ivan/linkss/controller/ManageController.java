@@ -379,15 +379,16 @@ public class ManageController {
             File imageOnDisk = new File(realImagePath);
             boolean created=true;
             if (!imageOnDisk.exists()) {
-                created=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
-                        realImagePath);
+//                created=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
+//                        realImagePath);
+                created=false;
             }
             if (!created) {
                 String context = getContextPath(request);
                 String shortLinkPath = context + shortLink;
                 try {
                     service.createQRImage(realImagePath,shortLink,shortLinkPath);
-                    service.uploadImageToFTP(realImagePath, shortLink);
+                    //service.uploadImageToFTP(realImagePath, shortLink);
                 } catch (WriterException e) {
                     e.printStackTrace();
                 } catch (IOException e) {

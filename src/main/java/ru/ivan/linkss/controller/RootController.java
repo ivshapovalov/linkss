@@ -100,14 +100,15 @@ public class RootController {
             File imageOnDisk = new File(filePath);
             boolean created = true;
             if (!imageOnDisk.exists()) {
-                created = service.downloadImageFromFTP(key + IMAGE_EXTENSION_WITH_DOT, filePath);
+//                created = service.downloadImageFromFTP(key + IMAGE_EXTENSION_WITH_DOT, filePath);
+                created = false;
             }
             if (!created) {
                 String context = getContextPath(request);
                 String shortLinkPath = context + key;
                 try {
                     service.createQRImage(filePath, key, shortLinkPath);
-                    service.uploadImageToFTP(filePath, key);
+                    //service.uploadImageToFTP(filePath, key);
                     created = true;
                 } catch (WriterException e) {
                     e.printStackTrace();

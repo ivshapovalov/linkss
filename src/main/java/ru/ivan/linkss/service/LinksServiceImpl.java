@@ -124,7 +124,7 @@ public class LinksServiceImpl implements LinksService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            uploadImageToFTP(imagePath, shortLink);
+            //uploadImageToFTP(imagePath, shortLink);
 
         }
         return shortLink;
