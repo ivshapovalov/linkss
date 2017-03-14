@@ -1,13 +1,13 @@
-Short link repo service on Heroku
+Short link service 
 ===============================
 
-####DB: Heroku Redis
+####DB: Redis
 ####DB client:lettuce
 ####WEB: Spring MVC + Spring AOP 
-####Other:zxing QR code + FTP Storage
+####Other:zxing QR code, GeoIP DB
 ####Front - Bootstrap+JQuery
 
-### <a href="http://linkss.herokuapp.com/" target=_blank>Демо разрабатываемого приложения</a>
+### <a href="http://app.whydt.ru/49193/linkss" target=_blank>Демо разрабатываемого приложения</a>
 
 
 ####REDIS INSTANCE 1
@@ -26,7 +26,7 @@ Short link repo service on Heroku
     - value:value
 - hset key:_users
     - field:userName
-    - value:password
+    - value:json User
 - hset key:userName
     - field:shortLink
     - value:link
@@ -34,12 +34,11 @@ Short link repo service on Heroku
 #####redis:1 FREELINK_DB 
 - key:shortLink
 
-####REDIS INSTANCE 2
-#####redis:0 LINK_DB 
+#####redis:2 LINK_DB 
 - key:shortLink
-- value:link
+- value:{"link":link, "location":{creator location}}
 
-#####redis:1 ARCHIVE_LINK_DB 
+#####redis:3 ARCHIVE_LINK_DB 
 - hset key:userName
     - field:shortLink
     - value:{"key":shortLink,"link":link,"visits":visits,"del_date":deleted_date}

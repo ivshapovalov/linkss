@@ -87,17 +87,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             String jUser = "";
             try {
                 jAdmin = new ObjectMapper().writeValueAsString(
-                        new User.UserBuilder()
+                        new User.Builder()
                                 .addUserName(ADMIN_USER)
                                 .addPassword(ADMIN_PASSWORD)
                                 .addIsAdmin(true)
-                                .addisEmpty(false).build());
+                                .addIsEmpty(false).build());
                 jUser = new ObjectMapper().writeValueAsString(
-                        new User.UserBuilder()
+                        new User.Builder()
                                 .addUserName(DEFAULT_USER)
                                 .addPassword(DEFAULT_PASSWORD)
                                 .addIsAdmin(false)
-                                .addisEmpty(false).build());
+                                .addIsEmpty(false).build());
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -217,9 +217,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                     String link = syncCommands.get(shortLink);
                                     String shortLinkWithContext = contextPath + shortLink;
                                     String visits = syncCommands.hget(KEY_VISITS, shortLink);
-                                    return new FullLink(shortLink, shortLinkWithContext,
-                                            link, visits,
-                                            shortLinkWithContext + ".png", user);
+                                    return new FullLink.Builder()
+                                            .addKey(shortLink)
+                                            .addShortLink(shortLinkWithContext)
+                                            .addLink(link)
+                                            .addVisits(visits)
+                                            .addImageLink(shortLinkWithContext + ".png")
+                                            .addUserName(user).build();
                                 }).collect(Collectors.toList());
                     })
                     .flatMap(Collection::stream)
@@ -259,13 +263,24 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                         syncCommands.select(DB_LINK_NUMBER);
                         long ttl = syncCommands.ttl(shortLink);
                         if (ttl < 0) {
-                            return new FullLink(shortLink, shortLinkWithContext,
-                                    link, visits,
-                                    shortLinkWithContext + ".png", userName);
+                            return new FullLink.Builder()
+                                    .addKey(shortLink)
+                                    .addShortLink(shortLinkWithContext)
+                                    .addLink(link)
+                                    .addVisits(visits)
+                                    .addImageLink(shortLinkWithContext+".png")
+                                    .addUserName(userName)
+                                    .build();
                         } else {
-                            return new FullLink(shortLink, shortLinkWithContext,
-                                    link, visits,
-                                    shortLinkWithContext + ".png", userName, ttl);
+                            return new FullLink.Builder()
+                                    .addKey(shortLink)
+                                    .addShortLink(shortLinkWithContext)
+                                    .addLink(link)
+                                    .addVisits(visits)
+                                    .addImageLink(shortLinkWithContext+".png")
+                                    .addUserName(userName)
+                                    .addSeconds(ttl)
+                                    .build();
                         }
                     })
                     .filter(fullLink -> fullLink.getLink() != null)
@@ -566,10 +581,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     if (syncCommands.hget(KEY_USERS, fullLink.getUserName()) == null) {
                         String json = "";
                         try {
-                            json = new ObjectMapper().writeValueAsString(new User.UserBuilder()
+                            json = new ObjectMapper().writeValueAsString(new User.Builder()
                                     .addUserName(fullLink.getUserName())
                                     .addIsAdmin(false)
-                                    .addisEmpty(false).build());
+                                    .addIsEmpty(false).build());
                         } catch (JsonProcessingException e) {
                             e.printStackTrace();
                         }
@@ -643,7 +658,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
             syncCommands.hdel(owner, shortLink);
             syncCommands.select(DB_ARCHIVE_NUMBER);
-            FullLink fullLink = new FullLink(shortLink, link, owner, visits, LocalDateTime.now());
+            FullLink fullLink = new FullLink.Builder()
+                    .addKey(shortLink)
+                    .addLink(link)
+                    .addUserName(owner)
+                    .addVisits(visits)
+                    .addDeleted(LocalDateTime.now())
+                    .build();
             String json = "";
             try {
                 json = new ObjectMapper().writeValueAsString(fullLink);
@@ -703,9 +724,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 ttl = 0;
             }
 
-            return new FullLink(shortLink, shortLinkWithContext,
-                    link, "",
-                    shortLinkWithContext + ".png", owner, ttl);
+            return new FullLink.Builder()
+                    .addKey(shortLink)
+                    .addShortLink(shortLinkWithContext)
+                    .addLink(link)
+                    .addImageLink(shortLinkWithContext + ".png")
+                    .addUserName(owner)
+                    .addSeconds(ttl).build();
         }
 
     }
@@ -1027,14 +1052,19 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .map(user -> {
                         syncCommands.select(DB_WORK_NUMBER);
                         return syncCommands.hkeys(user)
-                            .stream()
-                            .map(shortLink -> {
-                                syncCommands.select(DB_LINK_NUMBER);
-                                String link = syncCommands.get(shortLink);
-                                return new FullLink(shortLink, link, user);
-                            })
-                            .filter(fullLink -> fullLink.getLink() == null)
-                            .collect(Collectors.toList());})
+                                .stream()
+                                .map(shortLink -> {
+                                    syncCommands.select(DB_LINK_NUMBER);
+                                    String link = syncCommands.get(shortLink);
+                                    return new FullLink.Builder()
+                                            .addKey(shortLink)
+                                            .addLink(link)
+                                            .addUserName(user)
+                                            .build();
+                                })
+                                .filter(fullLink -> fullLink.getLink() == null)
+                                .collect(Collectors.toList());
+                    })
                     .flatMap(Collection::stream)
                     .map(fullLink -> {
                         String shortLink = fullLink.getKey();

@@ -1,19 +1,13 @@
 package ru.ivan.linkss.repository.entity;
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import org.springframework.format.annotation.DateTimeFormat;
 import ru.ivan.linkss.util.Util;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.TimeZone;
 
 public class FullLink {
 
@@ -24,6 +18,7 @@ public class FullLink {
     private String imageLink;
     private String userName;
     private long seconds;
+    private IPLocation ipLocation;
 
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -32,70 +27,17 @@ public class FullLink {
     public FullLink() {
 
     }
-    public FullLink(String key, String link) {
-        this.key = key;
-        this.link = link;
-    }
 
-    public FullLink(LocalDateTime deleted) {
-        this.deleted = deleted;
-    }
-
-    public FullLink(String key, String shortLink, String link, String visits, LocalDateTime deleted, String imageLink, String userName, long seconds) {
-        this.key = key;
-        this.shortLink = shortLink;
-        this.link = link;
-        this.visits = visits;
-        this.deleted = deleted;
-        this.imageLink = imageLink;
-        this.userName = userName;
-        this.seconds = seconds;
-    }
-
-    public FullLink(String key, String link, String userName) {
-        this.key = key;
-        this.link = link;
-        this.userName = userName;
-    }
-
-    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
-                    String userName, long seconds) {
-        this.key = key;
-        this.shortLink = shortLink;
-        this.link = link;
-        this.visits = visits;
-        this.imageLink = imageLink;
-        this.userName = userName;
-        this.seconds = seconds;
-    }
-    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
-                    String userName, LocalDateTime deleted) {
-        this.key = key;
-        this.shortLink = shortLink;
-        this.link = link;
-        this.visits = visits;
-        this.imageLink = imageLink;
-        this.userName = userName;
-        this.deleted = deleted;
-    }
-
-    public FullLink(String key, String shortLink, String link, String visits, String imageLink,
-                    String userName) {
-        this.key = key;
-        this.shortLink = shortLink;
-        this.link = link;
-        this.visits = visits;
-        this.imageLink = imageLink;
-        this.userName = userName;
-    }
-
-    public FullLink(String key, String link, String userName, String visits, LocalDateTime
-            deleted) {
-        this.key = key;
-        this.link = link;
-        this.visits = visits;
-        this.deleted = deleted;
-        this.userName = userName;
+    public FullLink(Builder builder) {
+        this.key = builder.key;
+        this.shortLink = builder.shortLink;
+        this.link = builder.link;
+        this.visits = builder.visits;
+        this.deleted = builder.deleted;
+        this.imageLink = builder.imageLink;
+        this.userName = builder.userName;
+        this.seconds = builder.seconds;
+        this.ipLocation = builder.ipLocation;
     }
 
     public LocalDateTime getDeleted() {
@@ -174,5 +116,68 @@ public class FullLink {
                 ", link='" + link + '\'' +
                 ", userName='" + userName + '\'' +
                 '}';
+    }
+
+    public static class Builder {
+        private String key;
+        private String shortLink;
+        private String link;
+        private String visits;
+        private String imageLink;
+        private String userName;
+        private long seconds;
+        private IPLocation ipLocation;
+        private LocalDateTime deleted;
+
+        public Builder() {
+        }
+
+        public Builder addKey(String key) {
+            this.key = key;
+            return this;
+        }
+
+        public Builder addShortLink(String shortLink) {
+            this.shortLink = shortLink;
+            return this;
+        }
+
+        public Builder addLink(String link) {
+            this.link = link;
+            return this;
+        }
+
+        public Builder addVisits(String visits) {
+            this.visits = visits;
+            return this;
+        }
+
+        public Builder addImageLink(String imageLink) {
+            this.imageLink = imageLink;
+            return this;
+        }
+
+        public Builder addUserName(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public Builder addSeconds(long seconds) {
+            this.seconds = seconds;
+            return this;
+        }
+
+        public Builder addIPLocation(IPLocation ipLocation) {
+            this.ipLocation = ipLocation;
+            return this;
+        }
+        public Builder addDeleted(LocalDateTime deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        public FullLink build() {
+            return new FullLink(this);
+        }
     }
 }

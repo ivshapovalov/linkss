@@ -6,13 +6,15 @@ public class User {
     private String email = "";
     private boolean admin;
     private boolean empty = true;
+    private IPLocation ipLocation;
 
-    public User(UserBuilder builder) {
+    public User(Builder builder) {
         this.userName = builder.userName;
         this.password = builder.password;
         this.email = builder.email;
         this.admin = builder.admin;
         this.empty = builder.empty;
+        this.ipLocation = builder.ipLocation;
     }
 
     public User() {
@@ -66,38 +68,43 @@ public class User {
                 '}';
     }
 
-    public static class UserBuilder {
+    public static class Builder {
         private String userName;
         private String password = "";
         private String email = "";
         private boolean admin;
         private boolean empty = true;
+        private IPLocation ipLocation;
 
-        public UserBuilder() {
+        public Builder() {
         }
 
-        public UserBuilder addUserName(String userName) {
+        public Builder addUserName(String userName) {
             this.userName = userName;
             return this;
         }
 
-        public UserBuilder addPassword(String password) {
+        public Builder addPassword(String password) {
             this.password = password;
             return this;
         }
 
-        public UserBuilder addEmail(String email) {
+        public Builder addEmail(String email) {
             this.email = email;
             return this;
         }
 
-        public UserBuilder addIsAdmin(boolean admin) {
+        public Builder addIsAdmin(boolean admin) {
             this.admin = admin;
             return this;
         }
 
-        public UserBuilder addisEmpty(boolean empty) {
+        public Builder addIsEmpty(boolean empty) {
             this.empty = empty;
+            return this;
+        }
+        public Builder addIPLocation(IPLocation location) {
+            this.ipLocation = ipLocation;
             return this;
         }
 

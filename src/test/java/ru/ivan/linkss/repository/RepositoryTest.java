@@ -120,11 +120,11 @@ public class RepositoryTest {
 //        //
 //        repository.createKeys(1);
 //
-//        repository.createShortLink(new User.UserBuilder()
+//        repository.createShortLink(new User.Builder()
 //                .addUserName("user")
 //                .addPassword("password")
 //                .build(), "ya.ru");
-//        repository.createShortLink(new User.UserBuilder()
+//        repository.createShortLink(new User.Builder()
 //                .addUserName("user")
 //                .addPassword("password")
 //                .build(), "mail.ru");
@@ -159,7 +159,7 @@ public class RepositoryTest {
 //        String expected = "shortLink";
 //        String expectedLink = "link";
 //        String actual = repository.createShortLink(
-//                new User.UserBuilder()
+//                new User.Builder()
 //                .addUserName("user")
 //                .addPassword("password")
 //                .build(), expectedLink);
@@ -174,7 +174,7 @@ public class RepositoryTest {
 //        syncCommands.select(DB_WORK_NUMBER);
 //        String userName = "user1";
 //        String expectedPassword = "password";
-//        repository.createUser(new User.UserBuilder()
+//        repository.createUser(new User.Builder()
 //                .addUserName(userName)
 //                .addPassword(expectedPassword)
 //                .build());
@@ -190,7 +190,7 @@ public class RepositoryTest {
 //        String userName = "user";
 //        String expectedPassword = "password";
 //
-//        repository.createUser(new User.UserBuilder()
+//        repository.createUser(new User.Builder()
 //                .addUserName(userName)
 //                .addPassword(expectedPassword)
 //                .build());

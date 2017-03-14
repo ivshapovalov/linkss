@@ -4,15 +4,12 @@ package ru.ivan.linkss.controller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.ui.Model;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -48,10 +45,10 @@ public class RootControllerTest {
         //given
         HttpSession session = Mockito.mock(HttpSession.class);
         Model model = Mockito.mock(Model.class);
-        User user = new User.UserBuilder()
+        User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addisEmpty(false)
+                .addIsEmpty(false)
                 .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
 
@@ -337,10 +334,10 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User.UserBuilder()
+        User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addisEmpty(false)
+                .addIsEmpty(false)
                 .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
@@ -417,10 +414,10 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User.UserBuilder()
+        User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addisEmpty(false)
+                .addIsEmpty(false)
                 .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
 
@@ -445,10 +442,10 @@ public class RootControllerTest {
         LinksService service = Mockito.mock(LinksService.class);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
-        User user = new User.UserBuilder()
+        User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addisEmpty(false)
+                .addIsEmpty(false)
                 .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
         Mockito.when(request.getServletContext()).thenReturn(servletContext);

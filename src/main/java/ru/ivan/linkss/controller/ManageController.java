@@ -82,14 +82,14 @@ public class ManageController {
     @RequestMapping(value = PAGE_SIGNUP, method = RequestMethod.GET)
     public String registration(Model model)
             throws IOException {
-        model.addAttribute(ATTRIBUTE_USER, new User.UserBuilder().build());
+        model.addAttribute(ATTRIBUTE_USER, new User.Builder().build());
         return PAGE_SIGNUP;
     }
 
     @RequestMapping(value = PAGE_SIGNIN, method = RequestMethod.GET)
     public String signin(Model model)
             throws IOException {
-        model.addAttribute(ATTRIBUTE_USER, new User.UserBuilder().build());
+        model.addAttribute(ATTRIBUTE_USER, new User.Builder().build());
         return PAGE_SIGNIN;
     }
 
@@ -399,9 +399,15 @@ public class ManageController {
             String link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
             String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION_WITH_DOT;
-            FullLink fullLink = new FullLink(shortLink, contextPath + shortLink, link,
-                    "", urlImagePath,
-                    owner, service.getLinkExpirePeriod(shortLink));
+            FullLink fullLink = new FullLink.Builder()
+                    .addKey(shortLink)
+                    .addShortLink(contextPath + shortLink)
+                    .addLink(link)
+                    .addImageLink(urlImagePath)
+                    .addUserName(owner)
+                    .addSeconds(service.getLinkExpirePeriod(shortLink))
+                            .build();
+
             model.addAttribute(ATTRIBUTE_FULL_LINK, fullLink);
             model.addAttribute(ATTRIBUTE_OLD_KEY, shortLink);
             model.addAttribute(ATTRIBUTE_OWNER, owner);
@@ -507,7 +513,7 @@ public class ManageController {
             return PAGE_ERROR;
         }
         try {
-            User oldUser = new User.UserBuilder().addUserName(oldUserName).build();
+            User oldUser = new User.Builder().addUserName(oldUserName).build();
             newUser.setEmpty(false);
             service.updateUser(autorizedUser, newUser, oldUser);
             model.addAttribute("oldUserName", null);

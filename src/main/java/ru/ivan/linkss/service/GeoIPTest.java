@@ -14,8 +14,9 @@ public class GeoIPTest {
     public static void main(String[] args) throws URISyntaxException, IOException {
 
         String ip = "46.188.121.42";
-        String server = "http://app.whydt.ru:49193/geoip/";
-        HttpClient client = new HttpClient(new URI(server + ip));
+//        String geoIpServer = "http://app.whydt.ru:49193/geoip/";
+        String geoIpServer = System.getenv("GEOIP_URL");
+        HttpClient client = new HttpClient(new URI(geoIpServer + ip));
         HttpResponse response = client.sendData(HttpClient.HTTP_METHOD.GET);
         if (!response.hasError()) {
             String jsonString = response.getData();
