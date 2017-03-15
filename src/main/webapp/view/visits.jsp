@@ -1,38 +1,49 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib prefix="s" uri="http://www.springframework.org/tags" %>
 
 <html>
 <body>
-<section>
-    <div class="container" style="alignment: center">
-        <%@include file="header.jsp" %>
-        <h2> DOMAINS </h2>
+<script>
+    $(document).ready(function () {
+        $('.dropdown-toggle').dropdown();
+    });
+</script>
+<div class="container" style="alignment: center">
+    <%@include file="header.jsp" %>
+    <h2> VISITS <a href="./map">map</a> </h2>
+    <section>
         <div class="bs-example">
             <ul class="pagination">
                 <li>
-                    <a href="./domains?page=${1}">
+                    <a href="./visits?page=${1}">
                         ${1}
                     </a>
                 </li>
                 <c:choose>
                     <c:when test="${currentPage lt 7}">
-                        <li class="disabled"><a href="/manage/domains?page=${currentPage - 6}">
+                        <li class="disabled"><a
+                                href="./visits?page=${currentPage - 6}">
                             << </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./domains?page=${currentPage - 6}">
-                            << </a>
+                        <li>
+                            <a href="./visits?page=${currentPage - 6}">
+                                << </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
-                        <li class="disabled"><a href="./domains?page=${currentPage - 1}">
+                        <li class="disabled"><a
+                                href="./visits?page=${currentPage - 1}">
                             < </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./domains?page=${currentPage - 1}">
-                            < </a>
+                        <li>
+
+                            <a href="./visits?page=${currentPage - 1}">
+                                < </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
@@ -64,70 +75,101 @@
                     <c:choose>
                         <c:when test="${currentPage eq i}">
                             <li class="active">
-                                <a href="./domains?page=${currentPage}">
+                                <a href="./visits?page=${currentPage}">
                                         ${i}
                                 </a>
                             </li>
                         </c:when>
                         <c:otherwise>
                             <li>
-                                <a href="./domains?page=${i}">
+                                <a href="./visits?page=${i}">
                                         ${i}
                                 </a>
-
                             </li>
                         </c:otherwise>
                     </c:choose>
                 </c:forEach>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
-                        <li class="disabled"><a href="./domains?page=${currentPage + 1}">
+                        <li class="disabled"><a
+                                href="./visits?page=${currentPage + 1}">
                             > </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./domains?page=${currentPage + 1}">
+                        <li><a href="./visits?page=${currentPage + 1}">
                             > </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
-                        <li class="disabled"><a href="./domains?page=${currentPage + 6}">
+                        <li class="disabled"><a
+                                href="./visits?page=${currentPage + 6}">
                             >> </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./domains?page=${currentPage + 6}">
+                        <li><a href="./visits?page=${currentPage + 6}">
                             >> </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
-
-                <li><a href="./domains?page=${numberOfPages}">
+                <li><a href="./visits?page=${numberOfPages}">
                     ${numberOfPages} </a>
                 </li>
 
             </ul>
         </div>
 
-         <div>
-             <h3>VISITS ACTUAL - '${visitsActualSize}'. VISITS HISTORY -
-              '${visitsHistorySize}'</h3></div>
-
         <table border="1" width="50%" class="table">
             <tr>
-                <td width="60%"><b>Domain</b></td>
-                <td width="20%"><b>Visits on existing links</b></td>
-                <td width="20%"><b>Visits on all links</b></td>
+                <td width="10%"><b>Time</b></td>
+                <td width="10%"><b>ip</b></td>
+                <td width="10%"><b>Country code</b></td>
+                <td width="10%"><b>Country name</b></td>
+                <td width="10%"><b>Region code</b></td>
+                <td width="10%"><b>Region name</b></td>
+                <td width="10%"><b>City</b></td>
+                <td width="10%"><b>Postal code</b></td>
+                <td width="10%"><b>Latitude</b></td>
+                <td width="10%"><b>Longitude</b></td>
             </tr>
             <c:forEach items="${list}" var="column">
                 <tr>
-                    <td width="60%">${column.name}</td>
-                    <td width="10%">${column.visitsActual}</td>
-                    <td width="10%">${column.visitsHistory}</td>
+                    <td width="10%">
+                        <s:eval
+                                expression="T(ru.ivan.linkss.util.Util).convertLocalDateTimeToString(column.time)"
+                                var="time"/>
+                    ${time}
+
+                    </td>
+
+                    <td width="10%">${column.ipLocation.ip}</td>
+                    <td width="10%">${column.ipLocation.countryCode}</td>
+                    <td width="10%">${column.ipLocation.countryName}</td>
+                    <td width="10%">${column.ipLocation.region}</td>
+                    <td width="10%">${column.ipLocation.regionName}</td>
+                    <td width="10%">${column.ipLocation.city}</td>
+                    <td width="10%">${column.ipLocation.postalCode}</td>
+                    <td width="10%">${column.ipLocation.latitude}</td>
+                    <td width="10%">${column.ipLocation.longitude}</td>
+
+                    <td>
+                        <div class="btn-group">
+                            <button type="button" data-toggle="dropdown"
+                                    class="btn btn-primary dropdown-toggle">Action
+                                <span class="caret"></span></button>
+                            <ul class="dropdown-menu">
+                                     <li><a
+                                        href="./visit/${column.timeAsMillis()}/delete"><span
+                                        class="glyphicon glyphicon-trash"></span>Delete</a></li>
+                            </ul>
+                        </div>
+                    </td>
                 </tr>
             </c:forEach>
         </table>
-    </div>
-</section>
+
+    </section>
+</div>
 </body>
 </html>

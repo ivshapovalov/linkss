@@ -11,7 +11,7 @@
 </script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> LINKS </h2>
+    <h2> LINKS <a href="./map">map</a></h2>
     <section>
         <div class="bs-example">
             <ul class="pagination">
@@ -140,7 +140,7 @@
                             expression="T(ru.ivan.linkss.util.Util).convertSecondsToPeriod(column.seconds)"
                             var="seconds"/>${seconds}</td>
 
-                    <td width="10%">${column.visits}</td>
+                    <td width="10%"><a href="./link/${column.key}/visits">${column.visits}</a></td>
                     <td width="20%"><a href="${column.shortLink}">${column.shortLink}</a>
                     </td>
                     <td>

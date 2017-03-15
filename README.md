@@ -7,38 +7,42 @@ Short link service
 ####Other:zxing QR code, GeoIP DB
 ####Front - Bootstrap+JQuery
 
-### <a href="http://app.whydt.ru/49193/linkss" target=_blank>Демо разрабатываемого приложения</a>
-
 
 ####REDIS INSTANCE 1
 #####redis:0 WORK_DB
 - hset key:_visits
-    - field:shortLink
-    - value:visitsActual
+    - field: String shortLink
+    - value: long visitsActual
 - hset key:_visits_by_domain_actual 
-    - field:domain
-    - value:visitsActual
+    - field: String domain
+    - value: long visitsActual
 - hset key:_visits_by_domain_history 
-    - field:domain
-    - value:visitsActual
+    - field: String domain
+    - value: long visitsActual
 - hset key:_preferences
-    - field:pref_name       
-    - value:value
+    - field: String pref_name       
+    - value: String value
 - hset key:_users
-    - field:userName
-    - value:json User
+    - field: String userName
+    - value: json User user
 - hset key:userName
-    - field:shortLink
-    - value:link
+    - field: String shortLink
+    - value: String link
 
 #####redis:1 FREELINK_DB 
-- key:shortLink
+- key: String shortLink
 
 #####redis:2 LINK_DB 
-- key:shortLink
-- value:{"link":link, "location":{creator location}}
+- key: String shortLink
+- value: String link
 
 #####redis:3 ARCHIVE_LINK_DB 
 - hset key:userName
-    - field:shortLink
-    - value:{"key":shortLink,"link":link,"visits":visits,"del_date":deleted_date}
+    - field: String shortLink
+    - value: json FullLink link
+
+#####redis:4 VISITS_DB
+- hset key:shortLink
+    - field: long time
+    - value: json Visit visit
+    

@@ -1,29 +1,36 @@
 package ru.ivan.linkss.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.LinkRepository;
-import ru.ivan.linkss.repository.entity.Domain;
-import ru.ivan.linkss.repository.entity.FullLink;
-import ru.ivan.linkss.repository.entity.User;
-import ru.ivan.linkss.repository.entity.UserDTO;
+import ru.ivan.linkss.repository.entity.*;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
+
+//import net.sf.corn.httpclient.HttpClient;
+//import net.sf.corn.httpclient.HttpResponse;
 
 @Service
 @Qualifier(value = "service")
@@ -32,7 +39,11 @@ public class LinksServiceImpl implements LinksService {
     private static final int SIZE_OF_POOL = 15;
     private static final String IMAGE_EXTENSION = "png";
     private static final String FILE_SEPARTOR = File.separator;
-    private static final String QR_FOLDER = "resources"+ FILE_SEPARTOR +"qr";
+    private static final String QR_FOLDER = "resources" + FILE_SEPARTOR + "qr";
+    //private static final String GEO_IP_URL = "http://localhost:8081/geoip/rest/?ip=";
+    //private static final String GEO_IP_URL = "http://app.whydt.ru:49193/geoip/rest/?ip=";
+    private static final String GEO_IP_URL = System.getenv("GEOIP_URL");
+
 
     @Autowired
     @Qualifier(value = "repositoryOne")
@@ -66,6 +77,13 @@ public class LinksServiceImpl implements LinksService {
         return repository.getUsersSize(autorizedUser);
     }
 
+    public long getVisitsActualSize(User autorizedUser) {
+        return repository.getVisitsActualSize(autorizedUser);
+    }
+    public long getVisitsHistorySize(User autorizedUser) {
+        return repository.getVisitsHistorySize(autorizedUser);
+    }
+
     public void setRepository(LinkRepository repository) {
         this.repository = repository;
     }
@@ -95,7 +113,7 @@ public class LinksServiceImpl implements LinksService {
 
         String shortLink = repository.createShortLink(autorizedUser, link);
         if (shortLink != null) {
-            String imagePath = path + "resources" + FILE_SEPARTOR +"qr"+ FILE_SEPARTOR + shortLink +
+            String imagePath = path + "resources" + FILE_SEPARTOR + "qr" + FILE_SEPARTOR + shortLink +
                     "." + IMAGE_EXTENSION;
             String shortLinkPath = context + shortLink;
 
@@ -153,8 +171,53 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String visitLink(String shortLink) {
-        return repository.visitLink(shortLink);
+    public String visitLink(String shortLink, String ip) {
+
+        return repository.visitLink(shortLink, getLocation(ip));
+    }
+
+    private IpLocation getLocation(String ip) {
+
+
+        try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()){
+//            HttpClient client = new HttpClient(new URI(GEO_IP_URL + ip));
+//            client.setUserAgent(HttpClient.USER_AGENT_FIREFOX_23_0);
+//            client.setKeepAliveTime(3000);
+//            HttpResponse response = client.sendData(HttpClient.HTTP_METHOD.GET);
+
+            //String jsonLocation=Jsoup.connect(GEO_IP_URL+ip).ignoreContentType(true).execute()
+            //       .body();
+            HttpGet request = new HttpGet(GEO_IP_URL + ip);
+            request.addHeader("accept", "application/json");
+
+            HttpResponse response = geoHTTPClient.execute(request);
+
+            IpLocation location = null;
+////            if (!response.hasError()) {
+            if (response.getStatusLine().getStatusCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : "
+                        + response.getStatusLine().getStatusCode());
+            }
+
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader((response.getEntity().getContent())));
+            String jsonLocation;
+            if ((jsonLocation = br.readLine()) != null) {
+                try {
+                    //try to convert to object
+                    location = new ObjectMapper().readValue(jsonLocation, IpLocation
+                            .class);
+                    return location;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new IpLocation(ip);
+
     }
 
     @Override
@@ -170,6 +233,11 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteUserLink(User user, String shortLink, String owner) {
         repository.deleteLink(user, shortLink, owner);
+    }
+
+    @Override
+    public void deleteLinkVisit(User user, String owner, String key, String time) {
+        repository.deleteVisit(user, owner, key, time);
     }
 
     @Override
@@ -201,6 +269,18 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
+    public List<Visit> getLinkVisits(User autorizedUser, String owner, String key, int
+            offset, long
+            recordsOnPage) {
+        return repository.getLinkVisits(autorizedUser,owner, key, offset,
+                recordsOnPage);
+    }
+    @Override
+    public List<Visit> getUserVisits(User autorizedUser, String owner) {
+        return repository.getUserVisits(autorizedUser,owner);
+    }
+
+    @Override
     public List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage) {
         return repository.getUserArchive(userName, contextPath, offset, recordsOnPage);
@@ -214,6 +294,15 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public long getUserArchiveSize(User autorizedUser, String owner) {
         return repository.getUserArchiveSize(autorizedUser, owner);
+    }
+
+    @Override
+    public long getLinkVisitsSize(User autorizedUser, String owner, String key) {
+        return repository.getLinkVisitsSize(autorizedUser, owner, key);
+    }
+    @Override
+    public long getUserVisitsSize(User autorizedUser, String owner) {
+        return repository.getUserVisitsSize(autorizedUser, owner);
     }
 
     @Override
@@ -232,7 +321,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public void deleteAllImages(String path) {
 
-        deleteLocalImages(path+QR_FOLDER);
+        deleteLocalImages(path + QR_FOLDER);
 
     }
 

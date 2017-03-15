@@ -8,14 +8,12 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
-import ru.ivan.linkss.repository.entity.Domain;
-import ru.ivan.linkss.repository.entity.FullLink;
-import ru.ivan.linkss.repository.entity.User;
-import ru.ivan.linkss.repository.entity.UserDTO;
+import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.util.Util;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +34,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private static final int DB_FREELINK_NUMBER = 1;
     private static final int DB_LINK_NUMBER = 2;
     private static final int DB_ARCHIVE_NUMBER = 3;
+    private static final int DB_VISITS_NUMBER = 4;
 
     private static final long MIN_FREE_LINK_SIZE = 10;
     private static final long SECONDS_IN_DAY = 3600 * 24;
@@ -107,7 +106,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         }
     }
 
-    private StatefulRedisConnection<String, String> connect() {
+    public StatefulRedisConnection<String, String> connect() {
         boolean connectionFailed = true;
         StatefulRedisConnection<String, String> connection = null;
         do {
@@ -146,7 +145,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         if (autorizedUser == null) {
             throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
         }
-        if (autorizedUser == null) {
+        if (!autorizedUser.isAdmin()) {
             throw new RuntimeException(String.format("User '%s' does not have permissions to see domains stat", autorizedUser.getUserName()));
         }
         try (StatefulRedisConnection<String, String> connection = connect()) {
@@ -162,13 +161,55 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         if (autorizedUser == null) {
             throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
         }
-        if (autorizedUser == null) {
+        if (!autorizedUser.isAdmin()) {
             throw new RuntimeException(String.format("User '%s' does not have permissions to see domains stat", autorizedUser.getUserName()));
         }
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);
             long size = syncCommands.hlen(KEY_USERS);
+            return size;
+        }
+    }
+
+    @Override
+    public long getVisitsActualSize(User autorizedUser) {
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to see " +
+                    "visits", autorizedUser.getUserName()));
+        }
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+
+            long size = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN_ACTUAL).stream()
+                    .map(domain -> Long.parseLong(syncCommands.hget
+                            (KEY_VISITS_BY_DOMAIN_ACTUAL, domain))
+                    ).reduce((sum, cost) -> sum + cost).get();
+            return size;
+        }
+    }
+
+    @Override
+    public long getVisitsHistorySize(User autorizedUser) {
+        if (autorizedUser == null) {
+            throw new RuntimeException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RuntimeException(String.format("User '%s' does not have permissions to see " +
+                    "visits", autorizedUser.getUserName()));
+        }
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+
+            long size = syncCommands.hkeys(KEY_VISITS_BY_DOMAIN_HISTORY).stream()
+                    .map(domain -> Long.parseLong(syncCommands.hget
+                            (KEY_VISITS_BY_DOMAIN_HISTORY, domain))
+                    ).reduce((sum, cost) -> sum + cost).get();
             return size;
         }
     }
@@ -268,7 +309,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                     .addShortLink(shortLinkWithContext)
                                     .addLink(link)
                                     .addVisits(visits)
-                                    .addImageLink(shortLinkWithContext+".png")
+                                    .addImageLink(shortLinkWithContext + ".png")
                                     .addUserName(userName)
                                     .build();
                         } else {
@@ -277,7 +318,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                     .addShortLink(shortLinkWithContext)
                                     .addLink(link)
                                     .addVisits(visits)
-                                    .addImageLink(shortLinkWithContext+".png")
+                                    .addImageLink(shortLinkWithContext + ".png")
                                     .addUserName(userName)
                                     .addSeconds(ttl)
                                     .build();
@@ -286,6 +327,69 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .filter(fullLink -> fullLink.getLink() != null)
                     .collect(Collectors.toList());
             return fullStat;
+        }
+    }
+
+    @Override
+    public List<Visit> getLinkVisits(User autorizedUser, String owner, String key, int offset, long
+            recordsOnPage) {
+
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+            if (!autorizedUser.isAdmin()) {
+                if (!syncCommands.hexists(autorizedUser.getUserName(), key)) {
+                    throw new RuntimeException(String.format("User '%s' don't have link '%s'",
+                            autorizedUser.getUserName(), key));
+                }
+            }
+            syncCommands.select(DB_VISITS_NUMBER);
+            List<Visit> visits = syncCommands.hkeys(key)
+                    .stream()
+                    .sorted()
+                    .skip(offset)
+                    .limit(recordsOnPage)
+                    .map(time -> {
+                        Visit visit = null;
+                        try {
+                            visit = new ObjectMapper().readValue(syncCommands.hget(key,
+                                    time), Visit.class);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return visit;
+                    })
+                    .collect(Collectors.toList());
+            return visits;
+        }
+    }
+
+    @Override
+    public List<Visit> getUserVisits(User autorizedUser, String owner) {
+
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+            List<Visit> visits = syncCommands.hkeys(owner)
+                    .stream()
+                    .sorted()
+                    .map(key -> {
+                        syncCommands.select(DB_VISITS_NUMBER);
+                        return syncCommands.hkeys(key).stream()
+                                .map(time -> {
+                                    Visit visit = null;
+                                    try {
+                                        visit = new ObjectMapper().readValue(syncCommands.hget(key,
+                                                time), Visit.class);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    return visit;
+                                })
+                                .collect(Collectors.toList());
+                    }).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+            return visits;
         }
     }
 
@@ -383,6 +487,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     syncCommands.hset(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, "0");
                 }
             }
+            syncCommands.select(DB_VISITS_NUMBER);
             return shortLink;
         }
     }
@@ -519,9 +624,31 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             syncCommands.select(DB_LINK_NUMBER);
             String link = syncCommands.get(shortLink);
             if (link != null) {
-                decreaseVisits(shortLink, owner, link, syncCommands);
+                moveLinkToArchive(shortLink, owner, link, syncCommands);
                 syncCommands.select(DB_LINK_NUMBER);
                 syncCommands.del(shortLink);
+            }
+        }
+    }
+
+    @Override
+    public void deleteVisit(User autorizedUser, String owner, String key, String time) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            if (!autorizedUser.isAdmin()) {
+                if (!syncCommands.hexists(autorizedUser.getUserName(), key)) {
+                    throw new RuntimeException(String.format("User '%s' does not have link '%s'",
+                            autorizedUser.getUserName(), key));
+                }
+            }
+            syncCommands.select(DB_LINK_NUMBER);
+            String link = syncCommands.get(key);
+            syncCommands.select(DB_VISITS_NUMBER);
+            long visits = syncCommands.hdel(key, time);
+            if (visits != 0 && link != null) {
+                decreaseVisits(key, owner, link, syncCommands);
             }
         }
     }
@@ -641,6 +768,19 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
         synchronized (redisClient) {
             syncCommands.select(DB_WORK_NUMBER);
+            String domainName = Util.getDomainName(link);
+            syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
+                    -1);
+            syncCommands.hincrby(KEY_VISITS, shortLink, -1);
+
+        }
+    }
+
+    private void moveLinkToArchive(String shortLink, String owner, String link,
+                                   RedisCommands<String,
+                                           String> syncCommands) {
+        synchronized (redisClient) {
+            syncCommands.select(DB_WORK_NUMBER);
             String visits = syncCommands.hget(KEY_VISITS, shortLink);
             syncCommands.hdel(KEY_VISITS, shortLink);
             if (visits == null) visits = "0";
@@ -656,8 +796,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName,
                         -1 * decrement);
             }
-            syncCommands.hdel(owner, shortLink);
-            syncCommands.select(DB_ARCHIVE_NUMBER);
             FullLink fullLink = new FullLink.Builder()
                     .addKey(shortLink)
                     .addLink(link)
@@ -665,6 +803,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .addVisits(visits)
                     .addDeleted(LocalDateTime.now())
                     .build();
+            syncCommands.hdel(owner, shortLink);
+            syncCommands.select(DB_ARCHIVE_NUMBER);
             String json = "";
             try {
                 json = new ObjectMapper().writeValueAsString(fullLink);
@@ -672,7 +812,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 e.printStackTrace();
             }
             syncCommands.hset(owner, shortLink, json);
-
         }
     }
 
@@ -687,7 +826,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String visitLink(String shortLink) {
+    public String visitLink(String shortLink, IpLocation ipLocation) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -701,6 +840,16 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, 1);
                     syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, 1);
                 }
+                syncCommands.select(DB_VISITS_NUMBER);
+                long time = Instant.now().toEpochMilli();
+                String json = "";
+                try {
+                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipLocation));
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                syncCommands.hset(shortLink, String.valueOf(time), json);
+
             }
             return link;
         }
@@ -961,7 +1110,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 .map(shortLink -> {
                     syncCommands.select(DB_WORK_NUMBER);
                     String link = syncCommands.hget(userName, shortLink);
-                    decreaseVisits(shortLink, userName, link, syncCommands);
+                    moveLinkToArchive(shortLink, userName, link, syncCommands);
                     return shortLink;
                 })
                 .collect(Collectors.toList());
@@ -1005,6 +1154,37 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 }
             }
             long size = syncCommands.hlen(owner);
+            return size;
+        }
+    }
+
+    @Override
+    public long getLinkVisitsSize(User autorizedUser, String owner, String key) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+
+            syncCommands.select(DB_VISITS_NUMBER);
+
+            if (!autorizedUser.isAdmin()) {
+                if (!autorizedUser.getUserName().equals(owner)) {
+                    throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                    "watch user visits",
+                            autorizedUser.getUserName()));
+                }
+            }
+            long size = syncCommands.hlen(key);
+            return size;
+        }
+    }
+
+    @Override
+    public long getUserVisitsSize(User autorizedUser, String owner) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+
+            List<Visit> visits = getUserVisits(autorizedUser,owner);
+            long size = visits.size();
             return size;
         }
     }
@@ -1070,7 +1250,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                         String shortLink = fullLink.getKey();
                         syncCommands.select(DB_WORK_NUMBER);
                         String link = syncCommands.hget(fullLink.getUserName(), fullLink.getKey());
-                        decreaseVisits(shortLink, fullLink.getUserName(), link, syncCommands);
+                        moveLinkToArchive(shortLink, fullLink.getUserName(), link, syncCommands);
                         return shortLink;
                     }).collect(Collectors.toList());
 

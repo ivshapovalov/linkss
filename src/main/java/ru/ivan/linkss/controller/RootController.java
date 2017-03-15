@@ -18,6 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,7 +65,8 @@ public class RootController {
         String servletPath = request.getServletPath();
 
         String shortLink = servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
-        String link = service.visitLink(shortLink);
+        String ip=getIP(request);
+        String link = service.visitLink(shortLink,ip);
         if (link != null) {
             Pattern p = Pattern.compile(URL_REGEX);
             Matcher m = p.matcher(link);
@@ -191,6 +194,22 @@ public class RootController {
             contextPath = p.substring(0, p.length() - cp.length() + 1);
         }
         return contextPath;
+    }
+
+    private String getIP (HttpServletRequest request) {
+        String ip = request.getRemoteAddr();
+        if (ip.equalsIgnoreCase("0:0:0:0:0:0:0:1")) {
+            InetAddress inetAddress = null;
+            try {
+                inetAddress = InetAddress.getLocalHost();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+            String ipAddress = inetAddress.getHostAddress();
+            ip = ipAddress;
+        }
+        ip="46.25.28.54";
+        return ip;
     }
 }
 

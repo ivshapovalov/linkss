@@ -11,10 +11,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import ru.ivan.linkss.repository.entity.Domain;
-import ru.ivan.linkss.repository.entity.FullLink;
-import ru.ivan.linkss.repository.entity.User;
-import ru.ivan.linkss.repository.entity.UserDTO;
+import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.Util;
 
@@ -24,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @EnableScheduling
@@ -49,6 +47,9 @@ public class ManageController {
     private static final String PAGE_FREE_LINK = "freelink";
     private static final String PAGE_LINK = "link";
     private static final String PAGE_LINKS = "links";
+    private static final String PAGE_VISITS = "visits";
+    private static final String PAGE_VISIT = "visit";
+    private static final String PAGE_MAP = "map";
     private static final String PAGE_ARCHIVE = "archive";
     private static final String PAGE_ARCHIVES = "archives";
     private static final String ACTION_LOGOUT = "logout";
@@ -65,6 +66,9 @@ public class ManageController {
     private static final String ATTRIBUTE_USER = "user";
     private static final String ATTRIBUTE_LIST = "list";
     private static final String ATTRIBUTE_KEY = "key";
+    private static final String ATTRIBUTE_POINTS = "points";
+    private static final String ATTRIBUTE_IPS = "ips";
+    private static final String ATTRIBUTE_TIME = "time";
     private static final String ATTRIBUTE_OLD_KEY = "oldKey";
     private static final String ATTRIBUTE_OLD_USERNAME = "oldUserName";
     private static final String ATTRIBUTE_OLD_PASSWORD = "oldPassword";
@@ -75,6 +79,8 @@ public class ManageController {
     private static final String ATTRIBUTE_PAGE = "page";
     private static final String ATTRIBUTE_CURRENT_PAGE = "currentPage";
     private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
+    private static final String ATTRIBUTE_VISITS_ACTUAL_SIZE = "visitsActualSize";
+    private static final String ATTRIBUTE_VISITS_HISTORY_SIZE = "visitsHistorySize";
 
     @Autowired
     LinksService service;
@@ -350,6 +356,51 @@ public class ManageController {
         return "";
     }
 
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
+            + WEB_SEPARTOR+"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR
+            +PAGE_VISIT+WEB_SEPARTOR+"{"+ATTRIBUTE_TIME+"}"+WEB_SEPARTOR+ACTION_DELETE,method =
+            RequestMethod.GET)
+    public String deleteVisit(Model model,
+                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                              @ModelAttribute(ATTRIBUTE_KEY) String key,
+                              @ModelAttribute(ATTRIBUTE_TIME) String time,
+                             HttpSession session,
+                             HttpServletRequest request) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
+            return PAGE_ERROR;
+        }
+        if (owner == null || owner.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link owner is not defined!");
+            return PAGE_ERROR;
+        }
+        if (key == null || key.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
+            return PAGE_ERROR;
+        }
+        if (time == null || time.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Time of visit is not defined!");
+            return PAGE_ERROR;
+        }
+
+        try {
+            service.deleteLinkVisit(autorizedUser, owner,key, time);
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+            model.addAttribute(ATTRIBUTE_KEY, null);
+            model.addAttribute(ATTRIBUTE_TIME, null);
+
+            return String.format("redirect:%s", getControllerMapping())
+                    + PAGE_USER + WEB_SEPARTOR
+                    + owner + WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
+                    +key +WEB_SEPARTOR+PAGE_VISITS;
+        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+    }
+
     @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
             + WEB_SEPARTOR+"{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ ACTION_EDIT}, method =
@@ -619,6 +670,137 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+PAGE_VISITS}, method = RequestMethod.GET)
+    public String visits(Model model,
+                        @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                        @ModelAttribute(ATTRIBUTE_KEY) String key,
+                        HttpServletRequest request,
+                        HttpSession session) {
+        int currentPage = 1;
+        int recordsOnPage = 10;
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            if (!autorizedUser.getUserName().equals(owner)) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                "watch user visits",
+                        autorizedUser.getUserName()));
+            }
+        }
+
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter(ATTRIBUTE_PAGE));
+        }
+
+        if (owner == null || owner.equals("")) {
+            owner = autorizedUser.getUserName();
+        }
+        String contextPath = getContextPath(request);
+        int offset = (currentPage - 1) * recordsOnPage;
+        List<Visit> list = service.getLinkVisits(autorizedUser, owner,key, offset, recordsOnPage);
+        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner,key);
+        if (visitsCount == 0) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have visits on that link. " +
+                    "Try another!");
+            return PAGE_MESSAGE;
+        }
+        int numberOfPages = Math.max(1, (int) Math.ceil((double) visitsCount / recordsOnPage));
+
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_OWNER, owner);
+        model.addAttribute(ATTRIBUTE_KEY, key);
+
+        return PAGE_VISITS;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_MAP}, method = RequestMethod.GET)
+    public String mapUser(Model model,
+                          @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                          HttpServletRequest request,
+                          HttpSession session) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+        if (!autorizedUser.isAdmin()) {
+            if (!autorizedUser.getUserName().equals(owner)) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                "watch user visits",
+                        autorizedUser.getUserName()));
+            }
+        }
+
+        //long visitsCount = service.getUserVisitsSize(autorizedUser, owner);
+        List<Visit> visits=service.getUserVisits(autorizedUser,owner);
+        visits = visits.stream()
+                .filter(visit -> visit.getIpLocation()!=null)
+                .filter(visit -> visit.getIpLocation().getLatitude()!=null && visit.getIpLocation()
+                        .getLongitude()!=null)
+                .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
+                        .getIpLocation().getLongitude()))
+                .collect(Collectors.toList());
+        List<String> points=visits.stream()
+                .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
+                .collect(Collectors.toList());
+        List<String> ips=visits.stream()
+                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp())+"']")
+                .collect(Collectors.toList());
+        model.addAttribute(ATTRIBUTE_POINTS, points.toString());
+        model.addAttribute(ATTRIBUTE_IPS, ips.toString());
+        return PAGE_MAP;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
+            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+PAGE_MAP}, method = RequestMethod.GET)
+    public String mapLink(Model model,
+                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                         @ModelAttribute(ATTRIBUTE_KEY) String key,
+                         HttpServletRequest request,
+                         HttpSession session) {
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+        if (!autorizedUser.isAdmin()) {
+            if (!autorizedUser.getUserName().equals(owner)) {
+                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                                "watch user visits",
+                        autorizedUser.getUserName()));
+            }
+        }
+
+        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner,key);
+        List<Visit> visits=service.getLinkVisits(autorizedUser,owner,key,0,visitsCount);
+        visits = visits.stream()
+                .filter(visit -> visit.getIpLocation()!=null)
+                .filter(visit -> visit.getIpLocation().getLatitude()!=null && visit.getIpLocation()
+                        .getLongitude()!=null)
+                .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
+                        .getIpLocation().getLongitude()))
+                .collect(Collectors.toList());
+        List<String> points=visits.stream()
+                .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
+                .collect(Collectors.toList());
+        List<String> ips=visits.stream()
+                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp())+"']")
+                .collect(Collectors.toList());
+        model.addAttribute(ATTRIBUTE_POINTS, points.toString());
+        model.addAttribute(ATTRIBUTE_IPS, ips.toString());
+        return PAGE_MAP;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVES}, method = RequestMethod.GET)
     public String archives(Model model,
                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
@@ -680,7 +862,9 @@ public class ManageController {
         }
         int offset = (currentPage - 1) * recordsOnPage;
         List<Domain> list = service.getShortStat(offset, recordsOnPage);
-        long domainsSize = (int) service.getDomainsSize(autorizedUser);
+        long domainsSize = service.getDomainsSize(autorizedUser);
+        long visitsActualSize = service.getVisitsActualSize(autorizedUser);
+        long visitsHistorySize = service.getVisitsHistorySize(autorizedUser);
         if (domainsSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have domains visits. Try later!");
             return PAGE_MESSAGE;
@@ -690,6 +874,8 @@ public class ManageController {
         model.addAttribute(ATTRIBUTE_LIST, list);
         model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
         model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_VISITS_ACTUAL_SIZE, visitsActualSize);
+        model.addAttribute(ATTRIBUTE_VISITS_HISTORY_SIZE, visitsHistorySize);
 
         return PAGE_DOMAINS;
     }
@@ -757,7 +943,7 @@ public class ManageController {
         Thread populatorThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                service.clear(path);
+                //service.clear(path);
                 Populator populator = applicationContext.getBean(Populator.class);
                 populator.setPath(path);
                 populator.setContext(context);

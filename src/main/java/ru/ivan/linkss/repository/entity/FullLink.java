@@ -18,7 +18,7 @@ public class FullLink {
     private String imageLink;
     private String userName;
     private long seconds;
-    private IPLocation ipLocation;
+    private IpLocation ipLocation;
 
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -126,7 +126,7 @@ public class FullLink {
         private String imageLink;
         private String userName;
         private long seconds;
-        private IPLocation ipLocation;
+        private IpLocation ipLocation;
         private LocalDateTime deleted;
 
         public Builder() {
@@ -167,7 +167,7 @@ public class FullLink {
             return this;
         }
 
-        public Builder addIPLocation(IPLocation ipLocation) {
+        public Builder addIPLocation(IpLocation ipLocation) {
             this.ipLocation = ipLocation;
             return this;
         }

@@ -1,21 +1,45 @@
 package ru.ivan.linkss.repository.entity;
 
-public class IPLocation {
+public class IpLocation {
 
-    private String countryCode;
-    private String countryName;
-    private String region;
-    private String regionName;
-    private String city;
-    private String postalCode;
-    private String latitude;
-    private String longitude;
+    private String ip;
+    private String countryCode="";
+    private String countryName="";
+    private String region="";
+    private String regionName="";
+    private String city="";
+    private String postalCode="";
+    private String latitude="";
+    private String longitude="";
 
     @Override
     public String toString() {
-        return city + " " + postalCode + ", " + regionName + " (" + region
-                + "), " + countryName + " (" + countryCode + ") " + latitude
-                + "," + longitude;
+        return "IpLocation{" +
+                "ip='" + ip + '\'' +
+                ", countryCode='" + countryCode + '\'' +
+                ", countryName='" + countryName + '\'' +
+                ", region='" + region + '\'' +
+                ", regionName='" + regionName + '\'' +
+                ", city='" + city + '\'' +
+                ", postalCode='" + postalCode + '\'' +
+                ", latitude='" + latitude + '\'' +
+                ", longitude='" + longitude + '\'' +
+                '}';
+    }
+
+    public IpLocation(String ip) {
+        this.ip = ip;
+    }
+
+    public IpLocation() {
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public String getCity() {

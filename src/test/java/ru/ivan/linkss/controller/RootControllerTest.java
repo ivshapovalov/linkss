@@ -86,7 +86,7 @@ public class RootControllerTest {
         Model model = Mockito.mock(Model.class);
         Mockito.when(request.getServletPath()).thenReturn("http://yandex.ru/ghyjjh");
         String link = "mail.ru";
-        Mockito.when(service.visitLink(Mockito.anyString())).thenReturn(link);
+        Mockito.when(service.visitLink(Mockito.anyString(),"")).thenReturn(link);
 
         //when
         controller.service = service;
@@ -94,7 +94,7 @@ public class RootControllerTest {
 
         //then
         Mockito.verify(request).getServletPath();
-        Mockito.verify(service).visitLink(Mockito.anyString());
+        Mockito.verify(service).visitLink(Mockito.anyString(),"");
         Mockito.verifyNoMoreInteractions(request, model, service);
         assertEquals("redirect://" + link, actual);
     }
@@ -108,7 +108,7 @@ public class RootControllerTest {
         Model model = Mockito.mock(Model.class);
         Mockito.when(request.getServletPath()).thenReturn("http://yandex.ru/ghyjjh");
         String link = "http://mail.ru";
-        Mockito.when(service.visitLink(Mockito.anyString())).thenReturn(link);
+        Mockito.when(service.visitLink(Mockito.anyString(),"")).thenReturn(link);
 
         //when
         controller.service = service;
@@ -116,7 +116,7 @@ public class RootControllerTest {
 
         //then
         Mockito.verify(request).getServletPath();
-        Mockito.verify(service).visitLink(Mockito.anyString());
+        Mockito.verify(service).visitLink(Mockito.anyString(),"");
         Mockito.verifyNoMoreInteractions(request, model, service);
         assertEquals("redirect:" + link, actual);
     }
@@ -129,7 +129,7 @@ public class RootControllerTest {
         Model model = Mockito.mock(Model.class);
         Mockito.when(request.getServletPath()).thenReturn("http://yandex.ru/ghyjjh");
         String text = "hello";
-        Mockito.when(service.visitLink(Mockito.anyString())).thenReturn(text);
+        Mockito.when(service.visitLink(Mockito.anyString(),"")).thenReturn(text);
 
         //when
         controller.service = service;
@@ -137,7 +137,7 @@ public class RootControllerTest {
 
         //then
         Mockito.verify(request).getServletPath();
-        Mockito.verify(service).visitLink(Mockito.anyString());
+        Mockito.verify(service).visitLink(Mockito.anyString(),"");
         Mockito.verify(model).addAttribute(ATTRIBUTE_MESSAGE, text);
         Mockito.verifyNoMoreInteractions(request, model, service);
         assertEquals(PAGE_MESSAGE, actual);
@@ -151,7 +151,7 @@ public class RootControllerTest {
         Model model = Mockito.mock(Model.class);
         Mockito.when(request.getServletPath()).thenReturn("http://yandex.ru/ghyjjh");
         String text = null;
-        Mockito.when(service.visitLink(Mockito.anyString())).thenReturn(text);
+        Mockito.when(service.visitLink(Mockito.anyString(),"")).thenReturn(text);
 
         //when
         controller.service = service;
@@ -159,7 +159,7 @@ public class RootControllerTest {
 
         //then
         Mockito.verify(request).getServletPath();
-        Mockito.verify(service).visitLink(Mockito.anyString());
+        Mockito.verify(service).visitLink(Mockito.anyString(),"");
         Mockito.verify(model).addAttribute(Mockito.anyString(),Mockito.anyString());
         Mockito.verifyNoMoreInteractions(request, model, service);
         assertEquals(PAGE_ERROR, actual);

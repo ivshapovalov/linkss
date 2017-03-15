@@ -109,8 +109,8 @@ public class Populator {
         service.clear(path);
         populator.setRepository(repository);
         populator.setService(service);
-        //populator.setContext("localhost:8080\\links\\");
-        populator.setContext("app.whydt.ru:49193\\linkss\\");
+        populator.setContext("localhost:8080\\links\\");
+        //populator.setContext("app.whydt.ru:49193\\linkss\\");
         populator.setPath(path);
         populator.init();
 
@@ -122,7 +122,7 @@ public class Populator {
         for (int i = 0; i < USERS; i++) {
             try {
                 User user = new User.Builder().addUserName("user" + i).build();
-                service.createUser(user);
+                //service.createUser(user);
                 users.add(user);
             } catch (Exception e) {
             }
@@ -212,6 +212,11 @@ public class Populator {
     private void executeCreateInOneThread() {
         Random random=new Random(users.size());
         for (int i = 1; i <= W_REQUESTS; i++) {
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             User user=users.get(random.nextInt(users.size()-1));
             new Creator(user,i).run();
         }
@@ -221,6 +226,11 @@ public class Populator {
     private void executeReadInOneThread() {
         Random random=new Random();
         for (int i = 1; i <= R_REQUESTS; i++) {
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             User user=users.get(random.nextInt(users.size()-1));
             new Visitor(user,i).run();
         }
@@ -267,10 +277,7 @@ public class Populator {
             do {
                 String shortLink = service.getRandomShortLink();
                 if (!"".equals(shortLink)) {
-                    String link = null;
-                    link = service.visitLink(shortLink);
-//                            System.out.println(Thread.currentThread().getName() +
-//                                    ": get '" + shortLink + "': '" + link + "'");
+                    service.visitLink(shortLink, createRandomIp());
                     failed = false;
                 } else {
                     failed = true;
@@ -279,6 +286,8 @@ public class Populator {
             } while (failed);
 
         }
+
+
     }
 
     private abstract class Client implements Runnable {
@@ -303,6 +312,15 @@ public class Populator {
         protected String getRandomDomain() {
             int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
+        }
+        protected String createRandomIp() {
+            StringBuilder ip=new StringBuilder();
+
+            for (int i = 1; i <= 4; i++) {
+                int num=(int)(Math.random()*255);
+                ip.append(num).append(".");
+            }
+            return ip.toString().substring(0,ip.length()-1);
         }
 
     }
