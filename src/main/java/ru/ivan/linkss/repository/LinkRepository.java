@@ -27,7 +27,7 @@ public interface LinkRepository {
 
     String getLink(String key);
 
-    String visitLink(String key, IpLocation ipLocation);
+    String visitLink(String key, IpPosition ipPosition);
 
     String getRandomShortLink();
 

@@ -143,15 +143,15 @@
 
                     </td>
 
-                    <td width="10%">${column.ipLocation.ip}</td>
-                    <td width="10%">${column.ipLocation.countryCode}</td>
-                    <td width="10%">${column.ipLocation.countryName}</td>
-                    <td width="10%">${column.ipLocation.region}</td>
-                    <td width="10%">${column.ipLocation.regionName}</td>
-                    <td width="10%">${column.ipLocation.city}</td>
-                    <td width="10%">${column.ipLocation.postalCode}</td>
-                    <td width="10%">${column.ipLocation.latitude}</td>
-                    <td width="10%">${column.ipLocation.longitude}</td>
+                    <td width="10%">${column.ipPosition.ip}</td>
+                    <td width="10%">${column.ipPosition.countryCode}</td>
+                    <td width="10%">${column.ipPosition.countryName}</td>
+                    <td width="10%">${column.ipPosition.region}</td>
+                    <td width="10%">${column.ipPosition.regionName}</td>
+                    <td width="10%">${column.ipPosition.city}</td>
+                    <td width="10%">${column.ipPosition.postalCode}</td>
+                    <td width="10%">${column.ipPosition.latitude}</td>
+                    <td width="10%">${column.ipPosition.longitude}</td>
 
                     <td>
                         <div class="btn-group">

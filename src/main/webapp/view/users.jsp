@@ -126,6 +126,7 @@
                 <td width="10%"><b>Archive</b></td>
                 <td width="10%"><b>Actions</b></td>
 
+
             </tr>
             <c:forEach items="${list}" var="column">
                 <tr>

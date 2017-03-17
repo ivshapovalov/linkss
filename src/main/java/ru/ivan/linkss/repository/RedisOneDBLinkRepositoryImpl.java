@@ -820,7 +820,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String visitLink(String shortLink, IpLocation ipLocation) {
+    public String visitLink(String shortLink, IpPosition ipPosition) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -838,7 +838,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 long time = Instant.now().toEpochMilli();
                 String json = "";
                 try {
-                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipLocation));
+                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipPosition));
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }

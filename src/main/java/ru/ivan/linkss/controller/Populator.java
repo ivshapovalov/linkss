@@ -232,9 +232,6 @@ public class Populator {
             if (shortLink == null) {
                 System.out.println(Thread.currentThread().getName() +
                         ": free short links ended ");
-//            } else {
-//                    System.out.println(Thread.currentThread().getName() +
-//                           ": create '" + shortLink + "' - link '" + link + "'");
             }
         }
     }

@@ -3,9 +3,7 @@ package ru.ivan.linkss.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.corn.httpclient.HttpClient;
 import net.sf.corn.httpclient.HttpResponse;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import ru.ivan.linkss.repository.entity.IpLocation;
+import ru.ivan.linkss.repository.entity.IpPosition;
 import ru.ivan.linkss.util.Constants;
 
 import java.io.IOException;
@@ -23,9 +21,9 @@ public class GeoIPTest {
         HttpResponse response = client.sendData(HttpClient.HTTP_METHOD.GET);
         if (!response.hasError()) {
             jsonString = response.getData();
-            IpLocation location = null;
+            IpPosition location = null;
             try {
-                location = new ObjectMapper().readValue(jsonString, IpLocation
+                location = new ObjectMapper().readValue(jsonString, IpPosition
                         .class);
             } catch (IOException e) {
                 e.printStackTrace();

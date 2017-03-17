@@ -16,20 +16,20 @@ public class Visit {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime time;
 
-    private IpLocation ipLocation;
+    private IpPosition ipPosition;
 
     public Visit() {
     }
 
-    public Visit(LocalDateTime time, IpLocation ipLocation) {
+    public Visit(LocalDateTime time, IpPosition ipPosition) {
         this.time = time;
-        this.ipLocation = ipLocation;
+        this.ipPosition = ipPosition;
     }
-    public Visit(long time, IpLocation ipLocation) {
+    public Visit(long time, IpPosition ipPosition) {
         LocalDateTime ldt =
                 Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
         this.time = ldt;
-        this.ipLocation = ipLocation;
+        this.ipPosition = ipPosition;
     }
 
     public LocalDateTime getTime() {
@@ -45,11 +45,11 @@ public class Visit {
         this.time = time;
     }
 
-    public IpLocation getIpLocation() {
-        return ipLocation;
+    public IpPosition getIpPosition() {
+        return ipPosition;
     }
 
-    public void setIpLocation(IpLocation ipLocation) {
-        this.ipLocation = ipLocation;
+    public void setIpPosition(IpPosition ipPosition) {
+        this.ipPosition = ipPosition;
     }
 }

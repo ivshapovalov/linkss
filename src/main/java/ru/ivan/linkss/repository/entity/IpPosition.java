@@ -1,6 +1,6 @@
 package ru.ivan.linkss.repository.entity;
 
-public class IpLocation {
+public class IpPosition {
 
     private String ip;
     private String countryCode="";
@@ -14,7 +14,7 @@ public class IpLocation {
 
     @Override
     public String toString() {
-        return "IpLocation{" +
+        return "IpPosition{" +
                 "ip='" + ip + '\'' +
                 ", countryCode='" + countryCode + '\'' +
                 ", countryName='" + countryName + '\'' +
@@ -27,11 +27,11 @@ public class IpLocation {
                 '}';
     }
 
-    public IpLocation(String ip) {
+    public IpPosition(String ip) {
         this.ip = ip;
     }
 
-    public IpLocation() {
+    public IpPosition() {
     }
 
     public String getIp() {

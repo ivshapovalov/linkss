@@ -171,25 +171,25 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public String visitLink(String shortLink, String ip) {
 
-        IpLocation ipLocation = getLocation(ip);
-        if (ipLocation == null) {
-            ipLocation = new IpLocation(ip);
+        IpPosition ipPosition = getPosition(ip);
+        if (ipPosition == null) {
+            ipPosition = new IpPosition(ip);
         }
-        return repository.visitLink(shortLink, getLocation(ip));
+        return repository.visitLink(shortLink, getPosition(ip));
     }
 
     @Override
     public String visitLinkwithIpChecking(String shortLink, String ip) {
 
-        IpLocation ipLocation = getLocation(ip);
-        if (ipLocation == null) {
+        IpPosition ipPosition = getPosition(ip);
+        if (ipPosition == null) {
             return null;
         } else {
-            return repository.visitLink(shortLink, getLocation(ip));
+            return repository.visitLink(shortLink, getPosition(ip));
         }
     }
 
-    private IpLocation getLocation(String ip) {
+    private IpPosition getPosition(String ip) {
 
         try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()) {
 //            HttpClient client = new HttpClient(new URI(GEO_IP_URL + ip));
@@ -197,14 +197,14 @@ public class LinksServiceImpl implements LinksService {
 //            client.setKeepAliveTime(3000);
 //            HttpResponse response = client.sendData(HttpClient.HTTP_METHOD.GET);
 
-            //String jsonLocation=Jsoup.connect(GEO_IP_URL+ip).ignoreContentType(true).execute()
+            //String jsonPosition=Jsoup.connect(GEO_IP_URL+ip).ignoreContentType(true).execute()
             //       .body();
             HttpGet request = new HttpGet(GEO_IP_URL + ip);
             request.addHeader("accept", "application/json");
 
             HttpResponse response = geoHTTPClient.execute(request);
 
-            IpLocation location = null;
+            IpPosition position = null;
 ////            if (!response.hasError()) {
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new RuntimeException("Failed : HTTP error code : "
@@ -213,13 +213,14 @@ public class LinksServiceImpl implements LinksService {
 
             BufferedReader br = new BufferedReader(
                     new InputStreamReader((response.getEntity().getContent())));
-            String jsonLocation;
-            if ((jsonLocation = br.readLine()) != null) {
+            String jsonPosition;
+            if ((jsonPosition = br.readLine()) != null) {
                 try {
                     //try to convert to object
-                    location = new ObjectMapper().readValue(jsonLocation, IpLocation
+
+                    position = new ObjectMapper().readValue(jsonPosition, IpPosition
                             .class);
-                    return location;
+                    return position;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

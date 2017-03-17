@@ -763,20 +763,19 @@ public class ManageController {
             }
         }
 
-        //long visitsCount = service.getUserVisitsSize(autorizedUser, owner);
         List<Visit> visits = service.getUserVisits(autorizedUser, owner);
         visits = visits.stream()
-                .filter(visit -> visit.getIpLocation() != null)
-                .filter(visit -> visit.getIpLocation().getLatitude() != null && visit.getIpLocation()
+                .filter(visit -> visit.getIpPosition() != null)
+                .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
                         .getLongitude() != null)
-                .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
-                        .getIpLocation().getLongitude()))
+                .filter(visit -> !"".equals(visit.getIpPosition().getLatitude()) & !"".equals(visit
+                        .getIpPosition().getLongitude()))
                 .collect(Collectors.toList());
         List<String> points = visits.stream()
-                .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
+                .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
                 .collect(Collectors.toList());
         List<String> ips = visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp()) + "']")
+                .map(visit -> "['" + String.valueOf(visit.getIpPosition().getIp()) + "']")
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
         model.addAttribute(ATTRIBUTE_IPS, ips.toString());
@@ -807,17 +806,17 @@ public class ManageController {
         long visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
         List<Visit> visits = service.getLinkVisits(autorizedUser, owner, key, 0, visitsCount);
         visits = visits.stream()
-                .filter(visit -> visit.getIpLocation() != null)
-                .filter(visit -> visit.getIpLocation().getLatitude() != null && visit.getIpLocation()
+                .filter(visit -> visit.getIpPosition() != null)
+                .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
                         .getLongitude() != null)
-                .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
-                        .getIpLocation().getLongitude()))
+                .filter(visit -> !"".equals(visit.getIpPosition().getLatitude()) & !"".equals(visit
+                        .getIpPosition().getLongitude()))
                 .collect(Collectors.toList());
         List<String> points = visits.stream()
-                .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
+                .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
                 .collect(Collectors.toList());
         List<String> ips = visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp()) + "']")
+                .map(visit -> "['" + String.valueOf(visit.getIpPosition().getIp()) + "']")
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
         model.addAttribute(ATTRIBUTE_IPS, ips.toString());

@@ -45,11 +45,9 @@
 
         clusterer.add(geoObjects);
         myMap.geoObjects.add(clusterer);
-
-
-//        myMap.setBounds(clusterer.getBounds(), {
-//            checkZoomRange: true
-//        });
+        myMap.setBounds(clusterer.getBounds(), {
+            checkZoomRange: true
+        });
     });
 </script>
 

@@ -6,7 +6,7 @@ public class User {
     private String email = "";
     private boolean admin;
     private boolean empty = true;
-    private IpLocation ipLocation;
+    private IpPosition ipPosition;
 
     public User(Builder builder) {
         this.userName = builder.userName;
@@ -14,7 +14,7 @@ public class User {
         this.email = builder.email;
         this.admin = builder.admin;
         this.empty = builder.empty;
-        this.ipLocation = builder.ipLocation;
+        this.ipPosition = builder.ipPosition;
     }
 
     public User() {
@@ -74,7 +74,7 @@ public class User {
         private String email = "";
         private boolean admin;
         private boolean empty = true;
-        private IpLocation ipLocation;
+        private IpPosition ipPosition;
 
         public Builder() {
         }
@@ -103,8 +103,8 @@ public class User {
             this.empty = empty;
             return this;
         }
-        public Builder addIPLocation(IpLocation location) {
-            this.ipLocation = ipLocation;
+        public Builder addIPLocation(IpPosition location) {
+            this.ipPosition = ipPosition;
             return this;
         }
 

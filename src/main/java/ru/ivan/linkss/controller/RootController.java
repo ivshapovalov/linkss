@@ -2,7 +2,6 @@ package ru.ivan.linkss.controller;
 
 
 import com.google.zxing.WriterException;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
+import ru.ivan.linkss.util.VerifyRecaptcha;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -70,8 +70,7 @@ public class RootController {
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_INIT}, method = RequestMethod.POST)
     public String init(Model model, HttpServletRequest request) {
         String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-        boolean valid = true;
-//        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
         String errorString = null;
         if (!valid) {
             errorString = "Captcha invalid!";
@@ -234,6 +233,7 @@ public class RootController {
             String ipAddress = inetAddress.getHostAddress();
             ip = ipAddress;
         }
+        ip="25.25.25.25";
         return ip;
     }
 }
