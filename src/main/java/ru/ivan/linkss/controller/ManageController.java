@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.Util;
+import ru.ivan.linkss.util.VerifyRecaptcha;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 public class ManageController {
 
     private static final String FILE_SEPARTOR = File.separator;
-    private static final String QR_FOLDER = "resources"+FILE_SEPARTOR+"qr";
+    private static final String QR_FOLDER = "resources" + FILE_SEPARTOR + "qr";
     private static final String IMAGE_EXTENSION_WITH_DOT = ".png";
 
     private static final String WEB_SEPARTOR = "/";
@@ -108,7 +109,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = PAGE_CONFIG, method = {RequestMethod.GET, RequestMethod.POST})
-    public String config(Model model,HttpSession session)
+    public String config(Model model, HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
@@ -157,56 +158,79 @@ public class ManageController {
                            @ModelAttribute(ATTRIBUTE_USER) User user,
                            HttpServletRequest request,
                            HttpSession session) {
-        try {
-            service.createUser(user);
-        } catch (RuntimeException e) {
-            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        String errorString = null;
+        if (!valid) {
+            errorString = "Captcha invalid!";
+        }
+        if (!valid) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
             return PAGE_ERROR;
-        }
-        if (request.getParameter("register") != null) {
+        } else {
+
+            try {
+                service.createUser(user);
+            } catch (RuntimeException e) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+                return PAGE_ERROR;
+            }
+            if (request.getParameter("register") != null) {
+                return "redirect:/";
+            } else if (request.getParameter("registerAndLogin") != null) {
+                return autoLogin(model, user, session);
+            }
             return "redirect:/";
-        } else if (request.getParameter("registerAndLogin") != null) {
-            return autoLogin(model, user, session);
         }
-        return "redirect:/";
 
     }
 
     @RequestMapping(value = ACTION_LOGIN, method = RequestMethod.POST)
-    public String login(Model model,
+    public String login(Model model, HttpServletRequest request,
                         @ModelAttribute(ATTRIBUTE_USER) User user,
                         HttpSession session) {
-        if (user != null && user.getUserName() != null && !user.getUserName().equals("")
-                && user.getPassword() != null && !user.getPassword().equals("")) {
-            try {
-                return autoLogin(model, user, session);
-            } catch (RuntimeException e) {
-                model.addAttribute(ATTRIBUTE_MESSAGE, "Login/password is incorrect");
-                return PAGE_ERROR;
-            }
+        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        String errorString = null;
+        if (!valid) {
+            errorString = "Captcha invalid!";
         }
-        return PAGE_SIGNIN;
+        if (!valid) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
+            return PAGE_ERROR;
+        } else {
+            if (user != null && user.getUserName() != null && !user.getUserName().equals("")
+                    && user.getPassword() != null && !user.getPassword().equals("")) {
+                try {
+                    return autoLogin(model, user, session);
+                } catch (RuntimeException e) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, "Login/password is incorrect");
+                    return PAGE_ERROR;
+                }
+            }
+            return PAGE_SIGNIN;
+        }
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {
-        User dbUser= service.checkUser(user);
-        if (dbUser!=null) {
+        User dbUser = service.checkUser(user);
+        if (dbUser != null) {
             session.setAttribute(ATTRIBUTE_AUTORIZED_USER, dbUser);
-           // model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
+            // model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
             return "redirect:/";
         }
         return ACTION_LOGIN;
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
-            + WEB_SEPARTOR+"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+ ACTION_DELETE,method =
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + ACTION_DELETE, method =
             RequestMethod.GET)
     public String deleteLink(Model model,
-                                 @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
-                                 @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                                 HttpSession session,
-                                 HttpServletRequest request) {
+                             @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                             HttpSession session,
+                             HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
@@ -228,7 +252,7 @@ public class ManageController {
 
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
-                    + owner + WEB_SEPARTOR +PAGE_LINKS;
+                    + owner + WEB_SEPARTOR + PAGE_LINKS;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -236,14 +260,14 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVE
-            + WEB_SEPARTOR+"{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ ACTION_DELETE,
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_ARCHIVE
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + ACTION_DELETE,
             method = RequestMethod.GET)
     public String deleteArchiveLink(Model model,
-                             @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
-                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                             HttpSession session,
-                             HttpServletRequest request) {
+                                    @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                    @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                                    HttpSession session,
+                                    HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
@@ -266,7 +290,7 @@ public class ManageController {
 
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
-                    + owner + WEB_SEPARTOR +PAGE_ARCHIVES;
+                    + owner + WEB_SEPARTOR + PAGE_ARCHIVES;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -274,14 +298,14 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVE
-            + WEB_SEPARTOR+ "{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ACTION_RESTORE,
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_ARCHIVE
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + ACTION_RESTORE,
             method = RequestMethod.GET)
     public String restoreArchiveLink(Model model,
-                                    @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
-                                    @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                                    HttpSession session,
-                                    HttpServletRequest request) {
+                                     @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                                     @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                                     HttpSession session,
+                                     HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
@@ -303,15 +327,15 @@ public class ManageController {
 
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
-                    + owner + WEB_SEPARTOR +PAGE_ARCHIVES;
+                    + owner + WEB_SEPARTOR + PAGE_ARCHIVES;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
     }
 
-    @RequestMapping(value = WEB_SEPARTOR + PAGE_FREE_LINK+ WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR + ACTION_DELETE,
+    @RequestMapping(value = WEB_SEPARTOR + PAGE_FREE_LINK + WEB_SEPARTOR
+            + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + ACTION_DELETE,
             method = RequestMethod.GET)
     public String deleteFreeLink(Model model,
                                  @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
@@ -346,8 +370,8 @@ public class ManageController {
 
     private String getControllerMapping() {
         try {
-            String[] path=this.getClass().getAnnotation(RequestMapping.class).value();
-            if (path!=null && path.length==1) {
+            String[] path = this.getClass().getAnnotation(RequestMapping.class).value();
+            if (path != null && path.length == 1) {
                 return path[0];
             }
         } catch (Exception e) {
@@ -357,16 +381,16 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
-            + WEB_SEPARTOR+"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR
-            +PAGE_VISIT+WEB_SEPARTOR+"{"+ATTRIBUTE_TIME+"}"+WEB_SEPARTOR+ACTION_DELETE,method =
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR
+            + PAGE_VISIT + WEB_SEPARTOR + "{" + ATTRIBUTE_TIME + "}" + WEB_SEPARTOR + ACTION_DELETE, method =
             RequestMethod.GET)
     public String deleteVisit(Model model,
-                             @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                              @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                               @ModelAttribute(ATTRIBUTE_KEY) String key,
                               @ModelAttribute(ATTRIBUTE_TIME) String time,
-                             HttpSession session,
-                             HttpServletRequest request) {
+                              HttpSession session,
+                              HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
@@ -386,15 +410,15 @@ public class ManageController {
         }
 
         try {
-            service.deleteLinkVisit(autorizedUser, owner,key, time);
+            service.deleteLinkVisit(autorizedUser, owner, key, time);
             model.addAttribute(ATTRIBUTE_OWNER, null);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_TIME, null);
 
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
-                    + owner + WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
-                    +key +WEB_SEPARTOR+PAGE_VISITS;
+                    + owner + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
+                    + key + WEB_SEPARTOR + PAGE_VISITS;
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -402,14 +426,14 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
-            + WEB_SEPARTOR+"{"+ATTRIBUTE_KEY+"}"+WEB_SEPARTOR+ ACTION_EDIT}, method =
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + ACTION_EDIT}, method =
             RequestMethod.GET)
     public String editLink(Model model,
-                                 @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
-                                 @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                                 HttpSession session,
-                                 HttpServletRequest request) {
+                           @ModelAttribute(ATTRIBUTE_KEY) String shortLink,
+                           @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                           HttpSession session,
+                           HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.getUserName() == null || autorizedUser.getUserName().equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
@@ -428,17 +452,17 @@ public class ManageController {
             String realImagePath = request.getServletContext().getRealPath("")
                     + QR_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
-            boolean created=true;
+            boolean created = true;
             if (!imageOnDisk.exists()) {
 //                created=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
 //                        realImagePath);
-                created=false;
+                created = false;
             }
             if (!created) {
                 String context = getContextPath(request);
                 String shortLinkPath = context + shortLink;
                 try {
-                    service.createQRImage(realImagePath,shortLink,shortLinkPath);
+                    service.createQRImage(realImagePath, shortLink, shortLinkPath);
                     //service.uploadImageToFTP(realImagePath, shortLink);
                 } catch (WriterException e) {
                     e.printStackTrace();
@@ -457,7 +481,7 @@ public class ManageController {
                     .addImageLink(urlImagePath)
                     .addUserName(owner)
                     .addSeconds(service.getLinkExpirePeriod(shortLink))
-                            .build();
+                    .build();
 
             model.addAttribute(ATTRIBUTE_FULL_LINK, fullLink);
             model.addAttribute(ATTRIBUTE_OLD_KEY, shortLink);
@@ -470,7 +494,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_CLEAR, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_CLEAR, method = RequestMethod.GET)
     public String clearUser(Model model,
                             @PathVariable(ATTRIBUTE_OWNER) String owner,
                             HttpSession session) {
@@ -488,7 +512,7 @@ public class ManageController {
         try {
             service.clearUser(autorizedUser, owner);
             model.addAttribute(ATTRIBUTE_OWNER, null);
-            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
+            return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -496,7 +520,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_EDIT, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_EDIT, method = RequestMethod.GET)
     private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String key
             , HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -522,7 +546,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_DELETE, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_DELETE, method = RequestMethod.GET)
     private String deleteUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String owner, HttpSession
             session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -539,7 +563,7 @@ public class ManageController {
         try {
             service.deleteUser(autorizedUser, owner);
             model.addAttribute(ATTRIBUTE_OWNER, null);
-            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
+            return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -547,7 +571,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +ACTION_SAVE}, method =
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateUser(Model model,
                              @ModelAttribute(ATTRIBUTE_USER) User newUser,
@@ -569,7 +593,7 @@ public class ManageController {
             service.updateUser(autorizedUser, newUser, oldUser);
             model.addAttribute("oldUserName", null);
 
-            return String.format("redirect:%s%s",getControllerMapping(),PAGE_USERS);
+            return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
         } catch (RuntimeException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
@@ -577,8 +601,8 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + ATTRIBUTE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK
-            + WEB_SEPARTOR+"{"+ATTRIBUTE_OLD_KEY+"}"+WEB_SEPARTOR+ ACTION_SAVE}, method =
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK
+            + WEB_SEPARTOR + "{" + ATTRIBUTE_OLD_KEY + "}" + WEB_SEPARTOR + ACTION_SAVE}, method =
             RequestMethod.POST)
     public String updateLink(Model model,
                              @ModelAttribute(ATTRIBUTE_FULL_LINK) FullLink fullLink,
@@ -605,7 +629,7 @@ public class ManageController {
             return PAGE_ERROR;
         }
         try {
-            long seconds=Util.convertPeriodToSeconds(secondsText);
+            long seconds = Util.convertPeriodToSeconds(secondsText);
             fullLink.setSeconds(seconds);
             String contextPath = getContextPath(request);
             FullLink oldFullLink = service.getFullLink(
@@ -631,7 +655,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINKS}, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINKS}, method = RequestMethod.GET)
     public String links(Model model,
                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                         HttpServletRequest request,
@@ -670,13 +694,13 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+PAGE_VISITS}, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
+            + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + PAGE_VISITS}, method = RequestMethod.GET)
     public String visits(Model model,
-                        @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                        @ModelAttribute(ATTRIBUTE_KEY) String key,
-                        HttpServletRequest request,
-                        HttpSession session) {
+                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                         @ModelAttribute(ATTRIBUTE_KEY) String key,
+                         HttpServletRequest request,
+                         HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -702,8 +726,8 @@ public class ManageController {
         }
         String contextPath = getContextPath(request);
         int offset = (currentPage - 1) * recordsOnPage;
-        List<Visit> list = service.getLinkVisits(autorizedUser, owner,key, offset, recordsOnPage);
-        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner,key);
+        List<Visit> list = service.getLinkVisits(autorizedUser, owner, key, offset, recordsOnPage);
+        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
         if (visitsCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have visits on that link. " +
                     "Try another!");
@@ -721,7 +745,7 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_MAP}, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_MAP}, method = RequestMethod.GET)
     public String mapUser(Model model,
                           @ModelAttribute(ATTRIBUTE_OWNER) String owner,
                           HttpServletRequest request,
@@ -740,19 +764,19 @@ public class ManageController {
         }
 
         //long visitsCount = service.getUserVisitsSize(autorizedUser, owner);
-        List<Visit> visits=service.getUserVisits(autorizedUser,owner);
+        List<Visit> visits = service.getUserVisits(autorizedUser, owner);
         visits = visits.stream()
-                .filter(visit -> visit.getIpLocation()!=null)
-                .filter(visit -> visit.getIpLocation().getLatitude()!=null && visit.getIpLocation()
-                        .getLongitude()!=null)
+                .filter(visit -> visit.getIpLocation() != null)
+                .filter(visit -> visit.getIpLocation().getLatitude() != null && visit.getIpLocation()
+                        .getLongitude() != null)
                 .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
                         .getIpLocation().getLongitude()))
                 .collect(Collectors.toList());
-        List<String> points=visits.stream()
+        List<String> points = visits.stream()
                 .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
                 .collect(Collectors.toList());
-        List<String> ips=visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp())+"']")
+        List<String> ips = visits.stream()
+                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp()) + "']")
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
         model.addAttribute(ATTRIBUTE_IPS, ips.toString());
@@ -760,13 +784,13 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR +PAGE_LINK+WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_KEY + "}"+WEB_SEPARTOR+PAGE_MAP}, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
+            + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + PAGE_MAP}, method = RequestMethod.GET)
     public String mapLink(Model model,
-                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                         @ModelAttribute(ATTRIBUTE_KEY) String key,
-                         HttpServletRequest request,
-                         HttpSession session) {
+                          @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                          @ModelAttribute(ATTRIBUTE_KEY) String key,
+                          HttpServletRequest request,
+                          HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
@@ -780,20 +804,20 @@ public class ManageController {
             }
         }
 
-        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner,key);
-        List<Visit> visits=service.getLinkVisits(autorizedUser,owner,key,0,visitsCount);
+        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
+        List<Visit> visits = service.getLinkVisits(autorizedUser, owner, key, 0, visitsCount);
         visits = visits.stream()
-                .filter(visit -> visit.getIpLocation()!=null)
-                .filter(visit -> visit.getIpLocation().getLatitude()!=null && visit.getIpLocation()
-                        .getLongitude()!=null)
+                .filter(visit -> visit.getIpLocation() != null)
+                .filter(visit -> visit.getIpLocation().getLatitude() != null && visit.getIpLocation()
+                        .getLongitude() != null)
                 .filter(visit -> !"".equals(visit.getIpLocation().getLatitude()) & !"".equals(visit
                         .getIpLocation().getLongitude()))
                 .collect(Collectors.toList());
-        List<String> points=visits.stream()
+        List<String> points = visits.stream()
                 .map(visit -> "[" + String.valueOf(visit.getIpLocation().getLatitude()) + "," + String.valueOf(visit.getIpLocation().getLongitude() + "]"))
                 .collect(Collectors.toList());
-        List<String> ips=visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp())+"']")
+        List<String> ips = visits.stream()
+                .map(visit -> "['" + String.valueOf(visit.getIpLocation().getIp()) + "']")
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
         model.addAttribute(ATTRIBUTE_IPS, ips.toString());
@@ -801,11 +825,11 @@ public class ManageController {
     }
 
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            +"{"+ ATTRIBUTE_OWNER + "}"+WEB_SEPARTOR + PAGE_ARCHIVES}, method = RequestMethod.GET)
+            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_ARCHIVES}, method = RequestMethod.GET)
     public String archives(Model model,
-                        @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                        HttpServletRequest request,
-                        HttpSession session) {
+                           @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                           HttpServletRequest request,
+                           HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -882,8 +906,8 @@ public class ManageController {
 
     @RequestMapping(value = PAGE_FREE_LINKS, method = RequestMethod.GET)
     public String freeLinks(Model model,
-                          HttpServletRequest request,
-                          HttpSession session) {
+                            HttpServletRequest request,
+                            HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -943,7 +967,7 @@ public class ManageController {
         Thread populatorThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                //service.clear(path);
+                service.clear(path);
                 Populator populator = applicationContext.getBean(Populator.class);
                 populator.setPath(path);
                 populator.setContext(context);
@@ -952,7 +976,7 @@ public class ManageController {
         });
         populatorThread.setName("Populator");
         populatorThread.start();
-        return "redirect:"+ PAGE_CONFIG;
+        return "redirect:" + PAGE_CONFIG;
     }
 
     @RequestMapping(value = ACTION_CHECK_EXPIRED, method = RequestMethod.GET)

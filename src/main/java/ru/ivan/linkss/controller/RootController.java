@@ -2,6 +2,7 @@ package ru.ivan.linkss.controller;
 
 
 import com.google.zxing.WriterException;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
@@ -37,6 +38,7 @@ public class RootController {
     private static final String PAGE_ERROR = "error";
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
+    private static final String PAGE_INIT = "init";
     private static final String PAGE_IMAGE = "image";
 
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
@@ -58,6 +60,30 @@ public class RootController {
             model.addAttribute(ATTRIBUTE_AUTORIZED_USER, autorizedUser);
         }
         return PAGE_MAIN;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_INIT}, method = RequestMethod.GET)
+    public String captcha(HttpServletRequest request) {
+        return PAGE_INIT;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_INIT}, method = RequestMethod.POST)
+    public String init(Model model, HttpServletRequest request) {
+        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+        boolean valid = true;
+//        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        String errorString = null;
+        if (!valid) {
+            errorString = "Captcha invalid!";
+        }
+        if (!valid) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
+            return PAGE_ERROR;
+        } else {
+            String path = request.getServletContext().getRealPath(WEB_SEPARTOR);
+            service.clear(path);
+            return "redirect:./";
+        }
     }
 
     @RequestMapping(value = WEB_SEPARTOR + "*", method = RequestMethod.GET)
@@ -208,7 +234,6 @@ public class RootController {
             String ipAddress = inetAddress.getHostAddress();
             ip = ipAddress;
         }
-        ip="46.25.28.54";
         return ip;
     }
 }

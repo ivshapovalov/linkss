@@ -4,6 +4,7 @@
 <html>
 <body>
 <div class="container" style="alignment: center">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <%@include file="header.jsp" %>
     <h2> SIGN UP </h2>
     <form:form action="./register" method="post" modelAttribute="user">
@@ -29,6 +30,7 @@
 
             </tr>
         </table>
+        <div class="g-recaptcha" data-sitekey="6LfYMRkUAAAAAIAYkmMRsZtqzv2D_Icz5PfvKNk7"></div>
     </form:form>
 </div>
 </body>

@@ -11,7 +11,7 @@
 </script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> VISITS <a href="./map">map</a> </h2>
+    <h2> VISITS <a href="./map" target="_blank">map</a> </h2>
     <section>
         <div class="bs-example">
             <ul class="pagination">

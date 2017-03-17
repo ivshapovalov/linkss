@@ -9,6 +9,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import ru.ivan.linkss.repository.entity.*;
+import ru.ivan.linkss.util.Constants;
 import ru.ivan.linkss.util.Util;
 
 import java.io.IOException;
@@ -49,22 +50,15 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
     private static final String DEFAULT_USER = "user";
     private static final String DEFAULT_PASSWORD = "user";
-    private static final String ADMIN_USER = "admin";
-    private static final String ADMIN_PASSWORD = "admin";
+    private static final String ADMIN_USER = "ivan";
+    private static final String ADMIN_PASSWORD = "ivan";
 
+    private volatile boolean freeLinkDBPopulatingInProgress=false;
 
-    //private RedisClient redisClient = RedisClient.createShortLink("redis://localhost:6379/0");
-//    private RedisClient redisClient = RedisClient.create
-//            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-////    private RedisClient redisClientStat = RedisClient.createShortLink
-//            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
-    //   private RedisClient redisClientByUsers = RedisClient.createShortLink
-//            ("redis://h:p3291e9f52c34dafdb323e02b34803df7a3b56ac1f3c993dfe3215096fb76b154@ec2-184-72-246-90.compute-1.amazonaws.com:21279");
     private final RedisClient redisClient;
 
     public RedisOneDBLinkRepositoryImpl() {
-        this.redisClient = RedisClient.create(System.getenv("REDIS_ONE_URL"));
-        //this.redisClient = RedisClient.create("redis://localhost:6379/0");
+        this.redisClient = RedisClient.create(Constants.REDIS_ONE_URL);
     }
 
     public RedisOneDBLinkRepositoryImpl(RedisClient redisClient) {
@@ -1183,7 +1177,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);
 
-            List<Visit> visits = getUserVisits(autorizedUser,owner);
+            List<Visit> visits = getUserVisits(autorizedUser, owner);
             long size = visits.size();
             return size;
         }
@@ -1195,19 +1189,42 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
-            syncCommands.select(DB_WORK_NUMBER);
-            String key = syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
-            if (key != null) {
-                syncCommands.select(DB_FREELINK_NUMBER);
-                long size = syncCommands.dbsize();
-                if (!"".equals(key)) {
-                    if (size <= MIN_FREE_LINK_SIZE) {
-                        addedKeys = updateFreeLinksDB(syncCommands, key);
-                    }
-                }
-                return addedKeys;
+            boolean needToAdd=false;
+            int newKeyLength=0;
+            if (freeLinkDBPopulatingInProgress) {
+                throw new Exception("Task: Check freelink DB. Updating keys in process!");
             }
-            throw new Exception(String.format("No '%s' in '%s'!", KEY_LENGTH, KEY_PREFERENCES));
+            synchronized (redisClient) {
+                syncCommands.select(DB_WORK_NUMBER);
+                String key = syncCommands.hget(KEY_PREFERENCES, KEY_LENGTH);
+                if (key != null) {
+                    syncCommands.select(DB_FREELINK_NUMBER);
+                    long size = syncCommands.dbsize();
+                    if (!"".equals(key)) {
+                        if (size <= MIN_FREE_LINK_SIZE) {
+                            String[] keys = key.split("\\|");
+                            int maxKey = Arrays.stream(keys)
+                                    .map(Integer::valueOf)
+                                    .mapToInt(i -> i).max().getAsInt();
+
+                            newKeyLength = maxKey + 1;
+                            syncCommands.select(DB_WORK_NUMBER);
+                            syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
+                                    (newKeyLength));
+                            freeLinkDBPopulatingInProgress=true;
+                            needToAdd=true;
+                        }
+                    }
+                }  else {
+                    throw new Exception(String.format("No '%s' in '%s'!", KEY_LENGTH, KEY_PREFERENCES));
+                }
+            }
+            if (needToAdd) {
+                addedKeys = updateFreeLinksDB(syncCommands, newKeyLength);
+                freeLinkDBPopulatingInProgress=false;
+            }
+            return addedKeys;
+
         } catch (Exception e) {
             throw new Exception("Task: Check freelink DB. Cannot connect to databases!");
         }
@@ -1260,16 +1277,9 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         }
     }
 
-    private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, String key) {
-        String[] keys = key.split("\\|");
-        int maxKey = Arrays.stream(keys)
-                .map(Integer::valueOf)
-                .mapToInt(i -> i).max().getAsInt();
-
-        int newKeyLength = maxKey + 1;
+    private BigInteger updateFreeLinksDB(RedisCommands<String, String> syncCommands, int
+            newKeyLength) {
         syncCommands.select(DB_WORK_NUMBER);
-        syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
-                (newKeyLength));
         BigInteger addedKeys = createKeys(newKeyLength);
         return addedKeys;
     }
@@ -1289,7 +1299,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     public class KeyCreator {
-
+        //62
         private final char[] alphabet =
                 "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         .toCharArray();
@@ -1322,6 +1332,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         }
 
         private void addKey(String key) {
+            syncCommands.select(DB_FREELINK_NUMBER);
             syncCommands.set(key, "");
         }
     }

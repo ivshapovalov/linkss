@@ -4,9 +4,11 @@ Short link service
 ####DB: Redis
 ####DB client:lettuce
 ####WEB: Spring MVC + Spring AOP 
-####Other:zxing QR code, GeoIP DB
+####Other:zxing QR code, GeoIP DB, Google reCaptcha, Yandex Maps
 ####Front - Bootstrap+JQuery
 
+
+First check the constants
 
 ####REDIS INSTANCE 1
 #####redis:0 WORK_DB

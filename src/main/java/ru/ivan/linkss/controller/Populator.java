@@ -22,10 +22,10 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
-    private static final int USERS = 100;
-    private static final int W_REQUESTS = 10000;
-    private static final int R_REQUESTS = 10000;
-    private static final int RW_REQUESTS = 10000;
+    private static final int USERS = 6;
+    private static final int W_REQUESTS = 100;
+    private static final int R_REQUESTS = 1000;
+    private static final int RW_REQUESTS = 1000;
 
     @Autowired
     private LinksService service;
@@ -84,33 +84,20 @@ public class Populator {
     }
 
     public static void main(String[] args) {
-//                RedisClient redisClient = RedisClient.create
-//            ("redis://h:p719d91a83883803e0b8dcdd866ccfcd88cb7c82d5d721fcfcd5068d40c253414@ec2-107-22-239-248.compute-1.amazonaws.com:14349");
-//       RedisClient redisClientLinks = RedisClient.create
-//            ("redis://h:p3c1e48009e2ca7405945e112b198385d800c695c79095312007c06ab48285e70@ec2-54-163-250-167.compute-1.amazonaws.com:18529");
-//        RedisClient redisClient = RedisClient.create(System.getenv("REDIS_URL"));
-//        RedisClient redisClientLinks = RedisClient.create(System.getenv
-//                ("HEROKU_REDIS_AMBER_URL"));
-        ;
-
         RedisClient redisClient = RedisClient.create
-            (System.getenv
-                ("REDIS_ONE_URL"));
-//        RedisClient redisClient = RedisClient.create
-//            ("redis://app.whydt.ru:49199");
-
+                (System.getenv
+                        ("REDIS_ONE_URL"));
 
         RedisOneDBLinkRepositoryImpl repository = new RedisOneDBLinkRepositoryImpl(redisClient);
         Populator populator = new Populator();
 
         LinksServiceImpl service = new LinksServiceImpl();
         service.setRepository(repository);
-        String path="C:\\JavaStudy\\my\\linkss\\target\\linkss\\";
+        String path = "C:\\JavaStudy\\my\\linkss\\target\\linkss\\";
         service.clear(path);
         populator.setRepository(repository);
         populator.setService(service);
         populator.setContext("localhost:8080\\links\\");
-        //populator.setContext("app.whydt.ru:49193\\linkss\\");
         populator.setPath(path);
         populator.init();
 
@@ -122,7 +109,7 @@ public class Populator {
         for (int i = 0; i < USERS; i++) {
             try {
                 User user = new User.Builder().addUserName("user" + i).build();
-                //service.createUser(user);
+                service.createUser(user);
                 users.add(user);
             } catch (Exception e) {
             }
@@ -159,14 +146,14 @@ public class Populator {
     private void executeCreateReadMultiThread() {
         boolean isWrite = true;
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        Random random=new Random();
+        Random random = new Random();
         for (int i = 1; i <= RW_REQUESTS; i++) {
             Runnable client;
-            User user=users.get(random.nextInt(users.size()-1));
+            User user = users.get(random.nextInt(users.size() - 1));
             if (isWrite) {
-                client = new Creator(user,i);
+                client = new Creator(user, i);
             } else {
-                client = new Visitor(user,i);
+                client = new Visitor(user, i);
             }
             executor.execute(client);
             isWrite = !isWrite;
@@ -178,10 +165,10 @@ public class Populator {
 
     private void executeReadMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        Random random=new Random();
+        Random random = new Random();
         for (int i = 1; i <= R_REQUESTS; i++) {
-            User user=users.get(random.nextInt(users.size()-1));
-            Runnable reader = new Visitor(user,i);
+            User user = users.get(random.nextInt(users.size() - 1));
+            Runnable reader = new Visitor(user, i);
             executor.execute(reader);
         }
         executor.shutdown();
@@ -191,17 +178,17 @@ public class Populator {
 
     private void executeCreateMultiThread() {
         ExecutorService executor = Executors.newFixedThreadPool(SIZE_OF_POOL);
-        Random random=new Random();
+        Random random = new Random();
         for (int i = 1; i <= W_REQUESTS; i++) {
 
-            User user= null;
-            int a=random.nextInt(users.size()-1);
+            User user = null;
+            int a = random.nextInt(users.size() - 1);
             try {
                 user = users.get(a);
             } catch (Exception e) {
                 System.out.println(a);
             }
-            Runnable creator = new Creator(user,i);
+            Runnable creator = new Creator(user, i);
             executor.execute(creator);
         }
         executor.shutdown();
@@ -210,36 +197,27 @@ public class Populator {
     }
 
     private void executeCreateInOneThread() {
-        Random random=new Random(users.size());
+        Random random = new Random(users.size());
         for (int i = 1; i <= W_REQUESTS; i++) {
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-            User user=users.get(random.nextInt(users.size()-1));
-            new Creator(user,i).run();
+
+            User user = users.get(random.nextInt(users.size() - 1));
+            new Creator(user, i).run();
         }
 
     }
 
     private void executeReadInOneThread() {
-        Random random=new Random();
+        Random random = new Random();
         for (int i = 1; i <= R_REQUESTS; i++) {
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-            User user=users.get(random.nextInt(users.size()-1));
-            new Visitor(user,i).run();
+            User user = users.get(random.nextInt(users.size() - 1));
+            new Visitor(user, i).run();
         }
     }
 
     private class Creator extends Client {
 
-        public Creator(User user,int number) {
-            super(user,number);
+        public Creator(User user, int number) {
+            super(user, number);
         }
 
         @Override
@@ -250,8 +228,6 @@ public class Populator {
             String shortLink = service.createShortLink(user,
                     link, path,
                     context);
-            //            service.uploadImage();
-
 
             if (shortLink == null) {
                 System.out.println(Thread.currentThread().getName() +
@@ -265,8 +241,8 @@ public class Populator {
 
     private class Visitor extends Client {
 
-        public Visitor(User user,int number) {
-            super(user,number);
+        public Visitor(User user, int number) {
+            super(user, number);
         }
 
         @Override
@@ -277,8 +253,12 @@ public class Populator {
             do {
                 String shortLink = service.getRandomShortLink();
                 if (!"".equals(shortLink)) {
-                    service.visitLink(shortLink, createRandomIp());
-                    failed = false;
+                    String link = service.visitLinkwithIpChecking(shortLink, createRandomIp());
+                    if (link == null) {
+                        failed = true;
+                    } else {
+                        failed = false;
+                    }
                 } else {
                     failed = true;
                     System.out.println("random link null. retry");
@@ -313,14 +293,15 @@ public class Populator {
             int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
         }
+
         protected String createRandomIp() {
-            StringBuilder ip=new StringBuilder();
+            StringBuilder ip = new StringBuilder();
 
             for (int i = 1; i <= 4; i++) {
-                int num=(int)(Math.random()*255);
+                int num = (int) (Math.random() * 255);
                 ip.append(num).append(".");
             }
-            return ip.toString().substring(0,ip.length()-1);
+            return ip.toString().substring(0, ip.length() - 1);
         }
 
     }

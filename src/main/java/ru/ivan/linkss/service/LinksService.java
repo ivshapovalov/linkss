@@ -23,6 +23,8 @@ public interface LinksService {
 
     String visitLink(String shortLink,String ip);
 
+    String visitLinkwithIpChecking(String shortLink,String ip);
+
     String getLink(String shortLink);
 
     long getLinkExpirePeriod(String shortLink);

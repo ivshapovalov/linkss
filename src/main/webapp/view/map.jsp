@@ -47,14 +47,15 @@
         myMap.geoObjects.add(clusterer);
 
 
-        myMap.setBounds(clusterer.getBounds(), {
-            checkZoomRange: true
-        });
+//        myMap.setBounds(clusterer.getBounds(), {
+//            checkZoomRange: true
+//        });
     });
 </script>
 
 <div class="container" style="alignment: center">
-    <%@include file="header.jsp" %>
+    <%--<%@include file="header.jsp" %>--%>
+    <br>
     <div id="map_clusters" style="width: 100%; height: 100%;"></div>
 </div>
 </body>

@@ -40,10 +40,7 @@ public class LinksServiceImpl implements LinksService {
     private static final String IMAGE_EXTENSION = "png";
     private static final String FILE_SEPARTOR = File.separator;
     private static final String QR_FOLDER = "resources" + FILE_SEPARTOR + "qr";
-    //private static final String GEO_IP_URL = "http://localhost:8081/geoip/rest/?ip=";
-    //private static final String GEO_IP_URL = "http://app.whydt.ru:49193/geoip/rest/?ip=";
     private static final String GEO_IP_URL = System.getenv("GEOIP_URL");
-
 
     @Autowired
     @Qualifier(value = "repositoryOne")
@@ -80,6 +77,7 @@ public class LinksServiceImpl implements LinksService {
     public long getVisitsActualSize(User autorizedUser) {
         return repository.getVisitsActualSize(autorizedUser);
     }
+
     public long getVisitsHistorySize(User autorizedUser) {
         return repository.getVisitsHistorySize(autorizedUser);
     }
@@ -173,13 +171,27 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public String visitLink(String shortLink, String ip) {
 
+        IpLocation ipLocation = getLocation(ip);
+        if (ipLocation == null) {
+            ipLocation = new IpLocation(ip);
+        }
         return repository.visitLink(shortLink, getLocation(ip));
+    }
+
+    @Override
+    public String visitLinkwithIpChecking(String shortLink, String ip) {
+
+        IpLocation ipLocation = getLocation(ip);
+        if (ipLocation == null) {
+            return null;
+        } else {
+            return repository.visitLink(shortLink, getLocation(ip));
+        }
     }
 
     private IpLocation getLocation(String ip) {
 
-
-        try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()){
+        try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()) {
 //            HttpClient client = new HttpClient(new URI(GEO_IP_URL + ip));
 //            client.setUserAgent(HttpClient.USER_AGENT_FIREFOX_23_0);
 //            client.setKeepAliveTime(3000);
@@ -216,7 +228,7 @@ public class LinksServiceImpl implements LinksService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new IpLocation(ip);
+        return null;
 
     }
 
@@ -271,13 +283,14 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public List<Visit> getLinkVisits(User autorizedUser, String owner, String key, int
             offset, long
-            recordsOnPage) {
-        return repository.getLinkVisits(autorizedUser,owner, key, offset,
+                                             recordsOnPage) {
+        return repository.getLinkVisits(autorizedUser, owner, key, offset,
                 recordsOnPage);
     }
+
     @Override
     public List<Visit> getUserVisits(User autorizedUser, String owner) {
-        return repository.getUserVisits(autorizedUser,owner);
+        return repository.getUserVisits(autorizedUser, owner);
     }
 
     @Override
@@ -300,6 +313,7 @@ public class LinksServiceImpl implements LinksService {
     public long getLinkVisitsSize(User autorizedUser, String owner, String key) {
         return repository.getLinkVisitsSize(autorizedUser, owner, key);
     }
+
     @Override
     public long getUserVisitsSize(User autorizedUser, String owner) {
         return repository.getUserVisitsSize(autorizedUser, owner);

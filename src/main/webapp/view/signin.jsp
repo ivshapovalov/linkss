@@ -4,6 +4,7 @@
 <html>
 
 <body>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> SIGN IN </h2>
@@ -23,11 +24,12 @@
                 <td><input type="submit" value="Login" id="login"/></td>
             </tr>
         </table>
+        <div class="g-recaptcha" data-sitekey="6LfYMRkUAAAAAIAYkmMRsZtqzv2D_Icz5PfvKNk7"></div>
     </form:form>
 
-    <h3> Defaults</h3>
-    <b>User - admin, password - admin</b><br>
-    <b>User - user, password - user </b>
+<%--<h3> Defaults</h3>--%>
+    <%--<b>User - admin, password - admin</b><br>--%>
+    <%--<b>User - user, password - user </b>--%>
 </div>
 </body>
 </html>

@@ -22,7 +22,7 @@
         <maven.test.skip>true</maven.test.skip>
     </properties>
     <dependencies>
-        
+
         <!--UI -->
         <dependency>
             <groupId>org.webjars</groupId>
@@ -48,6 +48,7 @@
             <version>${jackson.version}</version>
         </dependency>
 
+
         <!--HTTP Client for IP Service-->
         <dependency>
             <groupId>net.sf.corn</groupId>
@@ -61,11 +62,16 @@
             <version>4.5.3</version>
         </dependency>
 
-            <dependency>
-                <groupId>org.jsoup</groupId>
-                <artifactId>jsoup</artifactId>
-                <version>1.10.2</version>
-            </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.0.4</version>
+        </dependency>
 
         <!--Servlet -->
         <dependency>
