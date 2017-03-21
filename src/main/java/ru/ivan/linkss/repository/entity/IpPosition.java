@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-public class IpPosition implements JSONable {
+public class IpPosition {
 
     private String ip;
     private String countryCode = "";
@@ -111,7 +111,6 @@ public class IpPosition implements JSONable {
         this.regionName = regionName;
     }
 
-    @Override
     public String toJSON() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(this);
     }

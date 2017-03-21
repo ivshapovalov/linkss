@@ -12,7 +12,7 @@ import ru.ivan.linkss.util.Util;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
-public class FullLink implements JSONable{
+public class FullLink {
 
     private String key;
     private String shortLink;
@@ -43,7 +43,6 @@ public class FullLink implements JSONable{
         this.ipPosition = builder.ipPosition;
     }
 
-    @Override
     public String toJSON() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(this);
     }

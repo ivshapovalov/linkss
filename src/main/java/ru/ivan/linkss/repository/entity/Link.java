@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-public class Link implements JSONable{
+public class Link {
 
     private String key;
     private String link;
@@ -38,15 +38,13 @@ public class Link implements JSONable{
         this.link = link;
     }
 
-
-    @Override
     public String toJSON() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(this);
 
     }
 
     public static Link fromJSON(String json) throws IOException {
-        return new ObjectMapper().readValue(json,Link.class);
+        return new ObjectMapper().readValue(json, Link.class);
     }
 
     public IpPosition getIpPosition() {

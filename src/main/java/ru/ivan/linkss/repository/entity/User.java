@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-public class User implements JSONable {
+public class User {
     private String userName;
     private String password = "";
     private String email = "";
@@ -73,7 +73,6 @@ public class User implements JSONable {
                 '}';
     }
 
-    @Override
     public String toJSON() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(this);
     }

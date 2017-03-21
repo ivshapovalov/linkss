@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.time.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Visit implements JSONable {
+public class Visit  {
 
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
@@ -63,7 +63,6 @@ public class Visit implements JSONable {
         this.userAgent = userAgent;
     }
 
-    @Override
     public String toJSON() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(this);
     }
