@@ -1,15 +1,18 @@
 package ru.ivan.linkss.repository.entity;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import ru.ivan.linkss.util.Util;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
-public class FullLink {
+public class FullLink implements JSONable{
 
     private String key;
     private String shortLink;
@@ -38,6 +41,15 @@ public class FullLink {
         this.userName = builder.userName;
         this.seconds = builder.seconds;
         this.ipPosition = builder.ipPosition;
+    }
+
+    @Override
+    public String toJSON() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(this);
+    }
+
+    public static FullLink fromJSON(String json) throws IOException {
+        return  new ObjectMapper().readValue(json,FullLink.class);
     }
 
     public LocalDateTime getDeleted() {
@@ -118,6 +130,14 @@ public class FullLink {
                 '}';
     }
 
+    public IpPosition getIpPosition() {
+        return ipPosition;
+    }
+
+    public void setIpPosition(IpPosition ipPosition) {
+        this.ipPosition = ipPosition;
+    }
+
     public static class Builder {
         private String key;
         private String shortLink;
@@ -167,7 +187,7 @@ public class FullLink {
             return this;
         }
 
-        public Builder addIPLocation(IpPosition ipPosition) {
+        public Builder addIpPosition(IpPosition ipPosition) {
             this.ipPosition = ipPosition;
             return this;
         }

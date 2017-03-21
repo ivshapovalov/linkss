@@ -347,9 +347,7 @@ public class RootControllerTest {
         String path = RootControllerTest.class.getProtectionDomain().getCodeSource().getLocation()
                 .getPath();
         Mockito.when(servletContext.getRealPath(Mockito.anyString())).thenReturn(path);
-        Mockito.when(service.createShortLink(user,link,path,
-                context))
-                .thenReturn(shortLink);
+
         //when
         controller.service=service;
         String actual=controller.createShortLink(model,session,request);
@@ -359,7 +357,7 @@ public class RootControllerTest {
         Mockito.verify(request,Mockito.times(2)).getRequestURL();
         Mockito.verify(request).getServletContext();
         Mockito.verify(servletContext).getRealPath(Mockito.anyString());
-        Mockito.verify(service).createShortLink(user,link,path,context);
+        Mockito.verify(service).createShortLink(user,link,path,context,Mockito.anyMap());
         Mockito.verify(model,Mockito.times(4)).addAttribute(Mockito.anyString(),Mockito.anyObject
                 ());
         Mockito.verifyNoMoreInteractions(model,session,request, service,servletContext);
@@ -386,7 +384,7 @@ public class RootControllerTest {
                 .getPath();
         Mockito.when(servletContext.getRealPath(Mockito.anyString())).thenReturn(path);
         Mockito.when(service.createShortLink(null,link,path,
-                context))
+                context,Mockito.anyMap()))
                 .thenReturn(shortLink);
         //when
         controller.service=service;
@@ -397,7 +395,7 @@ public class RootControllerTest {
         Mockito.verify(request,Mockito.times(2)).getRequestURL();
         Mockito.verify(request).getServletContext();
         Mockito.verify(servletContext).getRealPath(Mockito.anyString());
-        Mockito.verify(service).createShortLink(null,link,path,context);
+        Mockito.verify(service).createShortLink(null,link,path,context,Mockito.anyMap());
         Mockito.verify(model,Mockito.times(4)).addAttribute(Mockito.anyString(),Mockito.anyObject
                 ());
         Mockito.verifyNoMoreInteractions(model,session,request, service,servletContext);
@@ -455,7 +453,7 @@ public class RootControllerTest {
                 .getPath();
         Mockito.when(servletContext.getRealPath(Mockito.anyString())).thenReturn(path);
         Mockito.when(service.createShortLink(user,link,path,
-                context))
+                context,Mockito.anyMap()))
                 .thenReturn(shortLink);
         //when
         controller.service=service;
@@ -466,7 +464,7 @@ public class RootControllerTest {
         Mockito.verify(request,Mockito.times(1)).getRequestURL();
         Mockito.verify(request).getServletContext();
         Mockito.verify(servletContext).getRealPath(Mockito.anyString());
-        Mockito.verify(service).createShortLink(user,link,path,context);
+        Mockito.verify(service).createShortLink(user,link,path,context,Mockito.anyMap());
         Mockito.verify(model,Mockito.times(1)).addAttribute(Mockito.anyString(),Mockito.anyObject
                 ());
         Mockito.verifyNoMoreInteractions(model,session,request, service,servletContext);

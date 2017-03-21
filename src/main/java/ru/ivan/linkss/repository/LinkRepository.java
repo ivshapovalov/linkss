@@ -22,11 +22,11 @@ public interface LinkRepository {
 
     long getVisitsHistorySize(User autorizedUser);
 
-    String createShortLink(User autorizedUser, String link);
+    String createShortLink(User autorizedUser, String link, IpPosition ipPosition);
 
     void createUser(User user);
 
-    String getLink(String key);
+    Link getLink(String key);
 
     String visitLink(String key, IpPosition ipPosition,Map<String,String> params);
 
@@ -42,6 +42,10 @@ public interface LinkRepository {
             recordsOnPage);
 
     List<Visit> getUserVisits(User autorizedUser,String owner);
+
+    List<Visit> getAllVisits();
+
+    List<Link> getAllLinks();
 
     List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage);

@@ -97,7 +97,6 @@ public class RootController {
     @RequestMapping(value = WEB_SEPARTOR + "*", method = RequestMethod.GET)
     public String redirect(Model model, HttpServletRequest request) {
         String servletPath = request.getServletPath();
-
         String shortLink = servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
         Map<String,String> params = getIP(request);
         String link = service.visitLink(shortLink, params);
@@ -129,7 +128,7 @@ public class RootController {
         String key = shortLink.substring(shortLink.lastIndexOf(WEB_SEPARTOR) + 1, shortLink.lastIndexOf
                 ("."));
 
-        String link = service.getLink(key);
+        String link = service.getLink(key).getLink();
         if (link != null) {
             String filePath = request.getServletContext().getRealPath("") +
                     "resources" + FILE_SEPARTOR + "qr" +
@@ -194,6 +193,7 @@ public class RootController {
     public String createShortLink(Model model, HttpSession session,
                                   HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        Map<String,String> params = getIP(request);
 
         String link = request.getParameter(ATTRIBUTE_LINK);
         if (link == null || "".equals(link)) {
@@ -204,9 +204,9 @@ public class RootController {
         String context = request.getRequestURL().toString();
         String shortLink = "";
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(null, link, path, context);
+            shortLink = service.createShortLink(null, link, path, context,params);
         } else {
-            shortLink = service.createShortLink(autorizedUser, link, path, context);
+            shortLink = service.createShortLink(autorizedUser, link, path, context,params);
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");

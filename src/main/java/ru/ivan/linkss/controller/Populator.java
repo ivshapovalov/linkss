@@ -231,7 +231,6 @@ public class Populator {
     }
 
     private class Creator extends Client {
-
         public Creator(User user, int number) {
             super(user, number);
         }
@@ -240,10 +239,14 @@ public class Populator {
         public void run() {
             Thread.currentThread().setName("t" + number);
 
+            Map<String, String> params = new HashMap<>();
+            params.put("ip", getRandomIp());
+            params.put("user-agent", getRandomUserAgent());
+
             String link = getRandomDomain() + "/" + number;
             String shortLink = service.createShortLink(user,
                     link, path,
-                    context);
+                    context,params);
 
             if (shortLink == null) {
                 System.out.println(Thread.currentThread().getName() +
@@ -266,11 +269,10 @@ public class Populator {
             do {
                 String shortLink = service.getRandomShortLink();
                 if (!"".equals(shortLink)) {
-                    String ip= createRandomIp();
-                    Map<String,String> params = new HashMap<>();
-                    params.put("ip",ip);
-                    params.put("user-agent",getRandomUserAgent());
-                    String link = service.visitLinkwithIpChecking(shortLink,params);
+                    Map<String, String> params = new HashMap<>();
+                    params.put("ip", getRandomIp());
+                    params.put("user-agent", getRandomUserAgent());
+                    String link = service.visitLinkwithIpChecking(shortLink, params);
                     if (link == null) {
                         failed = true;
                     } else {
@@ -310,12 +312,13 @@ public class Populator {
             int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
         }
+
         protected String getRandomUserAgent() {
             int index = Math.abs(random.nextInt() % userAgents.size());
             return userAgents.get(index);
         }
 
-        protected String createRandomIp() {
+        protected String getRandomIp() {
             StringBuilder ip = new StringBuilder();
 
             for (int i = 1; i <= 4; i++) {

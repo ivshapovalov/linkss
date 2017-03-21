@@ -3,17 +3,19 @@ package ru.ivan.linkss.repository.entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class IpPosition {
+import java.io.IOException;
+
+public class IpPosition implements JSONable {
 
     private String ip;
-    private String countryCode="";
-    private String countryName="";
-    private String region="";
-    private String regionName="";
-    private String city="";
-    private String postalCode="";
-    private String latitude="";
-    private String longitude="";
+    private String countryCode = "";
+    private String countryName = "";
+    private String region = "";
+    private String regionName = "";
+    private String city = "";
+    private String postalCode = "";
+    private String latitude = "";
+    private String longitude = "";
 
     @Override
     public String toString() {
@@ -109,15 +111,14 @@ public class IpPosition {
         this.regionName = regionName;
     }
 
-    public String json() {
-            String jPosition = "";
-            try {
-                jPosition = new ObjectMapper().writeValueAsString(
-                        this);
+    @Override
+    public String toJSON() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(this);
+    }
 
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            return jPosition;
+    public IpPosition fromJSON(String json) throws IOException {
+
+        return new ObjectMapper().readValue(json, IpPosition.class);
+
     }
 }

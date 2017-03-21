@@ -1,7 +1,6 @@
 package ru.ivan.linkss.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -27,7 +26,6 @@ import java.util.stream.Collectors;
 @Qualifier(value = "repositoryOne")
 public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
-    //REDIS 1
     private static final int DB_WORK_NUMBER = 0;
     private static final int DB_FREELINK_NUMBER = 1;
     private static final int DB_LINK_NUMBER = 2;
@@ -78,18 +76,16 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             String jAdmin = "";
             String jUser = "";
             try {
-                jAdmin = new ObjectMapper().writeValueAsString(
-                        new User.Builder()
-                                .addUserName(ADMIN_USER)
-                                .addPassword(ADMIN_PASSWORD)
-                                .addIsAdmin(true)
-                                .addIsEmpty(false).build());
-                jUser = new ObjectMapper().writeValueAsString(
-                        new User.Builder()
-                                .addUserName(DEFAULT_USER)
-                                .addPassword(DEFAULT_PASSWORD)
-                                .addIsAdmin(false)
-                                .addIsEmpty(false).build());
+                jAdmin = new User.Builder()
+                        .addUserName(ADMIN_USER)
+                        .addPassword(ADMIN_PASSWORD)
+                        .addIsAdmin(true)
+                        .addIsEmpty(false).build().toJSON();
+                jUser = new User.Builder()
+                        .addUserName(DEFAULT_USER)
+                        .addPassword(DEFAULT_PASSWORD)
+                        .addIsAdmin(false)
+                        .addIsEmpty(false).build().toJSON();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -248,16 +244,24 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                 .stream()
                                 .map(shortLink -> {
                                     syncCommands.select(DB_LINK_NUMBER);
-                                    String link = syncCommands.get(shortLink);
+                                    String jsonLink = syncCommands.get(shortLink);
+                                    Link link = null;
+                                    try {
+                                        link = new Link().fromJSON(jsonLink);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                     String shortLinkWithContext = contextPath + shortLink;
                                     String visits = syncCommands.hget(KEY_VISITS, shortLink);
                                     return new FullLink.Builder()
                                             .addKey(shortLink)
                                             .addShortLink(shortLinkWithContext)
-                                            .addLink(link)
+                                            .addLink(link.getLink())
                                             .addVisits(visits)
                                             .addImageLink(shortLinkWithContext + ".png")
-                                            .addUserName(user).build();
+                                            .addUserName(user)
+                                            .addIpPosition(link.getIpPosition())
+                                            .build();
                                 }).collect(Collectors.toList());
                     })
                     .flatMap(Collection::stream)
@@ -290,7 +294,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .limit(recordsOnPage)
                     .map(shortLink -> {
                         syncCommands.select(DB_LINK_NUMBER);
-                        String link = syncCommands.get(shortLink);
+                        String jsonLink = syncCommands.get(shortLink);
+                        Link link = null;
+                        try {
+                            link = new Link().fromJSON(jsonLink);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         String shortLinkWithContext = contextPath + shortLink;
                         syncCommands.select(DB_WORK_NUMBER);
                         String visits = syncCommands.hget(KEY_VISITS, shortLink);
@@ -300,20 +310,22 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                             return new FullLink.Builder()
                                     .addKey(shortLink)
                                     .addShortLink(shortLinkWithContext)
-                                    .addLink(link)
+                                    .addLink(link.getLink())
                                     .addVisits(visits)
                                     .addImageLink(shortLinkWithContext + ".png")
                                     .addUserName(userName)
+                                    .addIpPosition(link.getIpPosition())
                                     .build();
                         } else {
                             return new FullLink.Builder()
                                     .addKey(shortLink)
                                     .addShortLink(shortLinkWithContext)
-                                    .addLink(link)
+                                    .addLink(link.getLink())
                                     .addVisits(visits)
                                     .addImageLink(shortLinkWithContext + ".png")
                                     .addUserName(userName)
                                     .addSeconds(ttl)
+                                    .addIpPosition(link.getIpPosition())
                                     .build();
                         }
                     })
@@ -345,8 +357,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .map(time -> {
                         Visit visit = null;
                         try {
-                            visit = new ObjectMapper().readValue(syncCommands.hget(key,
-                                    time), Visit.class);
+                            visit = new Visit().fromJSON(syncCommands.hget(key,
+                                    time));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -372,8 +384,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                 .map(time -> {
                                     Visit visit = null;
                                     try {
-                                        visit = new ObjectMapper().readValue(syncCommands.hget(key,
-                                                time), Visit.class);
+                                        visit = new Visit().fromJSON(syncCommands.hget(key,
+                                                time));
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -383,6 +395,70 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     }).flatMap(Collection::stream)
                     .collect(Collectors.toList());
             return visits;
+        }
+    }
+
+    @Override
+    public List<Visit> getAllVisits() {
+
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_VISITS_NUMBER);
+            List<String> links = new ArrayList<>();
+            KeyScanCursor cursor = syncCommands.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> links.add(key));
+                cursor = syncCommands.scan(cursor);
+            }
+
+            List<Visit> visits = links.stream()
+                    .sorted()
+                    .map(key -> {
+                        return syncCommands.hkeys(key).stream()
+                                .map(time -> {
+                                    Visit visit = null;
+                                    try {
+                                        visit = new Visit().fromJSON(syncCommands.hget(key,
+                                                time));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    return visit;
+                                })
+                                .collect(Collectors.toList());
+                    }).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+            return visits;
+        }
+    }
+
+    @Override
+    public List<Link> getAllLinks() {
+
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_LINK_NUMBER);
+            List<String> links = new ArrayList<>();
+            KeyScanCursor cursor = syncCommands.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> links.add(key));
+                cursor = syncCommands.scan(cursor);
+            }
+
+            return links.stream()
+                    .sorted()
+                    .map(key -> {
+                        Link link = null;
+                        try {
+                            link = new Link().fromJSON(syncCommands.get(key));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return link;
+                    })
+                    .collect(Collectors.toList());
         }
     }
 
@@ -400,9 +476,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .map(shortLink -> {
                         FullLink fullLink = null;
                         try {
-                            fullLink = new ObjectMapper().readValue(syncCommands.hget(userName, shortLink)
-                                    , FullLink
-                                            .class);
+                            fullLink = new FullLink().fromJSON(syncCommands.hget(userName,
+                                    shortLink));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -431,7 +506,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String createShortLink(User autorizedUser, String link) {
+    public String createShortLink(User autorizedUser, String link, IpPosition ipPosition) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_WORK_NUMBER);
@@ -450,7 +525,16 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
 
             syncCommands.select(DB_LINK_NUMBER);
-            syncCommands.set(shortLink, link);
+            String jsonLink = "";
+            try {
+                jsonLink = new Link.Builder().addKey(shortLink)
+                        .addLink(link)
+                        .addIpPosition(ipPosition).build()
+                        .toJSON();
+                syncCommands.set(shortLink, jsonLink);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
             int days = 0;
             if (!"".equals(period)) {
                 syncCommands.expire(shortLink, Integer.parseInt(period) * SECONDS_IN_DAY);
@@ -459,13 +543,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
             if (autorizedUser != null && !"".equals(autorizedUser.getUserName())) {
                 try {
-                    syncCommands.hset(autorizedUser.getUserName(), shortLink, link);
+                    syncCommands.hset(autorizedUser.getUserName(), shortLink, jsonLink);
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("Cannot add shortlink '%s' to users " +
                             "'%s' links", shortLink, autorizedUser.getUserName()));
                 }
             } else {
-                syncCommands.hset(DEFAULT_USER, shortLink, link);
+                syncCommands.hset(DEFAULT_USER, shortLink, jsonLink);
 
             }
             syncCommands.hset(KEY_VISITS, shortLink, "0");
@@ -511,7 +595,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 String json = "";
                 try {
                     user.setEmpty(false);
-                    json = new ObjectMapper().writeValueAsString(user);
+                    json = user.toJSON();
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
@@ -533,7 +617,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .map(userName -> {
                         User user = null;
                         try {
-                            user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName), User.class);
+                            user = new User().fromJSON(syncCommands.hget(KEY_USERS, userName));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -582,9 +666,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
             User dbUser = null;
             try {
-                dbUser = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, user
-                        .getUserName()), User
-                        .class);
+                dbUser = new User().fromJSON(syncCommands.hget(KEY_USERS, user
+                        .getUserName()));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -701,9 +784,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
             FullLink fullLink = null;
             try {
-                fullLink = new ObjectMapper().readValue(syncCommands.hget(owner, shortLink),
-                        FullLink
-                                .class);
+                fullLink = new FullLink().fromJSON(syncCommands.hget(owner, shortLink));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -716,10 +797,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     if (syncCommands.hget(KEY_USERS, fullLink.getUserName()) == null) {
                         String json = "";
                         try {
-                            json = new ObjectMapper().writeValueAsString(new User.Builder()
+                            json = new User.Builder()
                                     .addUserName(fullLink.getUserName())
                                     .addIsAdmin(false)
-                                    .addIsEmpty(false).build());
+                                    .addIsEmpty(false).build().toJSON();
                         } catch (JsonProcessingException e) {
                             e.printStackTrace();
                         }
@@ -784,7 +865,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         }
     }
 
-    private void moveLinkToArchive(String shortLink, String owner, String link,
+    private void moveLinkToArchive(String shortLink, String owner, String jsonLink,
                                    RedisCommands<String,
                                            String> syncCommands) {
         synchronized (redisClient) {
@@ -792,7 +873,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             String visits = syncCommands.hget(KEY_VISITS, shortLink);
             syncCommands.hdel(KEY_VISITS, shortLink);
             if (visits == null) visits = "0";
-            String domainName = Util.getDomainName(link);
+            Link link = null;
+            try {
+                link = new Link().fromJSON(jsonLink);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String domainName = Util.getDomainName(link.getLink());
             String visitsByDomainActual = syncCommands.hget
                     (KEY_VISITS_BY_DOMAIN_ACTUAL, domainName);
             if (visitsByDomainActual != null && !"".equals(visitsByDomainActual)
@@ -806,16 +893,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
             FullLink fullLink = new FullLink.Builder()
                     .addKey(shortLink)
-                    .addLink(link)
+                    .addLink(link.getLink())
                     .addUserName(owner)
                     .addVisits(visits)
                     .addDeleted(LocalDateTime.now())
+                    .addIpPosition(link.getIpPosition())
                     .build();
             syncCommands.hdel(owner, shortLink);
             syncCommands.select(DB_ARCHIVE_NUMBER);
             String json = "";
             try {
-                json = new ObjectMapper().writeValueAsString(fullLink);
+                json = fullLink.toJSON();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -824,11 +912,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String getLink(String shortLink) {
+    public Link getLink(String shortLink) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_LINK_NUMBER);
-            String link = syncCommands.get(shortLink);
+            String jsonLink = syncCommands.get(shortLink);
+            Link link = null;
+            try {
+                link = new Link().fromJSON(jsonLink);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return link;
         }
     }
@@ -839,11 +933,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             RedisCommands<String, String> syncCommands = connection.sync();
 
             syncCommands.select(DB_LINK_NUMBER);
-            String link = syncCommands.get(shortLink);
-            if (link != null) {
+            String jsonLink = syncCommands.get(shortLink);
+            Link link = null;
+            try {
+                link = new Link().fromJSON(jsonLink);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (jsonLink != null) {
                 syncCommands.select(DB_WORK_NUMBER);
                 syncCommands.hincrby(KEY_VISITS, shortLink, 1);
-                String domainName = Util.getDomainName(link);
+                String domainName = Util.getDomainName(link.getLink());
                 if (!"".equals(link)) {
                     syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_ACTUAL, domainName, 1);
                     syncCommands.hincrby(KEY_VISITS_BY_DOMAIN_HISTORY, domainName, 1);
@@ -853,14 +953,14 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 String userAgent = params.get(PARAM_USER_AGENT);
                 String json = "";
                 try {
-                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipPosition, userAgent));
+                    json = new Visit(time, ipPosition, userAgent).toJSON();
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
                 syncCommands.hset(shortLink, String.valueOf(time), json);
 
             }
-            return link;
+            return link.getLink();
         }
     }
 
@@ -875,7 +975,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     }
                 }
             }
-            String link = getLink(shortLink);
+            Link link = getLink(shortLink);
             String shortLinkWithContext = contextPath + shortLink;
             long ttl = syncCommands.ttl(shortLink);
             if (ttl < 0) {
@@ -885,10 +985,12 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             return new FullLink.Builder()
                     .addKey(shortLink)
                     .addShortLink(shortLinkWithContext)
-                    .addLink(link)
+                    .addLink(link.getLink())
                     .addImageLink(shortLinkWithContext + ".png")
                     .addUserName(owner)
-                    .addSeconds(ttl).build();
+                    .addSeconds(ttl)
+                    .addIpPosition(link.getIpPosition())
+                    .build();
         }
 
     }
@@ -913,6 +1015,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 throw new RuntimeException(String.format("User '%s' is not exists",
                         newFullLink.getUserName()));
             }
+            syncCommands.select(DB_WORK_NUMBER);
+            String jsonLink = "";
+            try {
+                jsonLink = new Link.Builder().addKey(newFullLink.getKey())
+                        .addLink(newFullLink
+                                .getLink())
+                        .addIpPosition(newFullLink.getIpPosition())
+                        .build().toJSON();
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
             if (oldFullLink.getKey().equals(newFullLink.getKey())) {
                 //days
                 if (newFullLink.getSeconds() != oldFullLink.getSeconds()) {
@@ -925,13 +1038,13 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     }
                 }
 
-                syncCommands.select(DB_WORK_NUMBER);
                 //userName
                 if (!newFullLink.getUserName().equals(oldFullLink.getUserName())) {
                     synchronized (redisClient) {
+
                         syncCommands.hdel(oldFullLink.getUserName(), oldFullLink.getKey());
-                        syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
-                                .getLink());
+                        syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(),
+                                jsonLink);
                     }
                 } else {
                     //link
@@ -941,8 +1054,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                         synchronized (redisClient) {
                             syncCommands.select(DB_WORK_NUMBER);
                             syncCommands.hdel(newFullLink.getUserName(), oldFullLink.getKey());
-                            syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
-                                    .getLink());
+                            syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(),
+                                    jsonLink);
                         }
                     }
                 }
@@ -965,8 +1078,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     }
                     syncCommands.select(DB_WORK_NUMBER);
                     syncCommands.hdel(oldFullLink.getUserName(), oldFullLink.getKey());
-                    syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), newFullLink
-                            .getLink());
+                    syncCommands.hset(newFullLink.getUserName(), newFullLink.getKey(), jsonLink);
                 }
             }
         }
@@ -983,7 +1095,6 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             if (seconds < 0) {
                 seconds = 0;
             }
-
             return seconds;
         }
     }
@@ -1006,8 +1117,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
             User user = null;
             try {
-                user = new ObjectMapper().readValue(syncCommands.hget(KEY_USERS, userName), User
-                        .class);
+                user = new User().fromJSON(syncCommands.hget(KEY_USERS, userName));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1048,7 +1158,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 }
                 String json = "";
                 try {
-                    json = new ObjectMapper().writeValueAsString(newUser);
+                    json = newUser.toJSON();
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
@@ -1118,8 +1228,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 .stream()
                 .map(shortLink -> {
                     syncCommands.select(DB_WORK_NUMBER);
-                    String link = syncCommands.hget(userName, shortLink);
-                    moveLinkToArchive(shortLink, userName, link, syncCommands);
+                    String jsonLink = syncCommands.hget(userName, shortLink);
+                    moveLinkToArchive(shortLink, userName, jsonLink, syncCommands);
                     return shortLink;
                 })
                 .collect(Collectors.toList());
@@ -1249,7 +1359,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     public BigInteger deleteExpiredUserLinks() throws Exception {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
-            syncCommands.select(DB_LINK_NUMBER);
+            syncCommands.select(DB_WORK_NUMBER);
             List<String> links = new ArrayList<>();
             KeyScanCursor cursor = syncCommands.scan();
             while (!cursor.isFinished()) {
@@ -1267,11 +1377,19 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                                 .stream()
                                 .map(shortLink -> {
                                     syncCommands.select(DB_LINK_NUMBER);
-                                    String link = syncCommands.get(shortLink);
+                                    String jsonLink = syncCommands.get(shortLink);
+                                    Link link = null;
+                                    try {
+                                        link = new Link().fromJSON(jsonLink);
+
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                     return new FullLink.Builder()
                                             .addKey(shortLink)
-                                            .addLink(link)
+                                            .addLink(link.getLink())
                                             .addUserName(user)
+                                            .addIpPosition(link.getIpPosition())
                                             .build();
                                 })
                                 .filter(fullLink -> fullLink.getLink() == null)
@@ -1281,8 +1399,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                     .map(fullLink -> {
                         String shortLink = fullLink.getKey();
                         syncCommands.select(DB_WORK_NUMBER);
-                        String link = syncCommands.hget(fullLink.getUserName(), fullLink.getKey());
-                        moveLinkToArchive(shortLink, fullLink.getUserName(), link, syncCommands);
+                        String jsonLink = syncCommands.hget(fullLink.getUserName(), fullLink.getKey
+                                ());
+                        moveLinkToArchive(shortLink, fullLink.getUserName(), jsonLink,
+                                syncCommands);
                         return shortLink;
                     }).collect(Collectors.toList());
 

@@ -1,5 +1,6 @@
 package ru.ivan.linkss.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -483,16 +484,17 @@ public class ManageController {
                 }
             }
 
-            String link = service.getLink(shortLink);
+            Link link = service.getLink(shortLink);
             String contextPath = getContextPath(request);
             String urlImagePath = contextPath + shortLink + IMAGE_EXTENSION_WITH_DOT;
             FullLink fullLink = new FullLink.Builder()
                     .addKey(shortLink)
                     .addShortLink(contextPath + shortLink)
-                    .addLink(link)
+                    .addLink(link.getLink())
                     .addImageLink(urlImagePath)
                     .addUserName(owner)
                     .addSeconds(service.getLinkExpirePeriod(shortLink))
+                    .addIpPosition(link.getIpPosition())
                     .build();
 
             model.addAttribute(ATTRIBUTE_FULL_LINK, fullLink);
@@ -723,7 +725,7 @@ public class ManageController {
 
         if (!autorizedUser.isAdmin()) {
             if (!autorizedUser.getUserName().equals(owner)) {
-                 model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions to " +
+                model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
                                 "watch user visits",
                         autorizedUser.getUserName()));
                 return PAGE_ERROR;
@@ -757,13 +759,13 @@ public class ManageController {
         return PAGE_VISITS;
     }
 
-    @RequestMapping(value = {WEB_SEPARTOR + PAGE_MAP+WEB_SEPARTOR+PAGE_VISITS}, method = RequestMethod.GET)
-    public String map(Model model,
-                      @RequestParam(value = ATTRIBUTE_USER, required = false) String user,
-                      @RequestParam(value = ATTRIBUTE_KEY, required = false) String key,
-                      HttpServletRequest request,
-                      HttpSession session) {
-        List<Visit> visits=new ArrayList<>();
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_MAP + WEB_SEPARTOR + PAGE_VISITS}, method = RequestMethod.GET)
+    public String mapVisits(Model model,
+                            @RequestParam(value = ATTRIBUTE_USER, required = false) String user,
+                            @RequestParam(value = ATTRIBUTE_KEY, required = false) String key,
+                            HttpServletRequest request,
+                            HttpSession session) {
+        List<Visit> visits = new ArrayList<>();
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
@@ -771,35 +773,38 @@ public class ManageController {
         }
         if (key != null) {
             if (!autorizedUser.isAdmin()) {
-                boolean checked=service.checkLinkOwner(key,autorizedUser.getUserName());
+                boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
                 if (!checked) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions " +
+                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
                                     "to " +
                                     "watch map of key '%s'",
-                            autorizedUser.getUserName(),key));
+                            autorizedUser.getUserName(), key));
                     return PAGE_ERROR;
                 }
             }
             long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
             visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
 
-        } else if (user!=null) {
+        } else if (user != null) {
             if (!autorizedUser.isAdmin()) {
                 if (!autorizedUser.getUserName().equals(user)) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions to " +
+                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
                                     "watch user '%s' visits",
-                            autorizedUser.getUserName(),user));
+                            autorizedUser.getUserName(), user));
                     return PAGE_ERROR;
                 }
             }
             visits = service.getUserVisits(autorizedUser, user);
-        } else
-        {
-            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
-            return PAGE_MESSAGE;
+        } else {
+            if (!autorizedUser.isAdmin()) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
+                return PAGE_MESSAGE;
+            } else {
+                visits = service.getAllVisits();
+            }
         }
 
-         visits = visits.stream()
+        visits = visits.stream()
                 .filter(visit -> visit.getIpPosition() != null)
                 .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
                         .getLongitude() != null)
@@ -810,7 +815,87 @@ public class ManageController {
                 .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
                 .collect(Collectors.toList());
         List<String> jPositions = visits.stream()
-                .map(visit -> visit.getIpPosition().json())
+                .map(visit -> {
+                    try {
+                        return visit.getIpPosition().toJSON();
+                    } catch (JsonProcessingException e) {
+                        return "";
+                    }
+                })
+                .collect(Collectors.toList());
+        model.addAttribute(ATTRIBUTE_POINTS, points.toString());
+        model.addAttribute(ATTRIBUTE_JPOSITIONS, jPositions.toString());
+        return PAGE_MAP;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_MAP + WEB_SEPARTOR + PAGE_LINKS}, method = RequestMethod.GET)
+    public String mapLinks(Model model,
+                           @RequestParam(value = ATTRIBUTE_USER, required = false) String user,
+                           @RequestParam(value = ATTRIBUTE_KEY, required = false) String key,
+                           HttpServletRequest request,
+                           HttpSession session) {
+        List<Link> links = new ArrayList<>();
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || autorizedUser.isEmpty()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+        if (key != null) {
+            if (!autorizedUser.isAdmin()) {
+                boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
+                if (!checked) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
+                                    "to " +
+                                    "watch map of key '%s'",
+                            autorizedUser.getUserName(), key));
+                    return PAGE_ERROR;
+                }
+            }
+            links.add(service.getLink(key));
+
+
+        } else if (user != null) {
+            if (!autorizedUser.isAdmin()) {
+                if (!autorizedUser.getUserName().equals(user)) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
+                                    "watch user '%s' links map",
+                            autorizedUser.getUserName(), user));
+                    return PAGE_ERROR;
+                }
+            }
+            int size = (int) service.getUserLinksSize(autorizedUser, user);
+            List<FullLink> fullLinks = service.getUserLinks(user, "", 0, size);
+            links = fullLinks.stream().map(fullLink -> new Link.Builder().addKey(fullLink.getKey())
+                    .addLink(fullLink.getLink()).addIpPosition(fullLink.getIpPosition()).build
+                            ()).collect(Collectors.toList());
+        } else {
+            if (!autorizedUser.isAdmin()) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
+                return PAGE_MESSAGE;
+            } else {
+                links = service.getAllLinks();
+            }
+        }
+
+        links = links.stream()
+                .filter(link -> link.getIpPosition() != null)
+                .filter(link -> link.getIpPosition().getLatitude() != null && link.getIpPosition()
+                        .getLongitude() != null)
+                .filter(link -> !"".equals(link.getIpPosition().getLatitude()) & !"".equals(link
+                        .getIpPosition().getLongitude()))
+                .collect(Collectors.toList());
+        List<String> points = links.stream()
+                .map(link -> "[" + String.valueOf(link.getIpPosition().getLatitude()) + "," +
+                        String.valueOf(link.getIpPosition().getLongitude() + "]"))
+                .collect(Collectors.toList());
+        List<String> jPositions = links.stream()
+                .map(link -> {
+                    try {
+                        return link.getIpPosition().toJSON();
+                    } catch (JsonProcessingException e) {
+                        return "";
+                    }
+                })
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
         model.addAttribute(ATTRIBUTE_JPOSITIONS, jPositions.toString());

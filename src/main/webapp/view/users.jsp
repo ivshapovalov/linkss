@@ -13,6 +13,9 @@
     <div class="container" style="alignment: center">
         <%@include file="header.jsp" %>
         <h2> USERS </h2>
+        <a href="/linkss/manage/map/users" target="_blank">map of users</a>
+        <a href="/linkss/manage/map/links" target="_blank">map of links</a>
+        <a href="/linkss/manage/map/visits" target="_blank">map of visits</a>
         <div class="bs-example">
             <ul class="pagination">
                 <li>

@@ -1,6 +1,11 @@
 package ru.ivan.linkss.repository.entity;
 
-public class User {
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+
+public class User implements JSONable {
     private String userName;
     private String password = "";
     private String email = "";
@@ -66,6 +71,15 @@ public class User {
                 "userName='" + userName + '\'' +
                 ", admin=" + admin +
                 '}';
+    }
+
+    @Override
+    public String toJSON() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(this);
+    }
+
+    public static User fromJSON(String json) throws IOException {
+        return   new ObjectMapper().readValue(json,User.class);
     }
 
     public static class Builder {

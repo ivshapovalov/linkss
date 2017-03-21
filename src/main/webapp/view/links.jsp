@@ -11,8 +11,9 @@
 </script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> LINKS OF '${owner}'
-        <a href="/linkss/manage/map/visits?user=${owner}" target="_blank">map</a></h2>
+    <h2> LINKS OF '${owner}'</h2>
+        <a href="/linkss/manage/map/visits?user=${owner}" target="_blank">map of visits</a>
+        <a href="/linkss/manage/map/links?user=${owner}" target="_blank">map of links</a>
     <section>
         <div class="bs-example">
             <ul class="pagination">

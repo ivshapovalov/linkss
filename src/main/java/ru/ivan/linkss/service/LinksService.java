@@ -18,7 +18,8 @@ public interface LinksService {
 
     BigInteger deleteLocalImages(String path);
 
-    String createShortLink(User autorizedUser, String link, String path, String context);
+    String createShortLink(User autorizedUser, String link, String path, String context,
+                           Map<String,String> params);
 
     void createUser(User user);
 
@@ -26,7 +27,7 @@ public interface LinksService {
 
     String visitLinkwithIpChecking(String shortLink,Map<String,String> params);
 
-    String getLink(String shortLink);
+    Link getLink(String shortLink);
 
     long getLinkExpirePeriod(String shortLink);
 
@@ -38,6 +39,10 @@ public interface LinksService {
             recordsOnPage);
 
     List<Visit> getUserVisits(User autorizedUser,String owner);
+
+    List<Visit> getAllVisits();
+
+    List<Link> getAllLinks();
 
     List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage);

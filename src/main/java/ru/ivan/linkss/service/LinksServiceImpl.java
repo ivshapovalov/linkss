@@ -117,9 +117,15 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String createShortLink(User autorizedUser, String link, String path, String context) {
+    public String createShortLink(User autorizedUser, String link, String path, String context,
+                                  Map<String,String> params) {
 
-        String shortLink = repository.createShortLink(autorizedUser, link);
+        String ip=params.get(PARAM_IP);
+        IpPosition ipPosition = getPosition(ip);
+        if (ipPosition == null) {
+            ipPosition = new IpPosition(ip);
+        }
+        String shortLink = repository.createShortLink(autorizedUser, link,ipPosition);
         if (shortLink != null) {
             String imagePath = path + "resources" + FILE_SEPARTOR + "qr" + FILE_SEPARTOR + shortLink +
                     "." + IMAGE_EXTENSION;
@@ -174,14 +180,14 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String getLink(String shortLink) {
+    public Link getLink(String shortLink) {
         return repository.getLink(shortLink);
     }
 
     @Override
     public String visitLink(String shortLink, Map<String,String> params) {
 
-        String ip=params.get(params.get(PARAM_IP));
+        String ip=params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             ipPosition = new IpPosition(ip);
@@ -309,6 +315,15 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public List<Visit> getUserVisits(User autorizedUser, String owner) {
         return repository.getUserVisits(autorizedUser, owner);
+    }
+    @Override
+    public List<Visit> getAllVisits() {
+        return repository.getAllVisits();
+    }
+
+    @Override
+    public List<Link> getAllLinks() {
+        return repository.getAllLinks();
     }
 
     @Override
