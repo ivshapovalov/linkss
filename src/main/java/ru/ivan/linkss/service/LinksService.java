@@ -6,6 +6,7 @@ import ru.ivan.linkss.repository.entity.*;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 public interface LinksService {
 
@@ -21,9 +22,9 @@ public interface LinksService {
 
     void createUser(User user);
 
-    String visitLink(String shortLink,String ip);
+    String visitLink(String shortLink,Map<String,String> params);
 
-    String visitLinkwithIpChecking(String shortLink,String ip);
+    String visitLinkwithIpChecking(String shortLink,Map<String,String> params);
 
     String getLink(String shortLink);
 
@@ -46,6 +47,8 @@ public interface LinksService {
             IOException;
 
     User checkUser(User user);
+
+    boolean checkLinkOwner(String key,String owner);
 
     void deleteUserLink(User user, String shortLink, String owner);
 

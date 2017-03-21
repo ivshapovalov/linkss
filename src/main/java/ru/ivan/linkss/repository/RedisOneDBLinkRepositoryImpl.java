@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,12 +45,14 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private static final String KEY_LENGTH = "key.length";
     private static final String KEY_EXPIRATION_PERIOD = "expiration.period";
 
+    private static final String PARAM_USER_AGENT = "user-agent";
+
     private static final String DEFAULT_USER = "user";
     private static final String DEFAULT_PASSWORD = "user";
     private static final String ADMIN_USER = "ivan";
     private static final String ADMIN_PASSWORD = "ivan";
 
-    private volatile boolean freeLinkDBPopulatingInProgress=false;
+    private volatile boolean freeLinkDBPopulatingInProgress = false;
 
     private final RedisClient redisClient;
 
@@ -600,6 +599,21 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public boolean checkLinkOwner(String key, String owner) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+            String link = syncCommands.hget(owner, key);
+            if (link == null) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    @Override
     public void deleteLink(User autorizedUser, String shortLink, String owner) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -820,7 +834,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public String visitLink(String shortLink, IpPosition ipPosition) {
+    public String visitLink(String shortLink, IpPosition ipPosition, Map<String, String> params) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
@@ -836,9 +850,10 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 }
                 syncCommands.select(DB_VISITS_NUMBER);
                 long time = Instant.now().toEpochMilli();
+                String userAgent = params.get(PARAM_USER_AGENT);
                 String json = "";
                 try {
-                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipPosition));
+                    json = new ObjectMapper().writeValueAsString(new Visit(time, ipPosition, userAgent));
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
@@ -1189,8 +1204,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
 
-            boolean needToAdd=false;
-            int newKeyLength=0;
+            boolean needToAdd = false;
+            int newKeyLength = 0;
             if (freeLinkDBPopulatingInProgress) {
                 throw new Exception("Task: Check freelink DB. Updating keys in process!");
             }
@@ -1211,17 +1226,17 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                             syncCommands.select(DB_WORK_NUMBER);
                             syncCommands.hset(KEY_PREFERENCES, KEY_LENGTH, key + "|" + String.valueOf
                                     (newKeyLength));
-                            freeLinkDBPopulatingInProgress=true;
-                            needToAdd=true;
+                            freeLinkDBPopulatingInProgress = true;
+                            needToAdd = true;
                         }
                     }
-                }  else {
+                } else {
                     throw new Exception(String.format("No '%s' in '%s'!", KEY_LENGTH, KEY_PREFERENCES));
                 }
             }
             if (needToAdd) {
                 addedKeys = updateFreeLinksDB(syncCommands, newKeyLength);
-                freeLinkDBPopulatingInProgress=false;
+                freeLinkDBPopulatingInProgress = false;
             }
             return addedKeys;
 

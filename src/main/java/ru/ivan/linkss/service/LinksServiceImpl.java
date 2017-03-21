@@ -8,14 +8,20 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.entity.*;
+import ru.ivan.linkss.util.Constants;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -25,12 +31,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Hashtable;
+import java.net.URI;
+import java.util.*;
 import java.util.List;
 
-//import net.sf.corn.httpclient.HttpClient;
-//import net.sf.corn.httpclient.HttpResponse;
+import static ru.ivan.linkss.util.Constants.GEOIP_KEY;
+import static ru.ivan.linkss.util.Constants.GEOIP_URL;
 
 @Service
 @Qualifier(value = "service")
@@ -40,7 +46,7 @@ public class LinksServiceImpl implements LinksService {
     private static final String IMAGE_EXTENSION = "png";
     private static final String FILE_SEPARTOR = File.separator;
     private static final String QR_FOLDER = "resources" + FILE_SEPARTOR + "qr";
-    private static final String GEO_IP_URL = System.getenv("GEOIP_URL");
+    private static final String PARAM_IP = "ip";
 
     @Autowired
     @Qualifier(value = "repositoryOne")
@@ -99,6 +105,10 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public User checkUser(User user) {
         return repository.checkUser(user);
+    }
+    @Override
+    public boolean checkLinkOwner(String key,String owner) {
+        return repository.checkLinkOwner(key,owner);
     }
 
     @Override
@@ -169,43 +179,52 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String visitLink(String shortLink, String ip) {
+    public String visitLink(String shortLink, Map<String,String> params) {
 
+        String ip=params.get(params.get(PARAM_IP));
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             ipPosition = new IpPosition(ip);
         }
-        return repository.visitLink(shortLink, getPosition(ip));
+        return repository.visitLink(shortLink, ipPosition,params);
     }
 
     @Override
-    public String visitLinkwithIpChecking(String shortLink, String ip) {
+    public String visitLinkwithIpChecking(String shortLink, Map<String,String> params) {
 
+        String ip=params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             return null;
         } else {
-            return repository.visitLink(shortLink, getPosition(ip));
+            return repository.visitLink(shortLink, ipPosition,params);
         }
     }
 
     private IpPosition getPosition(String ip) {
 
         try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()) {
-//            HttpClient client = new HttpClient(new URI(GEO_IP_URL + ip));
-//            client.setUserAgent(HttpClient.USER_AGENT_FIREFOX_23_0);
-//            client.setKeepAliveTime(3000);
-//            HttpResponse response = client.sendData(HttpClient.HTTP_METHOD.GET);
 
-            //String jsonPosition=Jsoup.connect(GEO_IP_URL+ip).ignoreContentType(true).execute()
-            //       .body();
-            HttpGet request = new HttpGet(GEO_IP_URL + ip);
+            String url=Constants.GEOIP_URL;
+            URI uri = new URIBuilder()
+                    .setScheme("http")
+                    .setHost(url)
+                    //.addParameter("ip", ip)
+                    //.addParameter("key", Constants.GEOIP_KEY)
+                    .build();
+            //HttpGet request = new HttpGet(uri);
+
+            //post
+            HttpPost request = new HttpPost(uri);
             request.addHeader("accept", "application/json");
+            List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+            urlParameters.add(new BasicNameValuePair("ip", ip));
+            urlParameters.add(new BasicNameValuePair("key", GEOIP_KEY));
+            request.setEntity(new UrlEncodedFormEntity(urlParameters));
 
             HttpResponse response = geoHTTPClient.execute(request);
 
             IpPosition position = null;
-////            if (!response.hasError()) {
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new RuntimeException("Failed : HTTP error code : "
                         + response.getStatusLine().getStatusCode());
@@ -216,8 +235,6 @@ public class LinksServiceImpl implements LinksService {
             String jsonPosition;
             if ((jsonPosition = br.readLine()) != null) {
                 try {
-                    //try to convert to object
-
                     position = new ObjectMapper().readValue(jsonPosition, IpPosition
                             .class);
                     return position;

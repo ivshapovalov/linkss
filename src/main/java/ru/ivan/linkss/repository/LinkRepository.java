@@ -4,6 +4,7 @@ import ru.ivan.linkss.repository.entity.*;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 public interface LinkRepository {
 
@@ -27,7 +28,7 @@ public interface LinkRepository {
 
     String getLink(String key);
 
-    String visitLink(String key, IpPosition ipPosition);
+    String visitLink(String key, IpPosition ipPosition,Map<String,String> params);
 
     String getRandomShortLink();
 
@@ -46,6 +47,8 @@ public interface LinkRepository {
             recordsOnPage);
 
     User checkUser(User user);
+
+    boolean checkLinkOwner(String key,String owner);
 
     void deleteLink(User user, String shortLink, String owner);
 

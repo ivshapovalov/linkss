@@ -21,8 +21,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ru.ivan.linkss.util.Constants.DEBUG;
 
 @Controller
 @EnableScheduling
@@ -70,7 +74,12 @@ public class RootController {
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_INIT}, method = RequestMethod.POST)
     public String init(Model model, HttpServletRequest request) {
         String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        boolean valid;
+        if (DEBUG) {
+            valid = true;
+        } else {
+            valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        }
         String errorString = null;
         if (!valid) {
             errorString = "Captcha invalid!";
@@ -90,8 +99,8 @@ public class RootController {
         String servletPath = request.getServletPath();
 
         String shortLink = servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
-        String ip=getIP(request);
-        String link = service.visitLink(shortLink,ip);
+        Map<String,String> params = getIP(request);
+        String link = service.visitLink(shortLink, params);
         if (link != null) {
             Pattern p = Pattern.compile(URL_REGEX);
             Matcher m = p.matcher(link);
@@ -152,7 +161,7 @@ public class RootController {
                     os.write(bytes);
                 }
                 fis.close();
-            }  else{
+            } else {
                 response.setContentType("text/plain");
                 response.getWriter().write(String.format("Sorry. Image '%s' does not exists", key));
 
@@ -221,7 +230,8 @@ public class RootController {
         return contextPath;
     }
 
-    private String getIP (HttpServletRequest request) {
+    private Map<String, String> getIP(HttpServletRequest request) {
+        Map<String, String> map = new HashMap<>();
         String ip = request.getRemoteAddr();
         if (ip.equalsIgnoreCase("0:0:0:0:0:0:0:1")) {
             InetAddress inetAddress = null;
@@ -233,8 +243,11 @@ public class RootController {
             String ipAddress = inetAddress.getHostAddress();
             ip = ipAddress;
         }
-        ip="25.25.25.25";
-        return ip;
+        ip = "25.25.25.25";
+        map.put("ip", ip);
+        map.put("user-agent", request.getHeader("user-agent"));
+
+        return map;
     }
 }
 

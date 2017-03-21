@@ -18,18 +18,17 @@ public class Visit {
 
     private IpPosition ipPosition;
 
+    private String userAgent;
+
     public Visit() {
     }
 
-    public Visit(LocalDateTime time, IpPosition ipPosition) {
-        this.time = time;
-        this.ipPosition = ipPosition;
-    }
-    public Visit(long time, IpPosition ipPosition) {
+    public Visit(long time, IpPosition ipPosition,String userAgent) {
         LocalDateTime ldt =
                 Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDateTime();
         this.time = ldt;
         this.ipPosition = ipPosition;
+        this.userAgent = userAgent;
     }
 
     public LocalDateTime getTime() {
@@ -51,5 +50,13 @@ public class Visit {
 
     public void setIpPosition(IpPosition ipPosition) {
         this.ipPosition = ipPosition;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
     }
 }

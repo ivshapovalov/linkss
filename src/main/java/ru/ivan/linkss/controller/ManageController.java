@@ -7,10 +7,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.Util;
@@ -21,8 +18,11 @@ import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ru.ivan.linkss.util.Constants.DEBUG;
 
 @Controller
 @EnableScheduling
@@ -65,10 +65,12 @@ public class ManageController {
     private static final String ACTION_CHECK_EXPIRED = "checkExpired";
 
     private static final String ATTRIBUTE_USER = "user";
+    private static final String ATTRIBUTE_TYPE = "type";
     private static final String ATTRIBUTE_LIST = "list";
     private static final String ATTRIBUTE_KEY = "key";
     private static final String ATTRIBUTE_POINTS = "points";
     private static final String ATTRIBUTE_IPS = "ips";
+    private static final String ATTRIBUTE_JPOSITIONS = "jpositions";
     private static final String ATTRIBUTE_TIME = "time";
     private static final String ATTRIBUTE_OLD_KEY = "oldKey";
     private static final String ATTRIBUTE_OLD_USERNAME = "oldUserName";
@@ -159,7 +161,12 @@ public class ManageController {
                            HttpServletRequest request,
                            HttpSession session) {
         String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        boolean valid;
+        if (DEBUG) {
+            valid = true;
+        } else {
+            valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        }
         String errorString = null;
         if (!valid) {
             errorString = "Captcha invalid!";
@@ -190,7 +197,12 @@ public class ManageController {
                         @ModelAttribute(ATTRIBUTE_USER) User user,
                         HttpSession session) {
         String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-        boolean valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        boolean valid;
+        if (DEBUG) {
+            valid = true;
+        } else {
+            valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        }
         String errorString = null;
         if (!valid) {
             errorString = "Captcha invalid!";
@@ -711,9 +723,10 @@ public class ManageController {
 
         if (!autorizedUser.isAdmin()) {
             if (!autorizedUser.getUserName().equals(owner)) {
-                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
+                 model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions to " +
                                 "watch user visits",
                         autorizedUser.getUserName()));
+                return PAGE_ERROR;
             }
         }
 
@@ -744,27 +757,49 @@ public class ManageController {
         return PAGE_VISITS;
     }
 
-    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_MAP}, method = RequestMethod.GET)
-    public String mapUser(Model model,
-                          @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                          HttpServletRequest request,
-                          HttpSession session) {
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_MAP+WEB_SEPARTOR+PAGE_VISITS}, method = RequestMethod.GET)
+    public String map(Model model,
+                      @RequestParam(value = ATTRIBUTE_USER, required = false) String user,
+                      @RequestParam(value = ATTRIBUTE_KEY, required = false) String key,
+                      HttpServletRequest request,
+                      HttpSession session) {
+        List<Visit> visits=new ArrayList<>();
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
             return PAGE_MESSAGE;
         }
-        if (!autorizedUser.isAdmin()) {
-            if (!autorizedUser.getUserName().equals(owner)) {
-                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
-                                "watch user visits",
-                        autorizedUser.getUserName()));
+        if (key != null) {
+            if (!autorizedUser.isAdmin()) {
+                boolean checked=service.checkLinkOwner(key,autorizedUser.getUserName());
+                if (!checked) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions " +
+                                    "to " +
+                                    "watch map of key '%s'",
+                            autorizedUser.getUserName(),key));
+                    return PAGE_ERROR;
+                }
             }
+            long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
+            visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
+
+        } else if (user!=null) {
+            if (!autorizedUser.isAdmin()) {
+                if (!autorizedUser.getUserName().equals(user)) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE,String.format("User '%s' does not have permissions to " +
+                                    "watch user '%s' visits",
+                            autorizedUser.getUserName(),user));
+                    return PAGE_ERROR;
+                }
+            }
+            visits = service.getUserVisits(autorizedUser, user);
+        } else
+        {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
+            return PAGE_MESSAGE;
         }
 
-        List<Visit> visits = service.getUserVisits(autorizedUser, owner);
-        visits = visits.stream()
+         visits = visits.stream()
                 .filter(visit -> visit.getIpPosition() != null)
                 .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
                         .getLongitude() != null)
@@ -774,52 +809,11 @@ public class ManageController {
         List<String> points = visits.stream()
                 .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
                 .collect(Collectors.toList());
-        List<String> ips = visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpPosition().getIp()) + "']")
+        List<String> jPositions = visits.stream()
+                .map(visit -> visit.getIpPosition().json())
                 .collect(Collectors.toList());
         model.addAttribute(ATTRIBUTE_POINTS, points.toString());
-        model.addAttribute(ATTRIBUTE_IPS, ips.toString());
-        return PAGE_MAP;
-    }
-
-    @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
-            + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
-            + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + PAGE_MAP}, method = RequestMethod.GET)
-    public String mapLink(Model model,
-                          @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                          @ModelAttribute(ATTRIBUTE_KEY) String key,
-                          HttpServletRequest request,
-                          HttpSession session) {
-        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
-            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
-            return PAGE_MESSAGE;
-        }
-        if (!autorizedUser.isAdmin()) {
-            if (!autorizedUser.getUserName().equals(owner)) {
-                throw new RuntimeException(String.format("User '%s' does not have permissions to " +
-                                "watch user visits",
-                        autorizedUser.getUserName()));
-            }
-        }
-
-        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
-        List<Visit> visits = service.getLinkVisits(autorizedUser, owner, key, 0, visitsCount);
-        visits = visits.stream()
-                .filter(visit -> visit.getIpPosition() != null)
-                .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
-                        .getLongitude() != null)
-                .filter(visit -> !"".equals(visit.getIpPosition().getLatitude()) & !"".equals(visit
-                        .getIpPosition().getLongitude()))
-                .collect(Collectors.toList());
-        List<String> points = visits.stream()
-                .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
-                .collect(Collectors.toList());
-        List<String> ips = visits.stream()
-                .map(visit -> "['" + String.valueOf(visit.getIpPosition().getIp()) + "']")
-                .collect(Collectors.toList());
-        model.addAttribute(ATTRIBUTE_POINTS, points.toString());
-        model.addAttribute(ATTRIBUTE_IPS, ips.toString());
+        model.addAttribute(ATTRIBUTE_JPOSITIONS, jPositions.toString());
         return PAGE_MAP;
     }
 

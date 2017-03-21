@@ -1,5 +1,8 @@
 package ru.ivan.linkss.repository.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class IpPosition {
 
     private String ip;
@@ -104,5 +107,17 @@ public class IpPosition {
 
     public void setRegionName(String regionName) {
         this.regionName = regionName;
+    }
+
+    public String json() {
+            String jPosition = "";
+            try {
+                jPosition = new ObjectMapper().writeValueAsString(
+                        this);
+
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            return jPosition;
     }
 }

@@ -11,9 +11,7 @@ import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.service.LinksServiceImpl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -40,8 +38,6 @@ public class Populator {
 
     final static List<String> domains = new ArrayList<>();
 
-    List<User> users;
-
     static {
         domains.add("ya.com");
         domains.add("yandex.com");
@@ -63,6 +59,26 @@ public class Populator {
         domains.add("mail.po");
 
     }
+
+    final static List<String> userAgents = new ArrayList<>();
+
+    static {
+        userAgents.add("Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7");
+        userAgents.add("Konqueror/3.0-rc4; (Konqueror/3.0-rc4; i686 Linux;;datecode)");
+        userAgents.add("MSIE (MSIE 6.0; X11; Linux; i686) Opera 7.23");
+        userAgents.add("Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/0.8.12");
+        userAgents.add("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
+        userAgents.add("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)");
+        userAgents.add("Mozilla/5.0 (Windows; U; Win98; en-US; rv:1.4) Gecko Netscape/7.1 (ax)");
+        userAgents.add("Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.29 Safari/525.13");
+        userAgents.add("Avant Browser/1.2.789rel1 (http://www.avantbrowser.com)");
+        userAgents.add("Opera/9.25 (Windows NT 6.0; U; en)");
+        userAgents.add("Mozilla/2.02E (Win95; U)");
+
+
+    }
+
+    List<User> users;
 
     public Populator() {
     }
@@ -250,7 +266,11 @@ public class Populator {
             do {
                 String shortLink = service.getRandomShortLink();
                 if (!"".equals(shortLink)) {
-                    String link = service.visitLinkwithIpChecking(shortLink, createRandomIp());
+                    String ip= createRandomIp();
+                    Map<String,String> params = new HashMap<>();
+                    params.put("ip",ip);
+                    params.put("user-agent",getRandomUserAgent());
+                    String link = service.visitLinkwithIpChecking(shortLink,params);
                     if (link == null) {
                         failed = true;
                     } else {
@@ -289,6 +309,10 @@ public class Populator {
         protected String getRandomDomain() {
             int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
+        }
+        protected String getRandomUserAgent() {
+            int index = Math.abs(random.nextInt() % userAgents.size());
+            return userAgents.get(index);
         }
 
         protected String createRandomIp() {
