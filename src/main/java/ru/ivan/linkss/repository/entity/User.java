@@ -10,7 +10,7 @@ public class User {
     private String password = "";
     private String email = "";
     private boolean admin;
-    private boolean empty = true;
+    private boolean verified;
     private IpPosition ipPosition;
 
     public User(Builder builder) {
@@ -18,7 +18,7 @@ public class User {
         this.password = builder.password;
         this.email = builder.email;
         this.admin = builder.admin;
-        this.empty = builder.empty;
+        this.verified = builder.verified;
         this.ipPosition = builder.ipPosition;
     }
 
@@ -45,8 +45,8 @@ public class User {
         this.admin = admin;
     }
 
-    public void setEmpty(boolean empty) {
-        this.empty = empty;
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 
     public String getPassword() {
@@ -61,8 +61,8 @@ public class User {
         return admin;
     }
 
-    public boolean isEmpty() {
-        return empty;
+    public boolean isVerified() {
+        return verified;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class User {
         private String password = "";
         private String email = "";
         private boolean admin;
-        private boolean empty = true;
+        private boolean verified;
         private IpPosition ipPosition;
 
         public Builder() {
@@ -112,8 +112,8 @@ public class User {
             return this;
         }
 
-        public Builder addIsEmpty(boolean empty) {
-            this.empty = empty;
+        public Builder addIsVerified(boolean verified) {
+            this.verified = verified;
             return this;
         }
         public Builder addIPLocation(IpPosition location) {

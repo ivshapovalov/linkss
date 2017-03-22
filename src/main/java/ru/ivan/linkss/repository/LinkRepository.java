@@ -14,17 +14,17 @@ public interface LinkRepository {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize(User autorizedUser);
+    long getDomainsSize(User autorizedUser) throws RepositoryException;
 
-    long getUsersSize(User autorizedUser);
+    long getUsersSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsActualSize(User autorizedUser);
+    long getVisitsActualSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsHistorySize(User autorizedUser);
+    long getVisitsHistorySize(User autorizedUser) throws RepositoryException;
 
-    String createShortLink(User autorizedUser, String link, IpPosition ipPosition);
+    String createShortLink(User autorizedUser, String link, IpPosition ipPosition) throws RepositoryException;
 
-    void createUser(User user);
+    void createUser(User user) throws RepositoryException;
 
     Link getLink(String key);
 
@@ -39,7 +39,7 @@ public interface LinkRepository {
     List<FullLink> getUserLinks(String userName, String contextPath, int offset, int
             recordsOnPage);
     List<Visit> getLinkVisits(User autorizedUser,String owner,String key, int offset, long
-            recordsOnPage);
+            recordsOnPage) throws RepositoryException;
 
     List<Visit> getUserVisits(User autorizedUser,String owner);
 
@@ -50,17 +50,17 @@ public interface LinkRepository {
     List<FullLink> getUserArchive(String userName, String contextPath, int offset, int
             recordsOnPage);
 
-    User checkUser(User user);
+    User checkUser(User user) throws RepositoryException;
 
     boolean checkLinkOwner(String key,String owner);
 
-    void deleteLink(User user, String shortLink, String owner);
+    void deleteLink(User user, String shortLink, String owner) throws RepositoryException;
 
-    void deleteVisit(User user, String owner, String key, String time);
+    void deleteVisit(User user, String owner, String key, String time) throws RepositoryException;
 
-    void deleteArchiveLink(User user, String shortLink, String owner);
+    void deleteArchiveLink(User user, String shortLink, String owner) throws RepositoryException;
 
-    void restoreArchiveLink(User user, String shortLink, String owner);
+    void restoreArchiveLink(User user, String shortLink, String owner) throws RepositoryException;
 
     void deleteFreeLink(String shortLink);
 
@@ -68,13 +68,13 @@ public interface LinkRepository {
 
     List<String> getFreeLinks(int offset, int recordsOnPage);
 
-    User getUser(User autorizedUser, String userName);
+    User getUser(User autorizedUser, String userName) throws RepositoryException;
 
-    void updateUser(User autorizedUser, User newUser, User oldUser);
+    void updateUser(User autorizedUser, User newUser, User oldUser) throws RepositoryException;
 
-    void deleteUser(User autorizedUser, String userName);
+    void deleteUser(User autorizedUser, String userName) throws RepositoryException;
 
-    void clearUser(User autorizedUser, String userName);
+    void clearUser(User autorizedUser, String userName) throws RepositoryException;
 
     BigInteger checkFreeLinksDB() throws Exception;
 
@@ -82,21 +82,25 @@ public interface LinkRepository {
 
     BigInteger createKeys(final int length);
 
-    long getUserLinksSize(User autorizedUser, String owner);
+    long getUserLinksSize(User autorizedUser, String owner) throws RepositoryException;
 
-    long getUserArchiveSize(User autorizedUser, String owner);
+    long getUserArchiveSize(User autorizedUser, String owner) throws RepositoryException;
 
     long getLinkVisitsSize(User autorizedUser, String ow
-                           ,String key);
+                           ,String key) throws RepositoryException;
 
     long getUserVisitsSize(User autorizedUser, String ow
                            );
 
     long getLinkExpirePeriod(String shortLink);
 
-    FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
+    FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) throws RepositoryException;
 
-    void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
+    void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) throws RepositoryException;
 
     void clear();
+
+    String generateNewUUID(User user);
+
+    String verifyUser(String uuid);
 }

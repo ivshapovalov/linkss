@@ -13,39 +13,25 @@
     <mvc:annotation-driven/>
     <aop:aspectj-autoproxy/>
     <context:component-scan base-package="ru.ivan.linkss.*" />
-    <!--<mvc:default-servlet-handler />-->
-    <!--<context:component-scan base-package="ru.ivan.linkss.controller" />-->
-    <!--<context:component-scan base-package="ru.ivan.linkss.service" />-->
-    <!--<context:component-scan base-package="ru.ivan.linkss.repository" />-->
-    <!--<context:component-scan base-package="ru.ivan.linkss.repository"/>-->
-    <!--<bean id="aspect-logger" class="ru.ivan.linkss.aspect.SimpleLogger"/>-->
-    <!--<bean id="aspect-profiler" class="ru.ivan.linkss.aspect.SimpleProfiler"/>-->
-    <!--<bean id="aspect-exception-logger" class="ru.ivan.linkss.aspect.SimpleExceptionLogger"/>-->
-    <!--<bean id="repositoryTwo" class="ru.ivan.linkss.repository.RedisTwoDBLinkRepositoryImpl"/>-->
 
-    <!--<aop:config>-->
-        <!--<aop:aspect ref="aspect-profiler">-->
-            <!--<aop:pointcut id="any_service_methods"-->
-                          <!--expression="execution(* ru.ivan.linkss.service.*(..))"/>-->
-            <!--<aop:around method="profile" pointcut-ref="any_service_methods"/>-->
-        <!--</aop:aspect>-->
-        <!--<aop:aspect ref="aspect-logger">-->
-            <!--<aop:pointcut id="any_repo_methods"-->
-                          <!--expression="execution(* ru.ivan.linkss.repository.*(..))"/>-->
-            <!--<aop:around method="log" pointcut-ref="any_repo_methods"/>-->
 
-        <!--</aop:aspect>-->
-        <!--<aop:aspect ref="aspect-exception-logger">-->
-            <!--<aop:pointcut id="any_public_methods"-->
-                          <!--expression="execution(* ru.ivan.linkss.repository.*(..))"/>-->
-            <!--&lt;!&ndash;expression="execution(public * *(..))" />&ndash;&gt;-->
-            <!--<aop:after-throwing method="logException" pointcut-ref="any_public_methods"-->
-                                <!--throwing="t"/>-->
+    <context:property-placeholder location="classpath:gmail.com.properties"
+                                  ignore-unresolvable="true" />
 
-        <!--</aop:aspect>-->
-    <!--</aop:config>-->
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtps.auth">${mail.smtps.auth}</prop>
+            </props>
+        </property>
+        <property name="host" value="${mail.host}" />
+        <property name="port" value="${mail.port}" />
+        <property name="username" value="${mail.username}" />
+        <property name="password" value="${mail.password}" />
+        <property name="protocol" value="${mail.protocol}" />
+    </bean>
 
-    <!--<mvc:resources mapping="/resources/**" location="/resources/"/>-->
+
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/view/" />
         <property name="suffix" value=".jsp" />

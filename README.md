@@ -27,6 +27,9 @@ First check the constants
 - hset key:_users
     - field: String userName
     - value: json User user
+- hset key:_users_unverified
+    - field: String UUID
+    - value: String userName    
 - hset key:userName
     - field: String shortLink
     - value: String link

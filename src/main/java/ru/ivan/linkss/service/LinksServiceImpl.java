@@ -8,18 +8,15 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.ivan.linkss.repository.LinkRepository;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.util.Constants;
 
@@ -32,11 +29,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
-
-import static ru.ivan.linkss.util.Constants.GEOIP_KEY;
-import static ru.ivan.linkss.util.Constants.GEOIP_URL;
+import java.util.Map;
 
 @Service
 @Qualifier(value = "service")
@@ -52,7 +48,18 @@ public class LinksServiceImpl implements LinksService {
     @Qualifier(value = "repositoryOne")
     private LinkRepository repository;
 
+    @Autowired
+    @Qualifier(value = "mail")
+    private Mail mail;
+
     public LinksServiceImpl() {
+    }
+
+    @Override
+    public void sendMail(User user, String path) {
+        String UUID = repository.generateNewUUID(user);
+        String verifyURL = path + UUID;
+        mail.send(user, verifyURL);
     }
 
     @Override
@@ -72,19 +79,19 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public long getDomainsSize(User autorizedUser) {
+    public long getDomainsSize(User autorizedUser) throws RepositoryException {
         return repository.getDomainsSize(autorizedUser);
     }
 
-    public long getUsersSize(User autorizedUser) {
+    public long getUsersSize(User autorizedUser) throws RepositoryException {
         return repository.getUsersSize(autorizedUser);
     }
 
-    public long getVisitsActualSize(User autorizedUser) {
+    public long getVisitsActualSize(User autorizedUser) throws RepositoryException {
         return repository.getVisitsActualSize(autorizedUser);
     }
 
-    public long getVisitsHistorySize(User autorizedUser) {
+    public long getVisitsHistorySize(User autorizedUser) throws RepositoryException {
         return repository.getVisitsHistorySize(autorizedUser);
     }
 
@@ -103,12 +110,13 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public User checkUser(User user) {
+    public User checkUser(User user) throws RepositoryException {
         return repository.checkUser(user);
     }
+
     @Override
-    public boolean checkLinkOwner(String key,String owner) {
-        return repository.checkLinkOwner(key,owner);
+    public boolean checkLinkOwner(String key, String owner) {
+        return repository.checkLinkOwner(key, owner);
     }
 
     @Override
@@ -118,14 +126,14 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public String createShortLink(User autorizedUser, String link, String path, String context,
-                                  Map<String,String> params) {
+                                  Map<String, String> params) throws RepositoryException {
 
-        String ip=params.get(PARAM_IP);
+        String ip = params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             ipPosition = new IpPosition(ip);
         }
-        String shortLink = repository.createShortLink(autorizedUser, link,ipPosition);
+        String shortLink = repository.createShortLink(autorizedUser, link, ipPosition);
         if (shortLink != null) {
             String imagePath = path + "resources" + FILE_SEPARTOR + "qr" + FILE_SEPARTOR + shortLink +
                     "." + IMAGE_EXTENSION;
@@ -138,15 +146,18 @@ public class LinksServiceImpl implements LinksService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //uploadImageToFTP(imagePath, shortLink);
-
         }
         return shortLink;
     }
 
     @Override
-    public void createUser(User user) {
+    public void createUser(User user) throws RepositoryException {
         repository.createUser(user);
+    }
+
+    @Override
+    public String verifyUser(String uuid) {
+        return repository.verifyUser(uuid);
     }
 
     @Override
@@ -160,22 +171,22 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public User getUser(User autorizedUser, String userName) {
+    public User getUser(User autorizedUser, String userName) throws RepositoryException {
         return repository.getUser(autorizedUser, userName);
     }
 
     @Override
-    public void deleteUser(User autorizedUser, String userName) {
+    public void deleteUser(User autorizedUser, String userName) throws RepositoryException {
         repository.deleteUser(autorizedUser, userName);
     }
 
     @Override
-    public void clearUser(User autorizedUser, String userName) {
+    public void clearUser(User autorizedUser, String userName) throws RepositoryException {
         repository.clearUser(autorizedUser, userName);
     }
 
     @Override
-    public void updateUser(User autorizedUser, User newUser, User oldUser) {
+    public void updateUser(User autorizedUser, User newUser, User oldUser) throws RepositoryException {
         repository.updateUser(autorizedUser, newUser, oldUser);
     }
 
@@ -185,25 +196,25 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public String visitLink(String shortLink, Map<String,String> params) {
+    public String visitLink(String shortLink, Map<String, String> params) {
 
-        String ip=params.get(PARAM_IP);
+        String ip = params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             ipPosition = new IpPosition(ip);
         }
-        return repository.visitLink(shortLink, ipPosition,params);
+        return repository.visitLink(shortLink, ipPosition, params);
     }
 
     @Override
-    public String visitLinkwithIpChecking(String shortLink, Map<String,String> params) {
+    public String visitLinkwithIpChecking(String shortLink, Map<String, String> params) {
 
-        String ip=params.get(PARAM_IP);
+        String ip = params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
             return null;
         } else {
-            return repository.visitLink(shortLink, ipPosition,params);
+            return repository.visitLink(shortLink, ipPosition, params);
         }
     }
 
@@ -211,22 +222,22 @@ public class LinksServiceImpl implements LinksService {
 
         try (CloseableHttpClient geoHTTPClient = HttpClientBuilder.create().build()) {
 
-            String url=Constants.GEOIP_URL;
+            String url = Constants.GEOIP_URL;
             URI uri = new URIBuilder()
                     .setScheme("http")
                     .setHost(url)
-                    //.addParameter("ip", ip)
-                    //.addParameter("key", Constants.GEOIP_KEY)
+                    .addParameter("ip", ip)
+                    .addParameter("key", Constants.GEOIP_KEY)
                     .build();
-            //HttpGet request = new HttpGet(uri);
+            HttpGet request = new HttpGet(uri);
 
             //post
-            HttpPost request = new HttpPost(uri);
+//            HttpPost request = new HttpPost(uri);
             request.addHeader("accept", "application/json");
-            List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-            urlParameters.add(new BasicNameValuePair("ip", ip));
-            urlParameters.add(new BasicNameValuePair("key", GEOIP_KEY));
-            request.setEntity(new UrlEncodedFormEntity(urlParameters));
+//            List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+//            urlParameters.add(new BasicNameValuePair("ip", ip));
+//            urlParameters.add(new BasicNameValuePair("key", GEOIP_KEY));
+//            request.setEntity(new UrlEncodedFormEntity(urlParameters));
 
             HttpResponse response = geoHTTPClient.execute(request);
 
@@ -257,7 +268,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) {
+    public FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) throws RepositoryException {
         return repository.getFullLink(autorizedUser, shortLink, owner, contextPath);
     }
 
@@ -267,25 +278,23 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void deleteUserLink(User user, String shortLink, String owner) {
+    public void deleteUserLink(User user, String shortLink, String owner) throws RepositoryException {
         repository.deleteLink(user, shortLink, owner);
     }
 
     @Override
-    public void deleteLinkVisit(User user, String owner, String key, String time) {
+    public void deleteLinkVisit(User user, String owner, String key, String time) throws RepositoryException {
         repository.deleteVisit(user, owner, key, time);
     }
 
     @Override
-    public void deleteArchiveLink(User user, String shortLink, String owner, String path) {
+    public void deleteArchiveLink(User user, String shortLink, String owner, String path) throws RepositoryException {
         repository.deleteArchiveLink(user, shortLink, owner);
-        String imagePath = path + "resources" + FILE_SEPARTOR + shortLink + "." + IMAGE_EXTENSION;
-
         deleteImage(path, shortLink);
     }
 
     @Override
-    public void restoreArchiveLink(User user, String shortLink, String owner) {
+    public void restoreArchiveLink(User user, String shortLink, String owner) throws RepositoryException {
         repository.restoreArchiveLink(user, shortLink, owner);
     }
 
@@ -307,7 +316,7 @@ public class LinksServiceImpl implements LinksService {
     @Override
     public List<Visit> getLinkVisits(User autorizedUser, String owner, String key, int
             offset, long
-                                             recordsOnPage) {
+                                             recordsOnPage) throws RepositoryException {
         return repository.getLinkVisits(autorizedUser, owner, key, offset,
                 recordsOnPage);
     }
@@ -316,6 +325,7 @@ public class LinksServiceImpl implements LinksService {
     public List<Visit> getUserVisits(User autorizedUser, String owner) {
         return repository.getUserVisits(autorizedUser, owner);
     }
+
     @Override
     public List<Visit> getAllVisits() {
         return repository.getAllVisits();
@@ -333,17 +343,17 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public long getUserLinksSize(User autorizedUser, String owner) {
+    public long getUserLinksSize(User autorizedUser, String owner) throws RepositoryException {
         return repository.getUserLinksSize(autorizedUser, owner);
     }
 
     @Override
-    public long getUserArchiveSize(User autorizedUser, String owner) {
+    public long getUserArchiveSize(User autorizedUser, String owner) throws RepositoryException {
         return repository.getUserArchiveSize(autorizedUser, owner);
     }
 
     @Override
-    public long getLinkVisitsSize(User autorizedUser, String owner, String key) {
+    public long getLinkVisitsSize(User autorizedUser, String owner, String key) throws RepositoryException {
         return repository.getLinkVisitsSize(autorizedUser, owner, key);
     }
 
@@ -353,7 +363,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+    public void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) throws RepositoryException {
         repository.updateLink(autorizedUser, oldFullLink, newFullLink);
     }
 

@@ -6,16 +6,14 @@
 <br>
 
 <script type="text/javascript">
-    function makeAdmin(isAdminCheckBox) {
-        if (isAdminCheckBox.checked == true) {
-            isAdminCheckBox.value=true;
+    function makeChecked(checkBox) {
+        if (checkBox.checked == true) {
+            checkBox.value = true;
         } else {
-            isAdminCheckBox.value=false;
+            checkBox.value = false;
         }
     }
-
 </script>
-<script src="js/makeAdmin.js"></script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
     <h2> USER ${oldUserName}</h2>
@@ -50,25 +48,47 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group">
-                    <label class="control-label col-xs-2">Admin</label>
-                    <div class="col-xs-2">
-                        <div class="admin">
-                            <label> <input type="checkbox" onClick="makeAdmin(this)" id="admin"
-                                           name="admin"
-                                           value="${user.admin}" <c:if
-                                    test="${user.admin}"> checked="checked"</c:if>></label>
+            <c:choose>
+                <c:when test="${autorizedUser.admin}">
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="control-label col-xs-2">Admin</label>
+                            <div class="col-xs-2">
+                                <div class="admin">
+                                    <label> <input type="checkbox" onClick="makeChecked(this)"
+                                                   id="admin"
+                                                   name="admin"
+                                                   value="${user.admin}" <c:if
+                                            test="${user.admin}"> checked="checked"</c:if>></label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="control-label col-xs-2">Verified</label>
+                            <div class="col-xs-2">
+                                <div class="verified">
+                                    <label> <input type="checkbox" onClick="makeChecked(this)"
+                                                   id="verified"
+                                                   name="verified"
+                                                   value="${user.verified}" <c:if
+                                            test="${user.verified}">
+                                                   checked="checked"</c:if>></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+            </c:choose>
             <div class="row">
                 <div class="form-group">
                     <%--<label class="control-label col-xs-2"><h4></h4>--%>
                     <%--</label>--%>
                     <div class="col-xs-1">
-                        <button type="submit" class="btn btn-primary"><h4>Update</h4></button>
+                        <button type="submit" class="btn btn-primary"><h4>Update</h4>
+                        </button>
                     </div>
                     <div class="col-xs-1">
                         <button type="button" class="btn btn-danger"
@@ -76,6 +96,7 @@
                     </div>
                 </div>
             </div>
+
         </form>
     </form>
 </div>

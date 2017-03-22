@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.*;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.Util;
@@ -56,6 +57,7 @@ public class ManageController {
     private static final String PAGE_ARCHIVES = "archives";
     private static final String ACTION_LOGOUT = "logout";
 
+    private static final String ACTION_VERIFY = "verify";
     private static final String ACTION_EDIT = "edit";
     private static final String ACTION_LOGIN = "login";
     private static final String ACTION_DELETE = "delete";
@@ -85,6 +87,7 @@ public class ManageController {
     private static final String ATTRIBUTE_NUMBER_OF_PAGES = "numberOfPages";
     private static final String ATTRIBUTE_VISITS_ACTUAL_SIZE = "visitsActualSize";
     private static final String ATTRIBUTE_VISITS_HISTORY_SIZE = "visitsHistorySize";
+    private static final String ATTRIBUTE_UUID = "uuid";
 
     @Autowired
     LinksService service;
@@ -103,6 +106,20 @@ public class ManageController {
         return PAGE_SIGNIN;
     }
 
+    @RequestMapping(value = ACTION_VERIFY, method =
+            RequestMethod.GET)
+    public String verify(Model model, @RequestParam(value = ATTRIBUTE_UUID, required = true) String
+            uuid)
+            throws IOException {
+        String userName = service.verifyUser(uuid);
+        if (userName != null && !"".equals(userName)) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' is verified!", userName));
+        } else {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "User does not exists!");
+        }
+        return PAGE_MESSAGE;
+    }
+
     @RequestMapping(value = ACTION_LOGOUT, method = RequestMethod.GET)
     public String logout(Model model, HttpSession session)
             throws IOException {
@@ -115,11 +132,16 @@ public class ManageController {
     public String config(Model model, HttpSession session)
             throws IOException {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser != null && !autorizedUser.isEmpty() && autorizedUser.isAdmin()) {
-            model.addAttribute("linksSize", service.getDBLinksSize());
-            model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
-            model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
-            model.addAttribute("domainsSize", service.getDomainsSize(autorizedUser));
+        if (autorizedUser != null && autorizedUser.isVerified() && autorizedUser.isAdmin()) {
+            try {
+                model.addAttribute("linksSize", service.getDBLinksSize());
+                model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
+                model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
+                model.addAttribute("domainsSize", service.getDomainsSize(autorizedUser));
+            } catch (RepositoryException e) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+                return PAGE_ERROR;
+            }
             return PAGE_CONFIG;
         }
         return PAGE_MAIN;
@@ -131,7 +153,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser != null && !autorizedUser.isEmpty() && !autorizedUser.isAdmin()) {
+        if (autorizedUser != null && autorizedUser.isVerified() && !autorizedUser.isAdmin()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, users available only for logged admin users!");
             return PAGE_ERROR;
         }
@@ -141,8 +163,16 @@ public class ManageController {
         }
 
         int offset = (currentPage - 1) * recordsOnPage;
-        List<UserDTO> usersDTO = service.getUsersDTO(offset, recordsOnPage);
-        long usersCount = (int) service.getUsersSize(autorizedUser);
+        List<UserDTO> usersDTO = null;
+        long usersCount = 0;
+        try {
+            usersDTO = service.getUsersDTO(offset, recordsOnPage);
+            usersCount = (int) service.getUsersSize(autorizedUser);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+
         if (usersCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have users. Try later!");
             return PAGE_MESSAGE;
@@ -176,21 +206,19 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
             return PAGE_ERROR;
         } else {
-
             try {
                 service.createUser(user);
-            } catch (RuntimeException e) {
+            } catch (RepositoryException e) {
                 model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
                 return PAGE_ERROR;
             }
-            if (request.getParameter("register") != null) {
-                return "redirect:/";
-            } else if (request.getParameter("registerAndLogin") != null) {
-                return autoLogin(model, user, session);
-            }
-            return "redirect:/";
+            String path = getContextPath(request) + getControllerMapping()
+                    + ACTION_VERIFY + WEB_SEPARTOR + "?uuid=";
+            service.sendMail(user, path);
+            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("Check your email '%s' for " +
+                    "verify URL", user.getEmail()));
+            return PAGE_MESSAGE;
         }
-
     }
 
     @RequestMapping(value = ACTION_LOGIN, method = RequestMethod.POST)
@@ -214,22 +242,22 @@ public class ManageController {
         } else {
             if (user != null && user.getUserName() != null && !user.getUserName().equals("")
                     && user.getPassword() != null && !user.getPassword().equals("")) {
-                try {
-                    return autoLogin(model, user, session);
-                } catch (RuntimeException e) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE, "Login/password is incorrect");
-                    return PAGE_ERROR;
-                }
+                return autoLogin(model, user, session);
             }
             return PAGE_SIGNIN;
         }
     }
 
     private String autoLogin(Model model, User user, HttpSession session) {
-        User dbUser = service.checkUser(user);
+        User dbUser = null;
+        try {
+            dbUser = service.checkUser(user);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
         if (dbUser != null) {
             session.setAttribute(ATTRIBUTE_AUTORIZED_USER, dbUser);
-            // model.addAttribute(ATTRIBUTE_AUTORIZED_USER, user);
             return "redirect:/";
         }
         return ACTION_LOGIN;
@@ -266,7 +294,7 @@ public class ManageController {
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
                     + owner + WEB_SEPARTOR + PAGE_LINKS;
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -300,11 +328,10 @@ public class ManageController {
             service.deleteArchiveLink(autorizedUser, shortLink, owner, path);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
-
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
                     + owner + WEB_SEPARTOR + PAGE_ARCHIVES;
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -337,11 +364,10 @@ public class ManageController {
             service.restoreArchiveLink(autorizedUser, shortLink, owner);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_OWNER, null);
-
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
                     + owner + WEB_SEPARTOR + PAGE_ARCHIVES;
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -359,7 +385,6 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User is not defined!");
             return PAGE_ERROR;
         }
-
         if (shortLink == null || shortLink.equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
             return PAGE_ERROR;
@@ -371,14 +396,10 @@ public class ManageController {
             return PAGE_ERROR;
         }
 
-        try {
-            service.deleteFreeLink(shortLink);
-            model.addAttribute(ATTRIBUTE_KEY, null);
-            return String.format("redirect:%s%s", getControllerMapping(), PAGE_FREE_LINKS);
-        } catch (RuntimeException e) {
-            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
-            return PAGE_ERROR;
-        }
+        service.deleteFreeLink(shortLink);
+        model.addAttribute(ATTRIBUTE_KEY, null);
+        return String.format("redirect:%s%s", getControllerMapping(), PAGE_FREE_LINKS);
+
     }
 
     private String getControllerMapping() {
@@ -427,12 +448,11 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_OWNER, null);
             model.addAttribute(ATTRIBUTE_KEY, null);
             model.addAttribute(ATTRIBUTE_TIME, null);
-
             return String.format("redirect:%s", getControllerMapping())
                     + PAGE_USER + WEB_SEPARTOR
                     + owner + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
                     + key + WEB_SEPARTOR + PAGE_VISITS;
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -465,18 +485,11 @@ public class ManageController {
             String realImagePath = request.getServletContext().getRealPath("")
                     + QR_FOLDER + FILE_SEPARTOR + shortLink + IMAGE_EXTENSION_WITH_DOT;
             File imageOnDisk = new File(realImagePath);
-            boolean created = true;
             if (!imageOnDisk.exists()) {
-//                created=service.downloadImageFromFTP(shortLink+IMAGE_EXTENSION_WITH_DOT,
-//                        realImagePath);
-                created = false;
-            }
-            if (!created) {
                 String context = getContextPath(request);
                 String shortLinkPath = context + shortLink;
                 try {
                     service.createQRImage(realImagePath, shortLink, shortLinkPath);
-                    //service.uploadImageToFTP(realImagePath, shortLink);
                 } catch (WriterException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -501,7 +514,7 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_OLD_KEY, shortLink);
             model.addAttribute(ATTRIBUTE_OWNER, owner);
             return PAGE_LINK;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -527,7 +540,7 @@ public class ManageController {
             service.clearUser(autorizedUser, owner);
             model.addAttribute(ATTRIBUTE_OWNER, null);
             return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -536,7 +549,7 @@ public class ManageController {
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_EDIT, method = RequestMethod.GET)
     private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String key
-            , HttpSession session) {
+            , HttpSession session, HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
         if (autorizedUser == null || autorizedUser.getUserName() == null || "".equals(autorizedUser.getUserName())) {
@@ -553,7 +566,7 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_OLD_USERNAME, user.getUserName());
             model.addAttribute(ATTRIBUTE_OLD_PASSWORD, user.getPassword());
             return PAGE_USER;
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -578,7 +591,7 @@ public class ManageController {
             service.deleteUser(autorizedUser, owner);
             model.addAttribute(ATTRIBUTE_OWNER, null);
             return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
-        } catch (RuntimeException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -602,13 +615,22 @@ public class ManageController {
             return PAGE_ERROR;
         }
         try {
-            User oldUser = new User.Builder().addUserName(oldUserName).build();
-            newUser.setEmpty(false);
+            User oldUser = service.getUser(autorizedUser, oldUserName);
+            if (!autorizedUser.isAdmin()) {
+                newUser.setAdmin(oldUser.isAdmin());
+                newUser.setVerified(oldUser.isVerified());
+            }
             service.updateUser(autorizedUser, newUser, oldUser);
             model.addAttribute("oldUserName", null);
 
-            return String.format("redirect:%s%s", getControllerMapping(), PAGE_USERS);
-        } catch (RuntimeException e) {
+            if (autorizedUser.isAdmin()) {
+                return String.format("redirect:%s", getControllerMapping() + PAGE_USERS);
+            } else {
+                return String.format("redirect:%s", getControllerMapping())
+                        + PAGE_USER + WEB_SEPARTOR
+                        + newUser.getUserName() + WEB_SEPARTOR + PAGE_LINKS;
+            }
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -630,6 +652,7 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
             return PAGE_ERROR;
         }
+
         if (owner == null || owner.equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Link owner is not defined!");
             return PAGE_ERROR;
@@ -642,16 +665,27 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Link is not defined!");
             return PAGE_ERROR;
         }
+        if (!autorizedUser.isAdmin()) {
+            if (!owner.equals(fullLink.getUserName())) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, "Only admin users can change link owner!");
+                return PAGE_ERROR;
+            }
+        }
         try {
             long seconds = Util.convertPeriodToSeconds(secondsText);
             fullLink.setSeconds(seconds);
             String contextPath = getContextPath(request);
             FullLink oldFullLink = service.getFullLink(
                     autorizedUser, shortLink, owner, contextPath);
+            fullLink.setIpPosition(oldFullLink.getIpPosition());
             updateLink(autorizedUser, oldFullLink, fullLink);
             model.addAttribute(ATTRIBUTE_OLD_KEY, null);
-            return "redirect:" + PAGE_LINKS;
-        } catch (RuntimeException e) {
+            model.addAttribute(ATTRIBUTE_OWNER, null);
+            model.addAttribute("secondsText", null);
+            return String.format("redirect:%s", getControllerMapping())
+                    + PAGE_USER + WEB_SEPARTOR
+                    + owner + WEB_SEPARTOR + PAGE_LINKS;
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
@@ -677,7 +711,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_MESSAGE;
         }
@@ -691,8 +725,15 @@ public class ManageController {
         }
         String contextPath = getContextPath(request);
         int offset = (currentPage - 1) * recordsOnPage;
-        List<FullLink> list = service.getUserLinks(owner, contextPath, offset, recordsOnPage);
-        long linksCount = (int) service.getUserLinksSize(autorizedUser, owner);
+        List<FullLink> list = null;
+        long linksCount = 0;
+        try {
+            list = service.getUserLinks(owner, contextPath, offset, recordsOnPage);
+            linksCount = (int) service.getUserLinksSize(autorizedUser, owner);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
         if (linksCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have links. Try another!");
             return PAGE_MESSAGE;
@@ -718,7 +759,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
             return PAGE_MESSAGE;
         }
@@ -741,8 +782,15 @@ public class ManageController {
         }
         String contextPath = getContextPath(request);
         int offset = (currentPage - 1) * recordsOnPage;
-        List<Visit> list = service.getLinkVisits(autorizedUser, owner, key, offset, recordsOnPage);
-        long visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
+        List<Visit> list = null;
+        long visitsCount = 0;
+        try {
+            list = service.getLinkVisits(autorizedUser, owner, key, offset, recordsOnPage);
+            visitsCount = service.getLinkVisitsSize(autorizedUser, owner, key);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
         if (visitsCount == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have visits on that link. " +
                     "Try another!");
@@ -767,41 +815,46 @@ public class ManageController {
                             HttpSession session) {
         List<Visit> visits = new ArrayList<>();
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
             return PAGE_MESSAGE;
         }
-        if (key != null) {
-            if (!autorizedUser.isAdmin()) {
-                boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
-                if (!checked) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
-                                    "to " +
-                                    "watch map of key '%s'",
-                            autorizedUser.getUserName(), key));
-                    return PAGE_ERROR;
+        try {
+            if (key != null) {
+                if (!autorizedUser.isAdmin()) {
+                    boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
+                    if (!checked) {
+                        model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
+                                        "to " +
+                                        "watch map of key '%s'",
+                                autorizedUser.getUserName(), key));
+                        return PAGE_ERROR;
+                    }
                 }
-            }
-            long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
-            visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
+                long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
+                visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
 
-        } else if (user != null) {
-            if (!autorizedUser.isAdmin()) {
-                if (!autorizedUser.getUserName().equals(user)) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
-                                    "watch user '%s' visits",
-                            autorizedUser.getUserName(), user));
-                    return PAGE_ERROR;
+            } else if (user != null) {
+                if (!autorizedUser.isAdmin()) {
+                    if (!autorizedUser.getUserName().equals(user)) {
+                        model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
+                                        "watch user '%s' visits",
+                                autorizedUser.getUserName(), user));
+                        return PAGE_ERROR;
+                    }
+                }
+                visits = service.getUserVisits(autorizedUser, user);
+            } else {
+                if (!autorizedUser.isAdmin()) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
+                    return PAGE_MESSAGE;
+                } else {
+                    visits = service.getAllVisits();
                 }
             }
-            visits = service.getUserVisits(autorizedUser, user);
-        } else {
-            if (!autorizedUser.isAdmin()) {
-                model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
-                return PAGE_MESSAGE;
-            } else {
-                visits = service.getAllVisits();
-            }
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
 
         visits = visits.stream()
@@ -836,45 +889,48 @@ public class ManageController {
                            HttpSession session) {
         List<Link> links = new ArrayList<>();
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
             return PAGE_MESSAGE;
         }
-        if (key != null) {
-            if (!autorizedUser.isAdmin()) {
-                boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
-                if (!checked) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
-                                    "to " +
-                                    "watch map of key '%s'",
-                            autorizedUser.getUserName(), key));
-                    return PAGE_ERROR;
+        try {
+            if (key != null) {
+                if (!autorizedUser.isAdmin()) {
+                    boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
+                    if (!checked) {
+                        model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
+                                        "to " +
+                                        "watch map of key '%s'",
+                                autorizedUser.getUserName(), key));
+                        return PAGE_ERROR;
+                    }
                 }
-            }
-            links.add(service.getLink(key));
-
-
-        } else if (user != null) {
-            if (!autorizedUser.isAdmin()) {
-                if (!autorizedUser.getUserName().equals(user)) {
-                    model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
-                                    "watch user '%s' links map",
-                            autorizedUser.getUserName(), user));
-                    return PAGE_ERROR;
+                links.add(service.getLink(key));
+            } else if (user != null) {
+                if (!autorizedUser.isAdmin()) {
+                    if (!autorizedUser.getUserName().equals(user)) {
+                        model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
+                                        "watch user '%s' links map",
+                                autorizedUser.getUserName(), user));
+                        return PAGE_ERROR;
+                    }
                 }
-            }
-            int size = (int) service.getUserLinksSize(autorizedUser, user);
-            List<FullLink> fullLinks = service.getUserLinks(user, "", 0, size);
-            links = fullLinks.stream().map(fullLink -> new Link.Builder().addKey(fullLink.getKey())
-                    .addLink(fullLink.getLink()).addIpPosition(fullLink.getIpPosition()).build
-                            ()).collect(Collectors.toList());
-        } else {
-            if (!autorizedUser.isAdmin()) {
-                model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
-                return PAGE_MESSAGE;
+                int size = (int) service.getUserLinksSize(autorizedUser, user);
+                List<FullLink> fullLinks = service.getUserLinks(user, "", 0, size);
+                links = fullLinks.stream().map(fullLink -> new Link.Builder().addKey(fullLink.getKey())
+                        .addLink(fullLink.getLink()).addIpPosition(fullLink.getIpPosition()).build
+                                ()).collect(Collectors.toList());
             } else {
-                links = service.getAllLinks();
+                if (!autorizedUser.isAdmin()) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, define user or link!");
+                    return PAGE_MESSAGE;
+                } else {
+                    links = service.getAllLinks();
+                }
             }
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
 
         links = links.stream()
@@ -911,7 +967,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, archive available only for logged " +
                     "users!");
             return PAGE_ERROR;
@@ -926,8 +982,15 @@ public class ManageController {
         }
         String contextPath = getContextPath(request);
         int offset = (currentPage - 1) * recordsOnPage;
-        List<FullLink> list = service.getUserArchive(owner, contextPath, offset, recordsOnPage);
-        long archiveSize = (int) service.getUserArchiveSize(autorizedUser, owner);
+        List<FullLink> list = null;
+        long archiveSize = 0;
+        try {
+            list = service.getUserArchive(owner, contextPath, offset, recordsOnPage);
+            archiveSize = (int) service.getUserArchiveSize(autorizedUser, owner);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
         if (archiveSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have archive. Try another!");
             return PAGE_MESSAGE;
@@ -949,7 +1012,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
@@ -963,10 +1026,19 @@ public class ManageController {
             return PAGE_ERROR;
         }
         int offset = (currentPage - 1) * recordsOnPage;
-        List<Domain> list = service.getShortStat(offset, recordsOnPage);
-        long domainsSize = service.getDomainsSize(autorizedUser);
-        long visitsActualSize = service.getVisitsActualSize(autorizedUser);
-        long visitsHistorySize = service.getVisitsHistorySize(autorizedUser);
+        List<Domain> list = null;
+        long domainsSize = 0;
+        long visitsActualSize = 0;
+        long visitsHistorySize = 0;
+        try {
+            list = service.getShortStat(offset, recordsOnPage);
+            domainsSize = service.getDomainsSize(autorizedUser);
+            visitsActualSize = service.getVisitsActualSize(autorizedUser);
+            visitsHistorySize = service.getVisitsHistorySize(autorizedUser);
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
         if (domainsSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have domains visits. Try later!");
             return PAGE_MESSAGE;
@@ -989,7 +1061,7 @@ public class ManageController {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, free links available only for logged " +
                     "users!");
             return PAGE_ERROR;
@@ -1005,8 +1077,11 @@ public class ManageController {
             return PAGE_ERROR;
         }
         int offset = (currentPage - 1) * recordsOnPage;
-        List<String> list = service.getFreeLinks(offset, recordsOnPage);
-        long freeLinksSize = (int) service.getDBFreeLinksSize();
+        List<String> list = null;
+        long freeLinksSize = 0;
+        list = service.getFreeLinks(offset, recordsOnPage);
+        freeLinksSize = (int) service.getDBFreeLinksSize();
+
         if (freeLinksSize == 0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have free links. Try " +
                     "later!");
@@ -1027,7 +1102,7 @@ public class ManageController {
                            HttpSession session) {
 
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
@@ -1063,7 +1138,7 @@ public class ManageController {
                                HttpSession session) {
 
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, links available only for logged users!");
             return PAGE_ERROR;
         }
@@ -1082,7 +1157,7 @@ public class ManageController {
         return PAGE_CONFIG;
     }
 
-    private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) {
+    private void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) throws RepositoryException {
         String newKey = newFullLink.getKey();
         String oldKey = oldFullLink.getKey();
         StringBuilder message = new StringBuilder();
@@ -1099,7 +1174,7 @@ public class ManageController {
             message.append("New link has empty user").append(System.lineSeparator());
         }
         if (!message.toString().equals("")) {
-            throw new RuntimeException(message.toString());
+            throw new RepositoryException(message.toString());
         }
         service.updateLink(autorizedUser, oldFullLink, newFullLink);
     }

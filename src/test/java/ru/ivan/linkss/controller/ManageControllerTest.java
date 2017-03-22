@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ManageControllerTest {
 
@@ -119,7 +120,7 @@ public class ManageControllerTest {
         LinksService service= Mockito.mock(LinksService.class);
 
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
-        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isVerified()).thenReturn(true);
         Mockito.when(user.isAdmin()).thenReturn(true);
         Mockito.when(service.getDBLinksSize()).thenReturn(0L);
         Mockito.when(service.getDBFreeLinksSize()).thenReturn(0L);
@@ -132,7 +133,7 @@ public class ManageControllerTest {
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isVerified();
         Mockito.verify(user).isAdmin();
         Mockito.verify(model,Mockito.times(4)).addAttribute(Mockito.anyString(),Mockito.anyLong());
         Mockito.verify(service).getDBFreeLinksSize();
@@ -168,14 +169,14 @@ public class ManageControllerTest {
         User user = Mockito.mock(User.class);
 
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
-        Mockito.when(user.isEmpty()).thenReturn(true);
+        Mockito.when(user.isVerified()).thenReturn(false);
 
         //when
         String actual = controller.config(model,session);
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isVerified();
         Mockito.verifyNoMoreInteractions(session,model);
         assertEquals(PAGE_MAIN, actual);
     }
@@ -188,7 +189,7 @@ public class ManageControllerTest {
         User user = Mockito.mock(User.class);
 
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
-        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isVerified()).thenReturn(true);
         Mockito.when(user.isAdmin()).thenReturn(false);
 
         //when
@@ -196,7 +197,7 @@ public class ManageControllerTest {
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isVerified();
         Mockito.verify(user).isAdmin();
         Mockito.verifyNoMoreInteractions(session,model);
         assertEquals(PAGE_MAIN, actual);
@@ -210,7 +211,7 @@ public class ManageControllerTest {
         User user = Mockito.mock(User.class);
 
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
-        Mockito.when(user.isEmpty()).thenReturn(false);
+        Mockito.when(user.isVerified()).thenReturn(true);
         Mockito.when(user.isAdmin()).thenReturn(false);
 
         //when
@@ -218,7 +219,7 @@ public class ManageControllerTest {
 
         //then
         Mockito.verify(session).getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        Mockito.verify(user).isEmpty();
+        Mockito.verify(user).isVerified();
         Mockito.verify(user).isAdmin();
         Mockito.verifyNoMoreInteractions(session,model);
         assertEquals(PAGE_MAIN, actual);

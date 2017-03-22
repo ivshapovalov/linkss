@@ -1,6 +1,7 @@
 package ru.ivan.linkss.service;
 
 import com.google.zxing.WriterException;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.*;
 
 import java.io.IOException;
@@ -19,9 +20,11 @@ public interface LinksService {
     BigInteger deleteLocalImages(String path);
 
     String createShortLink(User autorizedUser, String link, String path, String context,
-                           Map<String,String> params);
+                           Map<String,String> params) throws RepositoryException;
 
-    void createUser(User user);
+    void createUser(User user) throws RepositoryException;
+
+    void sendMail(User user,String path);
 
     String visitLink(String shortLink,Map<String,String> params);
 
@@ -36,7 +39,7 @@ public interface LinksService {
     List<FullLink> getUserLinks(String userName, String contextPath, int offset, int recordsOnPage);
 
     List<Visit> getLinkVisits(User autorizedUser,String owner, String key,int offset, long
-            recordsOnPage);
+            recordsOnPage) throws RepositoryException;
 
     List<Visit> getUserVisits(User autorizedUser,String owner);
 
@@ -51,29 +54,29 @@ public interface LinksService {
             WriterException,
             IOException;
 
-    User checkUser(User user);
+    User checkUser(User user) throws RepositoryException;
 
     boolean checkLinkOwner(String key,String owner);
 
-    void deleteUserLink(User user, String shortLink, String owner);
+    void deleteUserLink(User user, String shortLink, String owner) throws RepositoryException;
 
-    void deleteLinkVisit(User user, String owner, String key, String time );
+    void deleteLinkVisit(User user, String owner, String key, String time ) throws RepositoryException;
 
-    void deleteArchiveLink(User user, String shortLink, String owner,String path);
+    void deleteArchiveLink(User user, String shortLink, String owner,String path) throws RepositoryException;
 
-    void restoreArchiveLink(User user, String shortLink, String owner);
+    void restoreArchiveLink(User user, String shortLink, String owner) throws RepositoryException;
 
     List<UserDTO> getUsersDTO(int offset, int recordsOnPage);
 
     List<String> getFreeLinks(int offset, int recordsOnPage);
 
-    User getUser(User autorizedUser, String userName);
+    User getUser(User autorizedUser, String userName) throws RepositoryException;
 
-    void deleteUser(User autorizedUser, String userName);
+    void deleteUser(User autorizedUser, String userName) throws RepositoryException;
 
-    void clearUser(User autorizedUser, String userName);
+    void clearUser(User autorizedUser, String userName) throws RepositoryException;
 
-    void updateUser(User autorizedUser, User newUser, User oldUser);
+    void updateUser(User autorizedUser, User newUser, User oldUser) throws RepositoryException;
 
     BigInteger updateFreeLinks() throws Exception;
 
@@ -83,25 +86,27 @@ public interface LinksService {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize(User autorizedUser);
+    long getDomainsSize(User autorizedUser) throws RepositoryException;
 
-    long getUsersSize(User autorizedUser);
+    long getUsersSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsActualSize(User autorizedUser);
+    long getVisitsActualSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsHistorySize(User autorizedUser);
+    long getVisitsHistorySize(User autorizedUser) throws RepositoryException;
 
-    long getUserLinksSize(User autorizedUser, String owner);
+    long getUserLinksSize(User autorizedUser, String owner) throws RepositoryException;
 
-    long getUserArchiveSize(User autorizedUser, String owner);
+    long getUserArchiveSize(User autorizedUser, String owner) throws RepositoryException;
 
-    long getLinkVisitsSize(User autorizedUser, String owner, String key);
+    long getLinkVisitsSize(User autorizedUser, String owner, String key) throws RepositoryException;
 
     long getUserVisitsSize(User autorizedUser, String owner);
 
-    FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath);
+    FullLink getFullLink(User autorizedUser, String shortLink, String owner, String contextPath) throws RepositoryException;
 
-    void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink);
+    void updateLink(User autorizedUser, FullLink oldFullLink, FullLink newFullLink) throws RepositoryException;
 
     void deleteFreeLink(String shortLink);
+
+    String verifyUser(String uuid);
 }

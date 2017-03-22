@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.util.VerifyRecaptcha;
@@ -43,7 +44,6 @@ public class RootController {
     private static final String PAGE_MESSAGE = "message";
     private static final String PAGE_MAIN = "main";
     private static final String PAGE_INIT = "init";
-    private static final String PAGE_IMAGE = "image";
 
     private static final String ATTRIBUTE_AUTORIZED_USER = "autorizedUser";
     private static final String ATTRIBUTE_USER = "user";
@@ -60,7 +60,7 @@ public class RootController {
     public String main(Model model,
                        HttpSession session) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        if (autorizedUser != null && !autorizedUser.isEmpty()) {
+        if (autorizedUser != null && autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_AUTORIZED_USER, autorizedUser);
         }
         return PAGE_MAIN;
@@ -203,10 +203,15 @@ public class RootController {
         String path = request.getServletContext().getRealPath("/");
         String context = request.getRequestURL().toString();
         String shortLink = "";
-        if (autorizedUser == null || autorizedUser.isEmpty()) {
-            shortLink = service.createShortLink(null, link, path, context,params);
-        } else {
-            shortLink = service.createShortLink(autorizedUser, link, path, context,params);
+        try {
+            if (autorizedUser == null || !autorizedUser.isVerified()) {
+                shortLink = service.createShortLink(null, link, path, context,params);
+            } else {
+                shortLink = service.createShortLink(autorizedUser, link, path, context,params);
+            }
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
         }
         if (shortLink == null) {
             model.addAttribute("message", "Sorry, free short links ended. Try later!");

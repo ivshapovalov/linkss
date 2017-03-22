@@ -48,7 +48,7 @@ public class RootControllerTest {
         User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addIsEmpty(false)
+                .addIsVerified(true)
                 .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
 
@@ -337,7 +337,7 @@ public class RootControllerTest {
         User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addIsEmpty(false)
+                .addIsVerified(true)
                 .build();
         Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
@@ -415,7 +415,7 @@ public class RootControllerTest {
         User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addIsEmpty(false)
+                .addIsVerified(true)
                 .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
 
@@ -443,8 +443,9 @@ public class RootControllerTest {
         User user = new User.Builder()
                 .addUserName("admin")
                 .addIsAdmin(true)
-                .addIsEmpty(false)
-                .build();        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
+                .addIsVerified(true)
+                .build();
+        Mockito.when(session.getAttribute(ATTRIBUTE_AUTORIZED_USER)).thenReturn(user);
         Mockito.when(request.getParameter(ATTRIBUTE_LINK)).thenReturn(link);
         Mockito.when(request.getServletContext()).thenReturn(servletContext);
         Mockito.when(request.getRequestURL()).thenReturn(new StringBuffer

@@ -4,28 +4,26 @@
 <html>
 <body>
 <div class="container" style="alignment: center">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <%@include file="header.jsp" %>
-    <h2> SIGN UP </h2>
-    <form:form action="./register" method="post" modelAttribute="user">
+    <h2> MAIL  </h2>
+    <form:form action="./sendmail" method="post" modelAttribute="user">
         <table class="table">
             <tr>
                 <td>User name</td>
-                <td><form:input path="userName" id="userName" value="${userName}" required="true"
-                                onkeyup="var regex=/[a-zA-Z,'0-9']/;
-                    if(!regex.test(this.value)) this.value=''"/></td>
+                <td><form:input path="userName" id="userName" value="${userName}"/></td>
+                <td>User name mustn't contain underscore '_' symbol</td>
             </tr>
             <tr>
                 <td>E-mail</td>
-                <td><form:input path="email" id="email" value="${email}" pattern="*@*.*" required="true"/></td>
+                <td><form:input path="email" id="email" value="${email}" pattern="*@*.*"/></td>
             </tr>
             <tr>
                 <td>Password</td>
                 <td><form:input type="password" path="password" id="password"
-                                value="${password}" required="true" /></td>
+                                value="${password}"/></td>
             </tr>
             <tr>
-                <td><input type="submit" value="Register" name="register" id="register"/></td>
+                <td><input type="submit" value="Send" name="Send" id="Send"/></td>
             </tr>
         </table>
         <div class="g-recaptcha" data-sitekey="6LfYMRkUAAAAAIAYkmMRsZtqzv2D_Icz5PfvKNk7"></div>
