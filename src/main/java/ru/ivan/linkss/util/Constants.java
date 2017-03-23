@@ -1,16 +1,31 @@
 package ru.ivan.linkss.util;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.Properties;
+
 public class Constants {
 
-    //redis://localhost:6379/0
-    public static final String REDIS_ONE_URL= System.getenv("REDIS_ONE_URL");
-
-    //http://yoursite.com:8080/
-    public static final String GEOIP_URL = System.getenv("GEOIP_URL");
-    public static final String GEOIP_KEY = "GZHAAGAGASDGFASLJKjhdYIFDGHDZFGsdfsafaga";
-
-    public static final String GOOGLE_SITE_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
-    public static final String GOOGLE_VERIFE_SECRET_KEY = "6LfYMRkUAAAAAAgpZsFa5NlQatQUpXKlDv6BQ6Kz";
-
     public static  final boolean DEBUG=true;
+
+    public static final String PROPERTIES_PATH = System.getenv("LINKSS_PROPERTIES_FILE");
+
+    static final Properties appProperties;
+
+    static {
+        appProperties = new Properties();
+        try (InputStream in = new FileInputStream(PROPERTIES_PATH)) {
+            appProperties.load(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static final String REDIS_URL = appProperties.getProperty("redis.url");
+    public static final String GEOIP_URL = appProperties.getProperty("geoip.url");
+    public static final String GEOIP_KEY = appProperties.getProperty("geoip.key");
+    public static final String GOOGLE_RECAPTCHA_VERIFY_URL = appProperties.getProperty("google.recaptcha.verify.url");
+    public static final String GOOGLE_RECAPTCHA_VERIFY_KEY = appProperties.getProperty("google" +
+            ".recaptcha.verify.key");
+
 }

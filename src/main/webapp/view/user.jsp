@@ -90,11 +90,16 @@
                         <button type="submit" class="btn btn-primary"><h4>Update</h4>
                         </button>
                     </div>
-                    <div class="col-xs-1">
-                        <button type="button" class="btn btn-danger"
-                                onclick="location.href='delete'"><h4>Delete</h4></button>
-                    </div>
+                    <c:choose>
+                        <c:when test="${autorizedUser.admin}">
+                            <div class="col-xs-1">
+                                <button type="button" class="btn btn-danger"
+                                        onclick="location.href='delete'"><h4>Delete</h4></button>
+                            </div>
+                        </c:when>
+                    </c:choose>
                 </div>
+
             </div>
 
         </form>

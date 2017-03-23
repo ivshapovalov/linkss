@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.ivan.linkss.repository.LinkRepository;
 import ru.ivan.linkss.repository.RedisOneDBLinkRepositoryImpl;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 import ru.ivan.linkss.service.LinksServiceImpl;
@@ -102,7 +103,7 @@ public class Populator {
     public static void main(String[] args) {
         RedisClient redisClient = RedisClient.create
                 (System.getenv
-                        ("REDIS_ONE_URL"));
+                        ("REDIS_URL"));
 
         RedisOneDBLinkRepositoryImpl repository = new RedisOneDBLinkRepositoryImpl(redisClient);
         Populator populator = new Populator();
@@ -244,9 +245,14 @@ public class Populator {
             params.put("user-agent", getRandomUserAgent());
 
             String link = getRandomDomain() + "/" + number;
-            String shortLink = service.createShortLink(user,
-                    link, path,
-                    context,params);
+            String shortLink = null;
+            try {
+                shortLink = service.createShortLink(user,
+                        link, path,
+                        context,params);
+            } catch (RepositoryException e) {
+                e.printStackTrace();
+            }
 
             if (shortLink == null) {
                 System.out.println(Thread.currentThread().getName() +

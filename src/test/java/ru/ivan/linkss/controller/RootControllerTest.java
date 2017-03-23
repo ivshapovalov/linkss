@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.ui.Model;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 
@@ -324,7 +325,7 @@ public class RootControllerTest {
     }
 
     @Test
-    public void createShortLinkTest() {
+    public void createShortLinkTest() throws RepositoryException {
         //given
         String shortLink = "AA";
         String link = "yandex.ru";
@@ -365,7 +366,7 @@ public class RootControllerTest {
     }
 
     @Test
-    public void createShortLinkTestWithoutAutorization() {
+    public void createShortLinkTestWithoutAutorization() throws RepositoryException {
         //given
         String shortLink = "AA";
         String link = "yandex.ru";
@@ -430,7 +431,7 @@ public class RootControllerTest {
     }
 
     @Test
-    public void createShortLinkTestWithoutShortLink() {
+    public void createShortLinkTestWithoutShortLink() throws RepositoryException {
         //given
         String shortLink = null;
         String link = "yandex.ru";

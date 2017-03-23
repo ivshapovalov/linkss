@@ -9,8 +9,8 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.net.ssl.HttpsURLConnection;
 
-import static ru.ivan.linkss.util.Constants.GOOGLE_SITE_VERIFY_URL;
-import static ru.ivan.linkss.util.Constants.GOOGLE_VERIFE_SECRET_KEY;
+import static ru.ivan.linkss.util.Constants.GOOGLE_RECAPTCHA_VERIFY_URL;
+import static ru.ivan.linkss.util.Constants.GOOGLE_RECAPTCHA_VERIFY_KEY;
 
 public class VerifyRecaptcha {
 
@@ -21,14 +21,14 @@ public class VerifyRecaptcha {
         }
 
         try {
-            URL verifyUrl = new URL(GOOGLE_SITE_VERIFY_URL);
+            URL verifyUrl = new URL(GOOGLE_RECAPTCHA_VERIFY_URL);
 
             HttpsURLConnection conn = (HttpsURLConnection) verifyUrl.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
             conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 
-            String postParams = "secret=" + GOOGLE_VERIFE_SECRET_KEY + "&response=" + gRecaptchaResponse;
+            String postParams = "secret=" + GOOGLE_RECAPTCHA_VERIFY_KEY + "&response=" + gRecaptchaResponse;
 
             conn.setDoOutput(true);
 

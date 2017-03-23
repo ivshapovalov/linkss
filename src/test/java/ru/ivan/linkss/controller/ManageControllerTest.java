@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.ui.Model;
+import ru.ivan.linkss.repository.RepositoryException;
 import ru.ivan.linkss.repository.entity.User;
 import ru.ivan.linkss.service.LinksService;
 
@@ -112,7 +113,7 @@ public class ManageControllerTest {
     }
 
     @Test
-    public void configTestAdminRole() throws IOException {
+    public void configTestAdminRole() throws IOException, RepositoryException {
         //given
         Model model = Mockito.mock(Model.class);
         HttpSession session = Mockito.mock(HttpSession.class);

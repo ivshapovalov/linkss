@@ -14,21 +14,24 @@
     <aop:aspectj-autoproxy/>
     <context:component-scan base-package="ru.ivan.linkss.*" />
 
-
-    <context:property-placeholder location="classpath:gmail.com.properties"
+    <context:property-placeholder location="file:///#{systemEnvironment['LINKSS_PROPERTIES_FILE']}"
                                   ignore-unresolvable="true" />
+
+    <!--<context:property-placeholder location="file:///C:\Servers\app_props\linkss.properties"-->
+                                  <!--ignore-unresolvable="true"/>-->
+
 
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="javaMailProperties">
             <props>
-                <prop key="mail.smtps.auth">${mail.smtps.auth}</prop>
+                <prop key="mail.smtps.auth">${google.mail.smtps.auth}</prop>
             </props>
         </property>
-        <property name="host" value="${mail.host}" />
-        <property name="port" value="${mail.port}" />
-        <property name="username" value="${mail.username}" />
-        <property name="password" value="${mail.password}" />
-        <property name="protocol" value="${mail.protocol}" />
+        <property name="host" value="${google.mail.host}" />
+        <property name="port" value="${google.mail.port}" />
+        <property name="username" value="${google.mail.username}" />
+        <property name="password" value="${google.mail.password}" />
+        <property name="protocol" value="${google.mail.protocol}" />
     </bean>
 
 

@@ -17,7 +17,7 @@ public class Mail {
 
     @Autowired
     @Qualifier(value = "mailSender")
-    JavaMailSender mailSender;
+    private JavaMailSender mailSender;
 
     public void send(User user, String verifyURL) {
 

@@ -56,7 +56,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     private final RedisClient redisClient;
 
     public RedisOneDBLinkRepositoryImpl() {
-        this.redisClient = RedisClient.create(Constants.REDIS_ONE_URL);
+        this.redisClient = RedisClient.create(Constants.REDIS_URL);
     }
 
     public RedisOneDBLinkRepositoryImpl(RedisClient redisClient) {
