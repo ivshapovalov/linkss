@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ru.ivan.linkss.util.Constants.DEBUG;
@@ -29,7 +30,7 @@ import static ru.ivan.linkss.util.Constants.DEBUG;
 @Controller
 @EnableScheduling
 @RequestMapping(value = "/manage/")
-public class ManageController {
+public class ManageController implements Parametrized {
 
     private static final String FILE_SEPARTOR = File.separator;
     private static final String QR_FOLDER = "resources" + FILE_SEPARTOR + "qr";
@@ -108,12 +109,14 @@ public class ManageController {
 
     @RequestMapping(value = ACTION_VERIFY, method =
             RequestMethod.GET)
-    public String verify(Model model, @RequestParam(value = ATTRIBUTE_UUID, required = true) String
-            uuid)
+    public String verify(Model model,
+                         @RequestParam(value = ATTRIBUTE_UUID, required = true) String
+                                 uuid)
             throws IOException {
         String userName = service.verifyUser(uuid);
         if (userName != null && !"".equals(userName)) {
-            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' is verified!", userName));
+            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' is verified! Please, " +
+                    "<a href='../%s'>Sign in</a>", userName, PAGE_SIGNIN));
         } else {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User does not exists!");
         }
@@ -206,8 +209,9 @@ public class ManageController {
             model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
             return PAGE_ERROR;
         } else {
+            Map<String, String> params = getParameters(request);
             try {
-                service.createUser(user);
+                service.createUser(user, params);
             } catch (RepositoryException e) {
                 model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
                 return PAGE_ERROR;
@@ -958,6 +962,59 @@ public class ManageController {
         return PAGE_MAP;
     }
 
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_MAP + WEB_SEPARTOR + PAGE_USERS}, method =
+            RequestMethod.GET)
+    public String mapUsers(Model model,
+                           HttpServletRequest request,
+                           HttpSession session) {
+        List<UserDTO> usersDTO= new ArrayList<>();
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+        try {
+            if (!autorizedUser.isAdmin()) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
+                                "watch users map",
+                        autorizedUser.getUserName()));
+                return PAGE_ERROR;
+            }
+            int size = (int) service.getUsersSize(autorizedUser);
+            usersDTO = service.getUsersDTO(0, size);
+         } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+
+        List<User> users = usersDTO.stream()
+                .map(userDTO -> userDTO.getUser())
+                .filter(user -> user!= null)
+                .filter(user -> user.getIpPosition() != null)
+                .filter(user -> user.getIpPosition().getLatitude() != null && user.getIpPosition()
+                        .getLongitude() != null)
+                .filter(user -> !"".equals(user.getIpPosition().getLatitude()) & !"".equals(user
+                        .getIpPosition().getLongitude()))
+                .collect(Collectors.toList());
+        List<String> points = users.stream()
+                .map(user -> "[" + String.valueOf(user.getIpPosition().getLatitude()) + "," +
+                        String.valueOf(user.getIpPosition().getLongitude() + "]"))
+                .collect(Collectors.toList());
+        List<String> jPositions = users.stream()
+                .map(user -> {
+                    try {
+                        return user.getIpPosition().toJSON();
+                    } catch (JsonProcessingException e) {
+                        return "";
+                    }
+                })
+                .collect(Collectors.toList());
+        model.addAttribute(ATTRIBUTE_POINTS, points.toString());
+        model.addAttribute(ATTRIBUTE_JPOSITIONS, jPositions.toString());
+        return PAGE_MAP;
+    }
+
+
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_ARCHIVES}, method = RequestMethod.GET)
     public String archives(Model model,
@@ -1178,4 +1235,5 @@ public class ManageController {
         }
         service.updateLink(autorizedUser, oldFullLink, newFullLink);
     }
+
 }

@@ -25,16 +25,22 @@ public class Mail {
         MimeMessageHelper helper = null;
         try {
               String htmlMsg = String.format(
-                      "<html><body><h3>Hello, %s. Verify your email by url</H3>" +
-                              "<br>" +
-                              String.format("<a href=\"%s\">Verify URL</a>",verifyURL) +
+                      "<html><body><h4>Hello, %s. </H4>" +
+                              "Your credentials is:" +
+                              "<p>Username:"+user.getUserName()+"<br>"+
+                              "E-mail:"+user.getEmail()+"<br>"+
+                              "Password:"+user.getPassword()+"</p>"+
+                              String.format("Verify your email by click <a href=\"%s\">Verify " +
+                                      "URL</a>",verifyURL) +
                               "</body></html>", user
                     .getUserName
                             ());
             mimeMessage.setContent(htmlMsg, "text/html");
             helper = new MimeMessageHelper(mimeMessage, false, "utf-8");
             helper.setTo(user.getEmail());
-            helper.setSubject(String.format("Linkss. Verify URL for user '%s'",user.getUserName()));
+            helper.setSubject(String.format("Linkss app. Verify registration, '%s'",user
+                    .getUserName
+                    ()));
             //helper.setText(htmlMsg);
             helper.setFrom("linkss.verify@gmail.com");
             mailSender.send(mimeMessage);

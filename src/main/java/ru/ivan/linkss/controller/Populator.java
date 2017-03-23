@@ -21,9 +21,9 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
-    private static final int USERS = 6;
-    private static final int W_REQUESTS = 100;
-    private static final int R_REQUESTS = 1000;
+    private static final int USERS = 1000;
+    private static final int W_REQUESTS = 10000;
+    private static final int R_REQUESTS = 10000;
     private static final int RW_REQUESTS = 1000;
 
     @Autowired
@@ -33,11 +33,12 @@ public class Populator {
     @Qualifier(value = "repositoryOne")
     private LinkRepository repository;
 
+    private static final Random random = new Random();
 
     private String path;
     private String context;
 
-    final static List<String> domains = new ArrayList<>();
+    public final static List<String> domains = new ArrayList<>();
 
     static {
         domains.add("ya.com");
@@ -61,7 +62,7 @@ public class Populator {
 
     }
 
-    final static List<String> userAgents = new ArrayList<>();
+    public final static List<String> userAgents = new ArrayList<>();
 
     static {
         userAgents.add("Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7");
@@ -125,8 +126,14 @@ public class Populator {
         users = new ArrayList<>();
         for (int i = 0; i < USERS; i++) {
             try {
-                User user = new User.Builder().addUserName("user" + i).build();
-                service.createUser(user);
+                Map<String, String> params = new HashMap<>();
+                params.put("ip", getRandomIp());
+                params.put("user-agent", getRandomUserAgent());
+
+                User user = new User.Builder()
+                        .addUserName("user" + i)
+                        .addIsVerified(true).build();
+                service.createUser(user,params);
                 users.add(user);
             } catch (Exception e) {
             }
@@ -231,6 +238,21 @@ public class Populator {
         }
     }
 
+    public static String getRandomUserAgent() {
+        int index = Math.abs(random.nextInt() % userAgents.size());
+        return userAgents.get(index);
+    }
+
+    public static String getRandomIp() {
+        StringBuilder ip = new StringBuilder();
+
+        for (int i = 1; i <= 4; i++) {
+            int num = (int) (Math.random() * 255);
+            ip.append(num).append(".");
+        }
+        return ip.toString().substring(0, ip.length() - 1);
+    }
+
     private class Creator extends Client {
         public Creator(User user, int number) {
             super(user, number);
@@ -298,7 +320,6 @@ public class Populator {
     private abstract class Client implements Runnable {
         protected final User user;
         protected final int number;
-        protected final Random random = new Random();
 
         public Client(User user, int number) {
             this.user = user;
@@ -317,21 +338,6 @@ public class Populator {
         protected String getRandomDomain() {
             int index = Math.abs(random.nextInt() % domains.size());
             return domains.get(index);
-        }
-
-        protected String getRandomUserAgent() {
-            int index = Math.abs(random.nextInt() % userAgents.size());
-            return userAgents.get(index);
-        }
-
-        protected String getRandomIp() {
-            StringBuilder ip = new StringBuilder();
-
-            for (int i = 1; i <= 4; i++) {
-                int num = (int) (Math.random() * 255);
-                ip.append(num).append(".");
-            }
-            return ip.toString().substring(0, ip.length() - 1);
         }
 
     }

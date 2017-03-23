@@ -22,7 +22,7 @@ public interface LinksService {
     String createShortLink(User autorizedUser, String link, String path, String context,
                            Map<String,String> params) throws RepositoryException;
 
-    void createUser(User user) throws RepositoryException;
+    void createUser(User user,Map<String,String> params) throws RepositoryException;
 
     void sendMail(User user,String path);
 

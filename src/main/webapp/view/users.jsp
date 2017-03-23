@@ -124,7 +124,8 @@
         <table border="1" width="50%" class="table">
             <tr>
                 <td width="40%"><b>User name</b></td>
-                <td width="40%"><b>Password</b></td>
+                <td width="5%"><b>Admin</b></td>
+                <td width="5%"><b>Verified</b></td>
                 <td width="10%"><b>Links</b></td>
                 <td width="10%"><b>Archive</b></td>
                 <td width="10%"><b>Actions</b></td>
@@ -133,7 +134,8 @@
                 <tr>
                     <td width="40%"><a href="user/${column.userName}/edit">
                             ${column.userName}</a></td>
-                    <td width="40%">*</td>
+                    <td width="5%">${column.admin}</td>
+                    <td width="5%">${column.verified}</td>
                     <td width="10%">
                         <a href="user/${column.userName}/links">
                         ${column.linkCount}

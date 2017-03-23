@@ -20,9 +20,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +28,7 @@ import static ru.ivan.linkss.util.Constants.DEBUG;
 
 @Controller
 @EnableScheduling
-public class RootController {
+public class RootController implements Parametrized {
 
     @Autowired
     LinksService service;
@@ -98,7 +95,7 @@ public class RootController {
     public String redirect(Model model, HttpServletRequest request) {
         String servletPath = request.getServletPath();
         String shortLink = servletPath.substring(servletPath.lastIndexOf(WEB_SEPARTOR) + 1);
-        Map<String,String> params = getIP(request);
+        Map<String,String> params = getParameters(request);
         String link = service.visitLink(shortLink, params);
         if (link != null) {
             Pattern p = Pattern.compile(URL_REGEX);
@@ -193,7 +190,7 @@ public class RootController {
     public String createShortLink(Model model, HttpSession session,
                                   HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
-        Map<String,String> params = getIP(request);
+        Map<String,String> params = getParameters(request);
 
         String link = request.getParameter(ATTRIBUTE_LINK);
         if (link == null || "".equals(link)) {
@@ -235,25 +232,6 @@ public class RootController {
         return contextPath;
     }
 
-    private Map<String, String> getIP(HttpServletRequest request) {
-        Map<String, String> map = new HashMap<>();
-        String ip = request.getRemoteAddr();
-        if (ip.equalsIgnoreCase("0:0:0:0:0:0:0:1")) {
-            InetAddress inetAddress = null;
-            try {
-                inetAddress = InetAddress.getLocalHost();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-            String ipAddress = inetAddress.getHostAddress();
-            ip = ipAddress;
-        }
-        ip = "25.25.25.25";
-        map.put("ip", ip);
-        map.put("user-agent", request.getHeader("user-agent"));
-
-        return map;
-    }
 }
 
 

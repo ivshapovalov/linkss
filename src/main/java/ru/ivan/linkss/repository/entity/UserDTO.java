@@ -23,6 +23,13 @@ public class UserDTO {
         return user.getUserName();
     }
 
+    public boolean isAdmin() {
+        return user.isAdmin();
+    }
+    public boolean isVerified() {
+        return user.isVerified();
+    }
+
     public void setUser(User user) {
         this.user = user;
     }

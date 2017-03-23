@@ -151,7 +151,13 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void createUser(User user) throws RepositoryException {
+    public void createUser(User user,Map<String,String> params) throws RepositoryException {
+        String ip = params.get(PARAM_IP);
+        IpPosition ipPosition = getPosition(ip);
+        if (ipPosition == null) {
+            ipPosition = new IpPosition(ip);
+        }
+        user.setIpPosition(ipPosition);
         repository.createUser(user);
     }
 

@@ -65,6 +65,14 @@ public class User {
         return verified;
     }
 
+    public IpPosition getIpPosition() {
+        return ipPosition;
+    }
+
+    public void setIpPosition(IpPosition ipPosition) {
+        this.ipPosition = ipPosition;
+    }
+
     @Override
     public String toString() {
         return "User{" +
