@@ -109,9 +109,9 @@
             </ul>
         </div>
 
-         <div>
-             <h3>VISITS ACTUAL - '${visitsActualSize}'. VISITS HISTORY -
-              '${visitsHistorySize}'</h3></div>
+        <div>
+            <h3>VISITS ACTUAL - '${visitsActualSize}'. VISITS HISTORY -
+                '${visitsHistorySize}'</h3></div>
 
         <table border="1" width="50%" class="table">
             <tr>
@@ -122,8 +122,10 @@
             <c:forEach items="${list}" var="column">
                 <tr>
                     <td width="60%">${column.name}</td>
-                    <td width="10%">${column.visitsActual}</td>
-                    <td width="10%">${column.visitsHistory}</td>
+                    <td width="10%"><a href="./domain/${column.name}/visits?type=actual">
+                            ${column.visitsActual}</a></td>
+                    <td width="10%"><a href="./domain/${column.name}/visits?type=history">
+                        ${column.visitsHistory}</a></td>
                 </tr>
             </c:forEach>
         </table>

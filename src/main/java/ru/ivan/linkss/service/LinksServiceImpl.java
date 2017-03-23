@@ -88,11 +88,11 @@ public class LinksServiceImpl implements LinksService {
     }
 
     public long getVisitsActualSize(User autorizedUser) throws RepositoryException {
-        return repository.getVisitsActualSize(autorizedUser);
+        return repository.getVisitsByDomainActualSize(autorizedUser);
     }
 
     public long getVisitsHistorySize(User autorizedUser) throws RepositoryException {
-        return repository.getVisitsHistorySize(autorizedUser);
+        return repository.getVisitsByDomainHistorySize(autorizedUser);
     }
 
     public void setRepository(LinkRepository repository) {
@@ -236,15 +236,7 @@ public class LinksServiceImpl implements LinksService {
                     .addParameter("key", Constants.GEOIP_KEY)
                     .build();
             HttpGet request = new HttpGet(uri);
-
-            //post
-//            HttpPost request = new HttpPost(uri);
             request.addHeader("accept", "application/json");
-//            List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-//            urlParameters.add(new BasicNameValuePair("ip", ip));
-//            urlParameters.add(new BasicNameValuePair("key", GEOIP_KEY));
-//            request.setEntity(new UrlEncodedFormEntity(urlParameters));
-
             HttpResponse response = geoHTTPClient.execute(request);
 
             IpPosition position = null;
@@ -326,6 +318,20 @@ public class LinksServiceImpl implements LinksService {
         return repository.getLinkVisits(autorizedUser, owner, key, offset,
                 recordsOnPage);
     }
+    @Override
+    public List<Visit> getDomainActualVisits(User autorizedUser, String key, int
+            offset, long
+                                             recordsOnPage) throws RepositoryException {
+        return repository.getDomainActualVisits(autorizedUser, key, offset,
+                recordsOnPage);
+    }
+    @Override
+    public List<Visit> getDomainHistoryVisits(User autorizedUser, String key, int
+            offset, long
+                                             recordsOnPage) throws RepositoryException {
+        return repository.getDomainHistoryVisits(autorizedUser, key, offset,
+                recordsOnPage);
+    }
 
     @Override
     public List<Visit> getUserVisits(User autorizedUser, String owner) {
@@ -362,6 +368,16 @@ public class LinksServiceImpl implements LinksService {
     public long getLinkVisitsSize(User autorizedUser, String owner, String key) throws RepositoryException {
         return repository.getLinkVisitsSize(autorizedUser, owner, key);
     }
+    @Override
+    public long getDomainActualVisitsSize(User autorizedUser, String key) throws
+            RepositoryException {
+        return repository.getDomainActualVisitsSize(autorizedUser, key);
+    }
+    @Override
+    public long getDomainHistoryVisitsSize(User autorizedUser, String key) throws
+            RepositoryException {
+        return repository.getDomainHistoryVisitsSize(autorizedUser, key);
+    }
 
     @Override
     public long getUserVisitsSize(User autorizedUser, String owner) {
@@ -390,7 +406,6 @@ public class LinksServiceImpl implements LinksService {
 
     @Override
     public BigInteger deleteLocalImages(String path) {
-
         //local
         File directory = new File(path);
         File[] files = directory.listFiles();
@@ -402,7 +417,6 @@ public class LinksServiceImpl implements LinksService {
             });
         }
         return deletedFiles[0];
-
     }
 
     @Override

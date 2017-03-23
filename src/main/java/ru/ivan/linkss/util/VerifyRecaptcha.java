@@ -14,7 +14,6 @@ import static ru.ivan.linkss.util.Constants.GOOGLE_RECAPTCHA_VERIFY_KEY;
 
 public class VerifyRecaptcha {
 
-
     public static boolean verify( String gRecaptchaResponse) {
         if (gRecaptchaResponse == null || gRecaptchaResponse.length() == 0) {
             return false;

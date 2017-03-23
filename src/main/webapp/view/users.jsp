@@ -12,10 +12,26 @@
 <section>
     <div class="container" style="alignment: center">
         <%@include file="header.jsp" %>
-        <h2> USERS </h2>
-        <a href="/linkss/manage/map/users" target="_blank">map of users</a>
-        <a href="/linkss/manage/map/links" target="_blank">map of links</a>
-        <a href="/linkss/manage/map/visits" target="_blank">map of visits</a>
+        <h2> USERS
+        <div class="btn-group">
+            <button type="button" data-toggle="dropdown"
+                    class="btn btn-primary dropdown-toggle">Maps
+                <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                <li><a
+                        href="/linkss/manage/map/visits?type=links" target="_blank"><span
+                        class="glyphicon glyphicon-map-marker"></span>Visits</a></li>
+                <li><a
+                        href="/linkss/manage/map/links" target="_blank"><span
+                        class="glyphicon glyphicon-cloud-upload"></span>Links</a></li>
+                <li><a
+                        href="/linkss/manage/map/users" target="_blank"><span
+                        class="glyphicon glyphicon-user"></span>Users</a></li>
+
+
+            </ul>
+        </div>
+        </h2>
         <div class="bs-example">
             <ul class="pagination">
                 <li>
@@ -118,8 +134,6 @@
 
             </ul>
         </div>
-
-        <br>
 
         <table border="1" width="50%" class="table">
             <tr>

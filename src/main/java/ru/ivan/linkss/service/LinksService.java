@@ -41,6 +41,12 @@ public interface LinksService {
     List<Visit> getLinkVisits(User autorizedUser,String owner, String key,int offset, long
             recordsOnPage) throws RepositoryException;
 
+    List<Visit> getDomainActualVisits(User autorizedUser,String key,int offset, long
+            recordsOnPage) throws RepositoryException;
+
+    List<Visit> getDomainHistoryVisits(User autorizedUser,String key,int offset, long
+            recordsOnPage) throws RepositoryException;
+
     List<Visit> getUserVisits(User autorizedUser,String owner);
 
     List<Visit> getAllVisits();
@@ -99,6 +105,12 @@ public interface LinksService {
     long getUserArchiveSize(User autorizedUser, String owner) throws RepositoryException;
 
     long getLinkVisitsSize(User autorizedUser, String owner, String key) throws RepositoryException;
+
+    long getDomainActualVisitsSize(User autorizedUser, String key) throws
+            RepositoryException;
+
+    long getDomainHistoryVisitsSize(User autorizedUser, String key) throws
+            RepositoryException;
 
     long getUserVisitsSize(User autorizedUser, String owner);
 

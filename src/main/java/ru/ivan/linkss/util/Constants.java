@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class Constants {
 
-    public static  final boolean DEBUG=true;
+    public static final boolean DEBUG=true;
 
     public static final String PROPERTIES_PATH = System.getenv("LINKSS_PROPERTIES_FILE");
 

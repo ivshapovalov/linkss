@@ -11,9 +11,21 @@
 </script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> LINKS OF '${owner}'</h2>
-        <a href="/linkss/manage/map/visits?user=${owner}" target="_blank">map of visits</a>
-        <a href="/linkss/manage/map/links?user=${owner}" target="_blank">map of links</a>
+    <h2> LINKS OF '${owner}'
+        <div class="btn-group">
+            <button type="button" data-toggle="dropdown"
+                    class="btn btn-primary dropdown-toggle">Maps
+                <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                <li><a
+                        href="/linkss/manage/map/visits?user=${owner}&type=link" target="_blank"><span
+                        class="glyphicon glyphicon-map-marker"></span>Visits</a></li>
+                <li><a
+                        href="/linkss/manage/map/links?user=${owner}" target="_blank"><span
+                        class="glyphicon glyphicon-cloud-upload"></span>Links</a></li>
+            </ul>
+        </div>
+    </h2>
     <section>
         <div class="bs-example">
             <ul class="pagination">

@@ -41,7 +41,6 @@ public class Mail {
             helper.setSubject(String.format("Linkss app. Verify registration, '%s'",user
                     .getUserName
                     ()));
-            //helper.setText(htmlMsg);
             helper.setFrom("linkss.verify@gmail.com");
             mailSender.send(mimeMessage);
             System.out.println("Mail sended");

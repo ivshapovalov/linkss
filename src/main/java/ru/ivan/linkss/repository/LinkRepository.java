@@ -18,9 +18,9 @@ public interface LinkRepository {
 
     long getUsersSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsActualSize(User autorizedUser) throws RepositoryException;
+    long getVisitsByDomainActualSize(User autorizedUser) throws RepositoryException;
 
-    long getVisitsHistorySize(User autorizedUser) throws RepositoryException;
+    long getVisitsByDomainHistorySize(User autorizedUser) throws RepositoryException;
 
     String createShortLink(User autorizedUser, String link, IpPosition ipPosition) throws RepositoryException;
 
@@ -39,6 +39,12 @@ public interface LinkRepository {
     List<FullLink> getUserLinks(String userName, String contextPath, int offset, int
             recordsOnPage);
     List<Visit> getLinkVisits(User autorizedUser,String owner,String key, int offset, long
+            recordsOnPage) throws RepositoryException;
+
+    List<Visit> getDomainActualVisits(User autorizedUser,String key, int offset, long
+            recordsOnPage) throws RepositoryException;
+
+    List<Visit> getDomainHistoryVisits(User autorizedUser,String key, int offset, long
             recordsOnPage) throws RepositoryException;
 
     List<Visit> getUserVisits(User autorizedUser,String owner);
@@ -86,8 +92,12 @@ public interface LinkRepository {
 
     long getUserArchiveSize(User autorizedUser, String owner) throws RepositoryException;
 
-    long getLinkVisitsSize(User autorizedUser, String ow
+    long getLinkVisitsSize(User autorizedUser, String owner
                            ,String key) throws RepositoryException;
+
+    long getDomainActualVisitsSize(User autorizedUser, String key) throws RepositoryException;
+
+    long getDomainHistoryVisitsSize(User autorizedUser, String key) throws RepositoryException;
 
     long getUserVisitsSize(User autorizedUser, String ow
                            );

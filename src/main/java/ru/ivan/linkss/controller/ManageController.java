@@ -47,6 +47,7 @@ public class ManageController implements Parametrized {
     private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
     private static final String PAGE_DOMAINS = "domains";
+    private static final String PAGE_DOMAIN = "domain";
     private static final String PAGE_FREE_LINKS = "freelinks";
     private static final String PAGE_FREE_LINK = "freelink";
     private static final String PAGE_LINK = "link";
@@ -89,6 +90,10 @@ public class ManageController implements Parametrized {
     private static final String ATTRIBUTE_VISITS_ACTUAL_SIZE = "visitsActualSize";
     private static final String ATTRIBUTE_VISITS_HISTORY_SIZE = "visitsHistorySize";
     private static final String ATTRIBUTE_UUID = "uuid";
+    private static final String ATTRIBUTE_DOMAIN = "domain";
+    private static final String ATTRIBUTE_VISITS_DOMAIN_ACTUAL = "actual";
+    private static final String ATTRIBUTE_VISITS_DOMAIN_HISTORY = "history";
+    private static final String ATTRIBUTE_VISITS_LINK = "link";
 
     @Autowired
     LinksService service;
@@ -755,11 +760,11 @@ public class ManageController implements Parametrized {
     @RequestMapping(value = {WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + PAGE_LINK + WEB_SEPARTOR
             + "{" + ATTRIBUTE_KEY + "}" + WEB_SEPARTOR + PAGE_VISITS}, method = RequestMethod.GET)
-    public String visits(Model model,
-                         @ModelAttribute(ATTRIBUTE_OWNER) String owner,
-                         @ModelAttribute(ATTRIBUTE_KEY) String key,
-                         HttpServletRequest request,
-                         HttpSession session) {
+    public String visitsByLink(Model model,
+                               @ModelAttribute(ATTRIBUTE_OWNER) String owner,
+                               @ModelAttribute(ATTRIBUTE_KEY) String key,
+                               HttpServletRequest request,
+                               HttpSession session) {
         int currentPage = 1;
         int recordsOnPage = 10;
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
@@ -807,6 +812,76 @@ public class ManageController implements Parametrized {
         model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
         model.addAttribute(ATTRIBUTE_OWNER, owner);
         model.addAttribute(ATTRIBUTE_KEY, key);
+        model.addAttribute(ATTRIBUTE_TYPE, ATTRIBUTE_VISITS_LINK);
+
+        return PAGE_VISITS;
+    }
+
+    @RequestMapping(value = {WEB_SEPARTOR + PAGE_DOMAIN + WEB_SEPARTOR
+            + "{" + ATTRIBUTE_DOMAIN + "}" + WEB_SEPARTOR + PAGE_VISITS}, method =
+            RequestMethod.GET)
+    public String visitsByDomain(Model model,
+                                 @ModelAttribute(ATTRIBUTE_DOMAIN) String key,
+                                 @RequestParam(ATTRIBUTE_TYPE) String type,
+                                 HttpServletRequest request,
+                                 HttpSession session) {
+        int currentPage = 1;
+        int recordsOnPage = 10;
+        User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
+        if (autorizedUser == null || !autorizedUser.isVerified()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, visits available only for logged users!");
+            return PAGE_MESSAGE;
+        }
+
+        if (type == null || type.equals("")) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, there is no type of visits (actual, " +
+                    "history)!");
+            return PAGE_MESSAGE;
+        }
+
+        if (!autorizedUser.isAdmin()) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
+                            "watch domains visits",
+                    autorizedUser.getUserName()));
+            return PAGE_ERROR;
+
+        }
+
+
+        if (request.getParameter(ATTRIBUTE_PAGE) != null) {
+            currentPage = Integer.parseInt(request.getParameter(ATTRIBUTE_PAGE));
+        }
+
+        String contextPath = getContextPath(request);
+        int offset = (currentPage - 1) * recordsOnPage;
+        List<Visit> list = null;
+        long visitsCount = 0;
+        try {
+            if (type.equals(ATTRIBUTE_VISITS_DOMAIN_ACTUAL)) {
+                list = service.getDomainActualVisits(autorizedUser, key, offset, recordsOnPage);
+                visitsCount = service.getDomainActualVisitsSize(autorizedUser, key);
+            } else {
+                list = service.getDomainHistoryVisits(autorizedUser, key, offset,
+                        recordsOnPage);
+                visitsCount = service.getDomainHistoryVisitsSize(autorizedUser, key);
+
+            }
+        } catch (RepositoryException e) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
+            return PAGE_ERROR;
+        }
+        if (visitsCount == 0) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, User don't have visits on that domain. " +
+                    "Try another!");
+            return PAGE_MESSAGE;
+        }
+        int numberOfPages = Math.max(1, (int) Math.ceil((double) visitsCount / recordsOnPage));
+
+        model.addAttribute(ATTRIBUTE_LIST, list);
+        model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);
+        model.addAttribute(ATTRIBUTE_CURRENT_PAGE, currentPage);
+        model.addAttribute(ATTRIBUTE_KEY, key);
+        model.addAttribute(ATTRIBUTE_TYPE, type);
 
         return PAGE_VISITS;
     }
@@ -815,6 +890,7 @@ public class ManageController implements Parametrized {
     public String mapVisits(Model model,
                             @RequestParam(value = ATTRIBUTE_USER, required = false) String user,
                             @RequestParam(value = ATTRIBUTE_KEY, required = false) String key,
+                            @RequestParam(value = ATTRIBUTE_TYPE, required = false) String type,
                             HttpServletRequest request,
                             HttpSession session) {
         List<Visit> visits = new ArrayList<>();
@@ -823,22 +899,45 @@ public class ManageController implements Parametrized {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
             return PAGE_MESSAGE;
         }
+
         try {
             if (key != null) {
+
                 if (!autorizedUser.isAdmin()) {
-                    boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
-                    if (!checked) {
+                    if (type.equals(ATTRIBUTE_VISITS_LINK)) {
+                        boolean checked = service.checkLinkOwner(key, autorizedUser.getUserName());
+                        if (!checked) {
+                            model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
+                                            "to " +
+                                            "watch map of key '%s'",
+                                    autorizedUser.getUserName(), key));
+                            return PAGE_ERROR;
+                        }
+                    } else {
                         model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions " +
                                         "to " +
-                                        "watch map of key '%s'",
+                                        "watch map of domain '%s'",
                                 autorizedUser.getUserName(), key));
                         return PAGE_ERROR;
                     }
+                } else {
+                    if (type.equals(ATTRIBUTE_VISITS_LINK)) {
+                        long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
+                        visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
+                    } else if (type.equals(ATTRIBUTE_VISITS_DOMAIN_ACTUAL)) {
+                        long visitsCount = service.getDomainActualVisitsSize(autorizedUser, key);
+                        visits = service.getDomainActualVisits(autorizedUser, key, 0, visitsCount);
+                    } else if (type.equals(ATTRIBUTE_VISITS_DOMAIN_HISTORY)) {
+                        long visitsCount = service.getDomainHistoryVisitsSize(autorizedUser, key);
+                        visits = service.getDomainHistoryVisits(autorizedUser, key, 0,
+                                visitsCount);
+                    }
                 }
-                long visitsCount = service.getLinkVisitsSize(autorizedUser, autorizedUser.getUserName(), key);
-                visits = service.getLinkVisits(autorizedUser, autorizedUser.getUserName(), key, 0, visitsCount);
-
             } else if (user != null) {
+                if (type == null || "".equals(type)) {
+                    model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, there is no type of map in request");
+                    return PAGE_MESSAGE;
+                }
                 if (!autorizedUser.isAdmin()) {
                     if (!autorizedUser.getUserName().equals(user)) {
                         model.addAttribute(ATTRIBUTE_MESSAGE, String.format("User '%s' does not have permissions to " +
@@ -856,17 +955,20 @@ public class ManageController implements Parametrized {
                     visits = service.getAllVisits();
                 }
             }
-        } catch (RepositoryException e) {
+        } catch (
+                RepositoryException e)
+
+        {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
 
         visits = visits.stream()
                 .filter(visit -> visit.getIpPosition() != null)
-                .filter(visit -> visit.getIpPosition().getLatitude() != null && visit.getIpPosition()
-                        .getLongitude() != null)
-                .filter(visit -> !"".equals(visit.getIpPosition().getLatitude()) & !"".equals(visit
-                        .getIpPosition().getLongitude()))
+                .filter(visit ->
+                        visit.getIpPosition().getLatitude() != null && visit.getIpPosition().getLongitude() != null)
+                .filter(visit -> !"".equals(visit.getIpPosition().getLatitude()) & !"".
+                        equals(visit.getIpPosition().getLongitude()))
                 .collect(Collectors.toList());
         List<String> points = visits.stream()
                 .map(visit -> "[" + String.valueOf(visit.getIpPosition().getLatitude()) + "," + String.valueOf(visit.getIpPosition().getLongitude() + "]"))
@@ -967,7 +1069,7 @@ public class ManageController implements Parametrized {
     public String mapUsers(Model model,
                            HttpServletRequest request,
                            HttpSession session) {
-        List<UserDTO> usersDTO= new ArrayList<>();
+        List<UserDTO> usersDTO = new ArrayList<>();
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
         if (autorizedUser == null || !autorizedUser.isVerified()) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, map available only for logged users!");
@@ -982,14 +1084,14 @@ public class ManageController implements Parametrized {
             }
             int size = (int) service.getUsersSize(autorizedUser);
             usersDTO = service.getUsersDTO(0, size);
-         } catch (RepositoryException e) {
+        } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
 
         List<User> users = usersDTO.stream()
                 .map(userDTO -> userDTO.getUser())
-                .filter(user -> user!= null)
+                .filter(user -> user != null)
                 .filter(user -> user.getIpPosition() != null)
                 .filter(user -> user.getIpPosition().getLatitude() != null && user.getIpPosition()
                         .getLongitude() != null)

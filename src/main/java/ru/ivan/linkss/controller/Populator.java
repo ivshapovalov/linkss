@@ -21,9 +21,9 @@ import static java.lang.Thread.sleep;
 @Component
 public class Populator {
     private static final int SIZE_OF_POOL = 5;
-    private static final int USERS = 1000;
-    private static final int W_REQUESTS = 10000;
-    private static final int R_REQUESTS = 10000;
+    private static final int USERS = 6;
+    private static final int W_REQUESTS = 100;
+    private static final int R_REQUESTS = 100;
     private static final int RW_REQUESTS = 1000;
 
     @Autowired
@@ -253,6 +253,12 @@ public class Populator {
         return ip.toString().substring(0, ip.length() - 1);
     }
 
+
+    public static String getRandomDomain() {
+        int index = Math.abs(random.nextInt() % domains.size());
+        return domains.get(index);
+    }
+
     private class Creator extends Client {
         public Creator(User user, int number) {
             super(user, number);
@@ -334,11 +340,5 @@ public class Populator {
                 e.printStackTrace();
             }
         }
-
-        protected String getRandomDomain() {
-            int index = Math.abs(random.nextInt() % domains.size());
-            return domains.get(index);
-        }
-
     }
 }

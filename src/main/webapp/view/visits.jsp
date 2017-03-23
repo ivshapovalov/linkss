@@ -11,7 +11,19 @@
 </script>
 <div class="container" style="alignment: center">
     <%@include file="header.jsp" %>
-    <h2> VISITS OF '${key}' <a href="/linkss/manage/map/visits?key=${key}" target="_blank">map</a>
+    <h2> VISITS OF '${key}'
+        <div class="btn-group">
+            <button type="button" data-toggle="dropdown"
+                    class="btn btn-primary dropdown-toggle">Maps
+                <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                <li><a
+                        href="/linkss/manage/map/visits?key=${key}&type=${type}"
+                        target="_blank"><span
+                        class="glyphicon glyphicon-map-marker"></span>Visits</a></li>
+            </ul>
+        </div>
+
     </h2>
     <section>
         <div class="bs-example">
@@ -24,12 +36,12 @@
                 <c:choose>
                     <c:when test="${currentPage lt 7}">
                         <li class="disabled"><a
-                                href="./visits?page=${currentPage - 6}">
+                                href="./visits?type=${type}&page=${currentPage - 6}">
                             << </a></li>
                     </c:when>
                     <c:otherwise>
                         <li>
-                            <a href="./visits?page=${currentPage - 6}">
+                            <a href="./visits?type=${type}&page=${currentPage - 6}">
                                 << </a>
                         </li>
                     </c:otherwise>
@@ -37,13 +49,13 @@
                 <c:choose>
                     <c:when test="${currentPage lt 2}">
                         <li class="disabled"><a
-                                href="./visits?page=${currentPage - 1}">
+                                href="./visits?type=${type}&page=${currentPage - 1}">
                             < </a></li>
                     </c:when>
                     <c:otherwise>
                         <li>
 
-                            <a href="./visits?page=${currentPage - 1}">
+                            <a href="./visits?type=${type}&page=${currentPage - 1}">
                                 < </a>
                         </li>
                     </c:otherwise>
@@ -76,14 +88,14 @@
                     <c:choose>
                         <c:when test="${currentPage eq i}">
                             <li class="active">
-                                <a href="./visits?page=${currentPage}">
+                                <a href="./visits?type=${type}&page=${currentPage}">
                                         ${i}
                                 </a>
                             </li>
                         </c:when>
                         <c:otherwise>
                             <li>
-                                <a href="./visits?page=${i}">
+                                <a href="./visits?type=${type}&page=${i}">
                                         ${i}
                                 </a>
                             </li>
@@ -93,11 +105,11 @@
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-1}">
                         <li class="disabled"><a
-                                href="./visits?page=${currentPage + 1}">
+                                href="./visits?type=${type}&page=${currentPage + 1}">
                             > </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./visits?page=${currentPage + 1}">
+                        <li><a href="./visits?type=${type}&page=${currentPage + 1}">
                             > </a>
                         </li>
                     </c:otherwise>
@@ -105,16 +117,16 @@
                 <c:choose>
                     <c:when test="${currentPage gt numberOfPages-6}">
                         <li class="disabled"><a
-                                href="./visits?page=${currentPage + 6}">
+                                href="./visits?type=${type}&page=${currentPage + 6}">
                             >> </a></li>
                     </c:when>
                     <c:otherwise>
-                        <li><a href="./visits?page=${currentPage + 6}">
+                        <li><a href="./visits?type=${type}&page=${currentPage + 6}">
                             >> </a>
                         </li>
                     </c:otherwise>
                 </c:choose>
-                <li><a href="./visits?page=${numberOfPages}">
+                <li><a href="./visits?type=${type}&page=${numberOfPages}">
                     ${numberOfPages} </a>
                 </li>
 

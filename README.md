@@ -51,3 +51,12 @@ First check the constants
     - field: long time
     - value: json Visit visit
     
+#####redis:5 VISITS_BY_DOMAIN_ACTUAL_DB
+- hset key:domain
+    - field: long time
+    - value: json Visit visit
+    
+#####redis:6 VISITS_BY_DOMAIN_HISTORY_DB
+- hset key:domain
+    - field: long time
+    - value: json Visit visit    
