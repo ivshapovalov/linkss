@@ -96,12 +96,14 @@
 <link href="/resources/images/favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 <div class="main_menu">
+
     <ul class="nav nav-pills">
         <li class="active"><a href="/linkss/">Home</a></li>
+        <li class="active"><a href="/linkss/manage/signup">Sign up</a></li>
         <c:choose>
             <c:when test="${autorizedUser!=null}">
                 <li
-                        class="active"><a
+                class="active"><a
                         href="/linkss/manage/user/${autorizedUser.userName}/links">
                     Links</a></li>
             </c:when>
@@ -112,7 +114,15 @@
                 </li>
             </c:when>
         </c:choose>
-        <li class="active"><a href="/linkss/manage/signup">Sign up</a></li>
+        <c:choose>
+            <c:when test="${autorizedUser==null || !autorizedUser.isVerified()}">
+            </c:when>
+            <c:otherwise>
+                <li class="active"><a
+                        href="/linkss/manage/user/${autorizedUser.getUserName()}/edit">User</a>
+                </li>
+            </c:otherwise>
+        </c:choose>
         <c:choose>
             <c:when test="${autorizedUser==null || !autorizedUser.isVerified()}">
                 <li class="active"><a href="/linkss/manage/signin"
