@@ -24,7 +24,9 @@ public interface LinksService {
 
     void createUser(User user,Map<String,String> params) throws RepositoryException;
 
-    void sendMail(User user,String path);
+    void sendVerifyMail(User user, String path);
+
+    List<User> sendRemindMail(User user) throws RepositoryException;
 
     String visitLink(String shortLink,Map<String,String> params);
 
@@ -92,7 +94,9 @@ public interface LinksService {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize(User autorizedUser) throws RepositoryException;
+    long getDomainsActualSize(User autorizedUser) throws RepositoryException;
+
+    long getDomainsHistorySize(User autorizedUser) throws RepositoryException;
 
     long getUsersSize(User autorizedUser) throws RepositoryException;
 

@@ -11,6 +11,7 @@ import ru.ivan.linkss.repository.entity.User;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.List;
 
 @Service
 public class Mail {
@@ -19,7 +20,7 @@ public class Mail {
     @Qualifier(value = "mailSender")
     private JavaMailSender mailSender;
 
-    public void send(User user, String verifyURL) {
+    public void sendVerifyEmail(User user, String verifyURL) {
 
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper helper = null;
@@ -46,7 +47,38 @@ public class Mail {
             System.out.println("Mail sended");
 
         } catch (MessagingException e) {
-            System.out.println("Mail send failed.");
+            System.out.println("Mail sendVerifyEmail failed.");
+
+            e.printStackTrace();
+        }
+    }
+
+    public void sendRemindEmail(List<User> users) {
+
+        String email= users.get(0).getEmail();
+        StringBuilder credentials=new StringBuilder();
+        users.forEach(user->credentials
+                        .append("<p>Username:").append(user.getUserName()).append("<br>")
+                        .append("E-mail:").append(user.getEmail()).append("<br>")
+                        .append("Password:").append(user.getPassword()).append("</p>"));
+         MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = null;
+        try {
+            String htmlMsg =
+                    "<html><body><h4>Hello. </H4>" +
+                            "Your credentials is:" +
+                            credentials.toString()+
+                            "</body></html>";
+            mimeMessage.setContent(htmlMsg, "text/html");
+            helper = new MimeMessageHelper(mimeMessage, false, "utf-8");
+            helper.setTo(email);
+            helper.setSubject(String.format("Linkss app. Credentials for email '%s'",email));
+            helper.setFrom("linkss.verify@gmail.com");
+            mailSender.send(mimeMessage);
+            System.out.println("Mail sended");
+
+        } catch (MessagingException e) {
+            System.out.println("Mail sendVerifyEmail failed.");
 
             e.printStackTrace();
         }

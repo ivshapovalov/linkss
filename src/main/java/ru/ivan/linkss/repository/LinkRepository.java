@@ -14,7 +14,8 @@ public interface LinkRepository {
 
     long getDBFreeLinksSize();
 
-    long getDomainsSize(User autorizedUser) throws RepositoryException;
+    long getDomainsActualSize(User autorizedUser) throws RepositoryException;
+    long getDomainsHistorySize(User autorizedUser) throws RepositoryException;
 
     long getUsersSize(User autorizedUser) throws RepositoryException;
 
@@ -75,6 +76,8 @@ public interface LinkRepository {
     List<String> getFreeLinks(int offset, int recordsOnPage);
 
     User getUser(User autorizedUser, String userName) throws RepositoryException;
+
+    List<User> getUsers(String email) throws RepositoryException;
 
     void updateUser(User autorizedUser, User newUser, User oldUser) throws RepositoryException;
 

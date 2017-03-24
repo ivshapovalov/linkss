@@ -130,7 +130,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
-    public long getDomainsSize(User autorizedUser) throws RepositoryException {
+    public long getDomainsActualSize(User autorizedUser) throws RepositoryException {
         if (autorizedUser == null) {
             throw new RepositoryException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
         }
@@ -140,6 +140,28 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
             syncCommands.select(DB_VISITS_BY_DOMAIN_ACTUAL_NUMBER);
+            List<String> allKeys = new ArrayList<>();
+            KeyScanCursor cursor = syncCommands.scan();
+            while (!cursor.isFinished()) {
+                List<String> keys = cursor.getKeys();
+                keys.stream().forEach(key -> allKeys.add(key));
+                cursor = syncCommands.scan(cursor);
+            }
+            return allKeys.size();
+        }
+    }
+
+    @Override
+    public long getDomainsHistorySize(User autorizedUser) throws RepositoryException {
+        if (autorizedUser == null) {
+            throw new RepositoryException(String.format("User '%s' does not defined", autorizedUser.getUserName()));
+        }
+        if (!autorizedUser.isAdmin()) {
+            throw new RepositoryException(String.format("User '%s' does not have permissions to see domains stat", autorizedUser.getUserName()));
+        }
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_VISITS_BY_DOMAIN_HISTORY_NUMBER);
             List<String> allKeys = new ArrayList<>();
             KeyScanCursor cursor = syncCommands.scan();
             while (!cursor.isFinished()) {
@@ -186,6 +208,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 cursorKeys.stream().forEach(key -> keys.add(key));
                 cursor = syncCommands.scan(cursor);
             }
+            if (keys.size()==0) { return 0;}
+
             long size = keys.stream()
                     .map(key -> syncCommands.hlen(key))
                     .reduce((sum, cost) -> sum + cost).get();
@@ -212,6 +236,8 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 cursorKeys.stream().forEach(key -> keys.add(key));
                 cursor = syncCommands.scan(cursor);
             }
+            if (keys.size()==0) { return 0;}
+
             long size = keys.stream()
                     .map(key -> syncCommands.hlen(key))
                     .reduce((sum, cost) -> sum + cost).get();
@@ -757,7 +783,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                         user.getUserName()));
             }
             if (!user.getPassword().equals(dbUser.getPassword())) {
-                throw new RuntimeException(String.format("Password for user '%s' is " +
+                throw new RepositoryException(String.format("Password for user '%s' is " +
                                 "wrong",
                         user.getUserName()));
             }
@@ -1247,6 +1273,33 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
             }
 
             return user;
+        }
+    }
+
+    @Override
+    public List<User> getUsers(String email) throws RepositoryException {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+
+            syncCommands.select(DB_WORK_NUMBER);
+
+            List<User> users= syncCommands.hkeys(KEY_USERS).stream()
+                    .map(userName->{
+                        String jsonUser=syncCommands.hget(KEY_USERS,userName);
+                        if (jsonUser != null && !"".equals(jsonUser)) {
+                            try {
+                                User user = new User().fromJSON(jsonUser);
+                                return user;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+                    }).filter(user->email.equals(user.getEmail()))
+                    .collect(Collectors.toList());
+            return users;
         }
     }
 

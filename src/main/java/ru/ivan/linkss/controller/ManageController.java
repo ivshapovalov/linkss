@@ -44,6 +44,7 @@ public class ManageController implements Parametrized {
     private static final String PAGE_SIGNIN = "signin";
     private static final String PAGE_CONFIG = "config";
     private static final String PAGE_REGISTER = "register";
+    private static final String PAGE_REMIND = "remind";
     private static final String PAGE_USER = "user";
     private static final String PAGE_USERS = "users";
     private static final String PAGE_DOMAINS = "domains";
@@ -62,6 +63,7 @@ public class ManageController implements Parametrized {
     private static final String ACTION_VERIFY = "verify";
     private static final String ACTION_EDIT = "edit";
     private static final String ACTION_LOGIN = "login";
+    private static final String ACTION_REMINDER = "reminder";
     private static final String ACTION_DELETE = "delete";
     private static final String ACTION_RESTORE = "restore";
     private static final String ACTION_CLEAR = "clear";
@@ -74,7 +76,6 @@ public class ManageController implements Parametrized {
     private static final String ATTRIBUTE_LIST = "list";
     private static final String ATTRIBUTE_KEY = "key";
     private static final String ATTRIBUTE_POINTS = "points";
-    private static final String ATTRIBUTE_IPS = "ips";
     private static final String ATTRIBUTE_JPOSITIONS = "jpositions";
     private static final String ATTRIBUTE_TIME = "time";
     private static final String ATTRIBUTE_OLD_KEY = "oldKey";
@@ -145,7 +146,7 @@ public class ManageController implements Parametrized {
                 model.addAttribute("linksSize", service.getDBLinksSize());
                 model.addAttribute("freeLinksSize", service.getDBFreeLinksSize());
                 model.addAttribute("usersSize", service.getUsersSize(autorizedUser));
-                model.addAttribute("domainsSize", service.getDomainsSize(autorizedUser));
+                model.addAttribute("domainsSize", service.getDomainsActualSize(autorizedUser));
             } catch (RepositoryException e) {
                 model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
                 return PAGE_ERROR;
@@ -223,12 +224,51 @@ public class ManageController implements Parametrized {
             }
             String path = getContextPath(request) + getControllerMapping()
                     + ACTION_VERIFY + WEB_SEPARTOR + "?uuid=";
-            service.sendMail(user, path);
+            service.sendVerifyMail(user, path);
             model.addAttribute(ATTRIBUTE_MESSAGE, String.format("Check your email '%s' for " +
                     "verify URL", user.getEmail()));
             return PAGE_MESSAGE;
         }
     }
+
+    @RequestMapping(value = PAGE_REMIND, method = RequestMethod.GET)
+    public String remind(Model model)
+            throws IOException {
+        model.addAttribute(ATTRIBUTE_USER, new User.Builder().build());
+        return PAGE_REMIND;
+    }
+
+    @RequestMapping(value = ACTION_REMINDER, method = RequestMethod.POST)
+    public String reminder(Model model,
+                           @ModelAttribute(ATTRIBUTE_USER) User user,
+                           HttpServletRequest request,
+                           HttpSession session) {
+        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+        boolean valid;
+        if (DEBUG) {
+            valid = true;
+        } else {
+            valid = VerifyRecaptcha.verify(gRecaptchaResponse);
+        }
+        String errorString = null;
+        if (!valid) {
+            errorString = "Captcha invalid!";
+        }
+        if (!valid) {
+            model.addAttribute(ATTRIBUTE_MESSAGE, errorString);
+            return PAGE_ERROR;
+        } else {
+            try {
+                List<User> dbUsers =service.sendRemindMail(user);
+                model.addAttribute(ATTRIBUTE_MESSAGE, "Check your email for your credentials");
+                return PAGE_MESSAGE;
+            } catch (RepositoryException e) {
+                model.addAttribute(ATTRIBUTE_MESSAGE, e);
+                return PAGE_ERROR;
+            }
+        }
+    }
+
 
     @RequestMapping(value = ACTION_LOGIN, method = RequestMethod.POST)
     public String login(Model model, HttpServletRequest request,
@@ -557,7 +597,7 @@ public class ManageController implements Parametrized {
 
     @RequestMapping(value = WEB_SEPARTOR + PAGE_USER + WEB_SEPARTOR
             + "{" + ATTRIBUTE_OWNER + "}" + WEB_SEPARTOR + ACTION_EDIT, method = RequestMethod.GET)
-    private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String key
+    private String editUser(Model model, @PathVariable(ATTRIBUTE_OWNER) String userName
             , HttpSession session, HttpServletRequest request) {
         User autorizedUser = (User) session.getAttribute(ATTRIBUTE_AUTORIZED_USER);
 
@@ -565,12 +605,12 @@ public class ManageController implements Parametrized {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Autorized user is not defined!");
             return PAGE_ERROR;
         }
-        if (key == null || key.equals("")) {
+        if (userName == null || userName.equals("")) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "User name is not defined!");
             return PAGE_ERROR;
         }
         try {
-            User user = service.getUser(autorizedUser, key);
+            User user = service.getUser(autorizedUser, userName);
             model.addAttribute(ATTRIBUTE_USER, user);
             model.addAttribute(ATTRIBUTE_OLD_USERNAME, user.getUserName());
             model.addAttribute(ATTRIBUTE_OLD_PASSWORD, user.getPassword());
@@ -1186,23 +1226,26 @@ public class ManageController implements Parametrized {
         }
         int offset = (currentPage - 1) * recordsOnPage;
         List<Domain> list = null;
-        long domainsSize = 0;
+        long domainsActualSize = 0;
+        long domainsHistorySize = 0;
         long visitsActualSize = 0;
         long visitsHistorySize = 0;
         try {
             list = service.getShortStat(offset, recordsOnPage);
-            domainsSize = service.getDomainsSize(autorizedUser);
+            domainsActualSize = service.getDomainsActualSize(autorizedUser);
+            domainsHistorySize = service.getDomainsHistorySize(autorizedUser);
             visitsActualSize = service.getVisitsActualSize(autorizedUser);
             visitsHistorySize = service.getVisitsHistorySize(autorizedUser);
         } catch (RepositoryException e) {
             model.addAttribute(ATTRIBUTE_MESSAGE, e.getMessage());
             return PAGE_ERROR;
         }
-        if (domainsSize == 0) {
+        if (domainsActualSize == 0 || domainsHistorySize==0) {
             model.addAttribute(ATTRIBUTE_MESSAGE, "Sorry, DB don't have domains visits. Try later!");
             return PAGE_MESSAGE;
         }
-        int numberOfPages = Math.max(1, (int) Math.ceil((double) domainsSize / recordsOnPage));
+        int numberOfPages = Math.max(1, (int) Math.ceil((double) Math.max(domainsActualSize,domainsHistorySize) /
+                recordsOnPage));
 
         model.addAttribute(ATTRIBUTE_LIST, list);
         model.addAttribute(ATTRIBUTE_NUMBER_OF_PAGES, numberOfPages);

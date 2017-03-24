@@ -29,10 +29,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Hashtable;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Qualifier(value = "service")
@@ -56,10 +54,36 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void sendMail(User user, String path) {
+    public void sendVerifyMail(User user, String path) {
         String UUID = repository.generateNewUUID(user);
         String verifyURL = path + UUID;
-        mail.send(user, verifyURL);
+        mail.sendVerifyEmail(user, verifyURL);
+    }
+
+    @Override
+    public List<User> sendRemindMail(User user) throws RepositoryException {
+        user.setAdmin(true);
+        List<User> dbUsers = new ArrayList<>();
+        try {
+            //first - check name - unique
+            dbUsers.add(repository.getUser(user, user.getUserName()));
+
+            //second email - non unique
+            if (dbUsers.size() == 0) {
+                if (!"".equals(user.getEmail())) {
+                    dbUsers = repository.getUsers(user.getEmail());
+                }
+            }
+            if (dbUsers.size() == 0) {
+                throw new RepositoryException("No user with such credentials!");
+            }
+        } catch (
+                RepositoryException e)
+        {
+            throw new RepositoryException("User with such credentials does not exists!");
+        }
+        mail.sendRemindEmail(dbUsers);
+        return dbUsers;
     }
 
     @Override
@@ -79,8 +103,13 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public long getDomainsSize(User autorizedUser) throws RepositoryException {
-        return repository.getDomainsSize(autorizedUser);
+    public long getDomainsActualSize(User autorizedUser) throws RepositoryException {
+        return repository.getDomainsActualSize(autorizedUser);
+    }
+
+    @Override
+    public long getDomainsHistorySize(User autorizedUser) throws RepositoryException {
+        return repository.getDomainsHistorySize(autorizedUser);
     }
 
     public long getUsersSize(User autorizedUser) throws RepositoryException {
@@ -151,7 +180,7 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public void createUser(User user,Map<String,String> params) throws RepositoryException {
+    public void createUser(User user, Map<String, String> params) throws RepositoryException {
         String ip = params.get(PARAM_IP);
         IpPosition ipPosition = getPosition(ip);
         if (ipPosition == null) {
@@ -318,17 +347,19 @@ public class LinksServiceImpl implements LinksService {
         return repository.getLinkVisits(autorizedUser, owner, key, offset,
                 recordsOnPage);
     }
+
     @Override
     public List<Visit> getDomainActualVisits(User autorizedUser, String key, int
             offset, long
-                                             recordsOnPage) throws RepositoryException {
+                                                     recordsOnPage) throws RepositoryException {
         return repository.getDomainActualVisits(autorizedUser, key, offset,
                 recordsOnPage);
     }
+
     @Override
     public List<Visit> getDomainHistoryVisits(User autorizedUser, String key, int
             offset, long
-                                             recordsOnPage) throws RepositoryException {
+                                                      recordsOnPage) throws RepositoryException {
         return repository.getDomainHistoryVisits(autorizedUser, key, offset,
                 recordsOnPage);
     }
@@ -368,11 +399,13 @@ public class LinksServiceImpl implements LinksService {
     public long getLinkVisitsSize(User autorizedUser, String owner, String key) throws RepositoryException {
         return repository.getLinkVisitsSize(autorizedUser, owner, key);
     }
+
     @Override
     public long getDomainActualVisitsSize(User autorizedUser, String key) throws
             RepositoryException {
         return repository.getDomainActualVisitsSize(autorizedUser, key);
     }
+
     @Override
     public long getDomainHistoryVisitsSize(User autorizedUser, String key) throws
             RepositoryException {

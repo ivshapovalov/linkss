@@ -125,7 +125,7 @@ public class ManageControllerTest {
         Mockito.when(user.isAdmin()).thenReturn(true);
         Mockito.when(service.getDBLinksSize()).thenReturn(0L);
         Mockito.when(service.getDBFreeLinksSize()).thenReturn(0L);
-        Mockito.when(service.getDomainsSize(user)).thenReturn(0L);
+        Mockito.when(service.getDomainsActualSize(user)).thenReturn(0L);
         Mockito.when(service.getUsersSize(user)).thenReturn(0L);
 
         //when
@@ -139,7 +139,7 @@ public class ManageControllerTest {
         Mockito.verify(model,Mockito.times(4)).addAttribute(Mockito.anyString(),Mockito.anyLong());
         Mockito.verify(service).getDBFreeLinksSize();
         Mockito.verify(service).getDBLinksSize();
-        Mockito.verify(service).getDomainsSize(user);
+        Mockito.verify(service).getDomainsActualSize(user);
         Mockito.verify(service).getUsersSize(user);
         Mockito.verifyNoMoreInteractions(session,model,service);
         assertEquals(PAGE_CONFIG, actual);

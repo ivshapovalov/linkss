@@ -21,7 +21,9 @@
             </tr>
             <tr>
                 <td></td>
-                <td><input type="submit" value="Login" id="login"/></td>
+                <td><input type="submit" value="Login" id="login"/>
+                <input type="button" value="Remind" id="remind"
+                           onclick="location.href='./remind'"/></td>
             </tr>
         </table>
         <div class="g-recaptcha" data-sitekey="6LfYMRkUAAAAAIAYkmMRsZtqzv2D_Icz5PfvKNk7"></div>
