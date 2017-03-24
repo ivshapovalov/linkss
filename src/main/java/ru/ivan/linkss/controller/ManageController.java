@@ -259,7 +259,9 @@ public class ManageController implements Parametrized {
             return PAGE_ERROR;
         } else {
             try {
-                List<User> dbUsers =service.sendRemindMail(user);
+                String path = getContextPath(request) + getControllerMapping()
+                        + ACTION_VERIFY + WEB_SEPARTOR + "?uuid=";
+                List<User> dbUsers =service.sendRemindMail(user,path);
                 model.addAttribute(ATTRIBUTE_MESSAGE, "Check your email for your credentials");
                 return PAGE_MESSAGE;
             } catch (RepositoryException e) {

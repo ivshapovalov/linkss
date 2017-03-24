@@ -61,12 +61,14 @@ public class LinksServiceImpl implements LinksService {
     }
 
     @Override
-    public List<User> sendRemindMail(User user) throws RepositoryException {
+    public List<User> sendRemindMail(User user, String verifyPath) throws RepositoryException {
         user.setAdmin(true);
         List<User> dbUsers = new ArrayList<>();
         try {
             //first - check name - unique
-            dbUsers.add(repository.getUser(user, user.getUserName()));
+            if (!"".equals(user.getUserName())) {
+                dbUsers.add(repository.getUser(user, user.getUserName()));
+            }
 
             //second email - non unique
             if (dbUsers.size() == 0) {
@@ -78,11 +80,24 @@ public class LinksServiceImpl implements LinksService {
                 throw new RepositoryException("No user with such credentials!");
             }
         } catch (
-                RepositoryException e)
-        {
+                RepositoryException e) {
             throw new RepositoryException("User with such credentials does not exists!");
         }
-        mail.sendRemindEmail(dbUsers);
+        Map<User, String> map = new HashMap<>();
+        dbUsers.forEach(u -> {
+            if (u.isVerified()) {
+                map.put(u, null);
+            } else {
+                String uuid = repository.getUserUUID(u);
+                if (uuid == null) {
+                    map.put(u, null);
+                } else {
+                    map.put(u, verifyPath + repository.getUserUUID(u));
+                }
+            }
+            ;
+        });
+        mail.sendRemindEmail(map);
         return dbUsers;
     }
 

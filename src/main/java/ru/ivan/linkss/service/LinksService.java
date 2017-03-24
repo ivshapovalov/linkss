@@ -26,7 +26,7 @@ public interface LinksService {
 
     void sendVerifyMail(User user, String path);
 
-    List<User> sendRemindMail(User user) throws RepositoryException;
+    List<User> sendRemindMail(User user, String verifyPath) throws RepositoryException;
 
     String visitLink(String shortLink,Map<String,String> params);
 

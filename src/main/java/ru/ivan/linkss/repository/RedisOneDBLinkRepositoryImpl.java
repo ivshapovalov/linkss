@@ -208,7 +208,9 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 cursorKeys.stream().forEach(key -> keys.add(key));
                 cursor = syncCommands.scan(cursor);
             }
-            if (keys.size()==0) { return 0;}
+            if (keys.size() == 0) {
+                return 0;
+            }
 
             long size = keys.stream()
                     .map(key -> syncCommands.hlen(key))
@@ -236,7 +238,9 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                 cursorKeys.stream().forEach(key -> keys.add(key));
                 cursor = syncCommands.scan(cursor);
             }
-            if (keys.size()==0) { return 0;}
+            if (keys.size() == 0) {
+                return 0;
+            }
 
             long size = keys.stream()
                     .map(key -> syncCommands.hlen(key))
@@ -808,6 +812,27 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
     }
 
     @Override
+    public String getUserUUID(User user) {
+        try (StatefulRedisConnection<String, String> connection = connect()) {
+            RedisCommands<String, String> syncCommands = connection.sync();
+            syncCommands.select(DB_WORK_NUMBER);
+            do {
+                String uuid = syncCommands.hkeys(KEY_USERS_UNVERIFIED).stream()
+                        .filter(key -> {
+                            String email = syncCommands.hget(KEY_USERS_UNVERIFIED, key);
+                            if (email.equals(user.getUserName())
+                                    ) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }).findFirst().orElse(null);
+                return uuid;
+            } while (true);
+        }
+    }
+
+    @Override
     public String verifyUser(String uuid) {
         try (StatefulRedisConnection<String, String> connection = connect()) {
             RedisCommands<String, String> syncCommands = connection.sync();
@@ -1283,9 +1308,9 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
 
             syncCommands.select(DB_WORK_NUMBER);
 
-            List<User> users= syncCommands.hkeys(KEY_USERS).stream()
-                    .map(userName->{
-                        String jsonUser=syncCommands.hget(KEY_USERS,userName);
+            List<User> users = syncCommands.hkeys(KEY_USERS).stream()
+                    .map(userName -> {
+                        String jsonUser = syncCommands.hget(KEY_USERS, userName);
                         if (jsonUser != null && !"".equals(jsonUser)) {
                             try {
                                 User user = new User().fromJSON(jsonUser);
@@ -1297,7 +1322,7 @@ public class RedisOneDBLinkRepositoryImpl implements LinkRepository {
                         } else {
                             return null;
                         }
-                    }).filter(user->email.equals(user.getEmail()))
+                    }).filter(user -> email.equals(user.getEmail()))
                     .collect(Collectors.toList());
             return users;
         }

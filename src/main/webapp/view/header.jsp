@@ -119,7 +119,7 @@
             </c:when>
             <c:otherwise>
                 <li class="active"><a
-                        href="/linkss/manage/user/${autorizedUser.getUserName()}/edit">User</a>
+                        href="/linkss/manage/user/${autorizedUser.getUserName()}/edit">Profile</a>
                 </li>
             </c:otherwise>
         </c:choose>

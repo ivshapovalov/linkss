@@ -116,4 +116,6 @@ public interface LinkRepository {
     String generateNewUUID(User user);
 
     String verifyUser(String uuid);
+
+    String getUserUUID(User user);
 }
