@@ -1,17 +1,17 @@
 Short link service 
 ===============================
 
-####DB: Redis
-####DB client:lettuce
-####WEB: Spring MVC + Spring AOP 
-####Other:zxing QR code, GeoIP DB, Google reCaptcha, Yandex Maps
-####Front - Bootstrap+JQuery
+#### DB:Redis
+#### DB client:lettuce
+#### WEB:Spring MVC + Spring AOP 
+#### Other:zxing QR code, GeoIP DB, Google reCaptcha, Yandex Maps
+#### Front - Bootstrap+JQuery
 
 
 First check the constants
 
-####REDIS INSTANCE 1
-#####redis:0 WORK_DB
+#### REDIS INSTANCE 1
+##### redis:0 WORK_DB
 - hset key:_visits
     - field: String shortLink
     - value: long visitsActual
@@ -34,29 +34,29 @@ First check the constants
     - field: String shortLink
     - value: String link
 
-#####redis:1 FREELINK_DB 
+##### redis:1 FREELINK_DB 
 - key: String shortLink
 
-#####redis:2 LINK_DB 
+##### redis:2 LINK_DB 
 - key: String shortLink
 - value: String link
 
-#####redis:3 ARCHIVE_LINK_DB 
+##### redis:3 ARCHIVE_LINK_DB 
 - hset key:userName
     - field: String shortLink
     - value: json FullLink link
 
-#####redis:4 VISITS_DB
+##### redis:4 VISITS_DB
 - hset key:shortLink
     - field: long time
     - value: json Visit visit
     
-#####redis:5 VISITS_BY_DOMAIN_ACTUAL_DB
+##### redis:5 VISITS_BY_DOMAIN_ACTUAL_DB
 - hset key:domain
     - field: long time
     - value: json Visit visit
     
-#####redis:6 VISITS_BY_DOMAIN_HISTORY_DB
+##### redis:6 VISITS_BY_DOMAIN_HISTORY_DB
 - hset key:domain
     - field: long time
     - value: json Visit visit    
